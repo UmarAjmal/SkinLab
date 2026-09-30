@@ -13,39 +13,44 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        try {
+          if (!credentials?.email || !credentials?.password) return null;
 
-        const email = credentials.email.trim().toLowerCase();
-        const user = await prisma.user.findFirst({
-          where: {
-            email: {
-              equals: email,
-              mode: "insensitive",
+          const email = credentials.email.trim().toLowerCase();
+          const user = await prisma.user.findFirst({
+            where: {
+              email: {
+                equals: email,
+                mode: "insensitive",
+              },
             },
-          },
-          include: { role: true },
-        });
+            include: { role: true },
+          });
 
-        if (!user || !user.password) {
-          console.warn(`[Auth] User not found: ${email}`);
+          if (!user || !user.password) {
+            console.warn(`[Auth] User not found: ${email}`);
+            return null;
+          }
+          if (!user.is_active) {
+            console.warn(`[Auth] Inactive user login attempt: ${email}`);
+            return null;
+          }
+
+          const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
+          if (!isPasswordValid) {
+            console.warn(`[Auth] Invalid password for: ${email}`);
+            return null;
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            role: user.role?.name || "User",
+          };
+        } catch (error) {
+          console.error("[Auth Exception in authorize]:", error);
           return null;
         }
-        if (!user.is_active) {
-          console.warn(`[Auth] Inactive user login attempt: ${email}`);
-          return null;
-        }
-
-        const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
-        if (!isPasswordValid) {
-          console.warn(`[Auth] Invalid password for: ${email}`);
-          return null;
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          role: user.role?.name || "User",
-        };
       },
     }),
   ],
