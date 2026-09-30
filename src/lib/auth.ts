@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET || "skinlab-super-secret-production-key-987654321",
   providers: [
     CredentialsProvider({
       name: "Credentials",
