@@ -1,9 +1,7 @@
 import { NextAuthOptions, getServerSession as getNextAuthServerSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-
-const prisma = new PrismaClient();
 
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET || "skinlab-super-secret-production-key-987654321",
@@ -17,21 +15,36 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+        const email = credentials.email.trim().toLowerCase();
+        const user = await prisma.user.findFirst({
+          where: {
+            email: {
+              equals: email,
+              mode: "insensitive",
+            },
+          },
           include: { role: true },
         });
 
-        if (!user || !user.password) return null;
-        if (!user.is_active) return null; // Block inactive users
+        if (!user || !user.password) {
+          console.warn(`[Auth] User not found: ${email}`);
+          return null;
+        }
+        if (!user.is_active) {
+          console.warn(`[Auth] Inactive user login attempt: ${email}`);
+          return null;
+        }
 
         const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
-        if (!isPasswordValid) return null;
+        if (!isPasswordValid) {
+          console.warn(`[Auth] Invalid password for: ${email}`);
+          return null;
+        }
 
         return {
           id: user.id,
           email: user.email,
-          role: user.role.name,
+          role: user.role?.name || "User",
         };
       },
     }),

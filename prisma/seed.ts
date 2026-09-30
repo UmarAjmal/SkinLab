@@ -8,6 +8,7 @@ async function main() {
 
   const users = [
     { email: 'admin@skinlab.com', role: 'Admin' },
+    { email: 'admin@skinlab.local', role: 'Admin' },
     { email: 'manager@skinlab.com', role: 'Manager' },
     { email: 'doctor@skinlab.com', role: 'Doctor' },
     { email: 'cashier@skinlab.com', role: 'Cashier' },
