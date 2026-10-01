@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth";
-
-const prisma = new PrismaClient();
 
 export async function GET(request: Request) {
   const session = await getServerSession();
@@ -44,19 +42,32 @@ export async function POST(request: Request) {
     const count = await prisma.product.count();
     const sku = `SRV-${String(count + 1).padStart(4, '0')}`;
 
+    const sellingPrice = data.selling_price !== undefined && data.selling_price !== null && data.selling_price !== "" 
+      ? Number(data.selling_price) 
+      : 0;
+
+    const costPrice = data.cost_price !== undefined && data.cost_price !== null && data.cost_price !== "" 
+      ? Number(data.cost_price) 
+      : 0;
+
+    const stockQuantity = data.stock_quantity !== undefined && data.stock_quantity !== null && data.stock_quantity !== "" 
+      ? parseInt(data.stock_quantity, 10) 
+      : 0;
+
     const newProduct = await prisma.product.create({
       data: {
         name: data.name,
         sku: sku,
         category_id: data.category_id,
-        cost_price: data.cost_price || 0,
-        selling_price: data.selling_price,
+        cost_price: costPrice,
+        selling_price: sellingPrice,
         tax_class: data.tax_class || "Standard",
-        stock_quantity: data.stock_quantity || 0,
+        stock_quantity: stockQuantity,
       }
     });
 
     return NextResponse.json(newProduct, { status: 201 });
+
   } catch (error) {
     console.error("POST /api/products error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

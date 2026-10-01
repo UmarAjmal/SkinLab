@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth";
-
-const prisma = new PrismaClient();
 
 export async function GET(request: Request) {
   const session = await getServerSession();
@@ -37,14 +35,18 @@ export async function POST(request: Request) {
   try {
     const data = await request.json();
     
-    if (!data.name || !data.price || !data.items || data.items.length === 0) {
-      return NextResponse.json({ error: "Name, price, and at least one item are required" }, { status: 400 });
+    if (!data.name || !data.items || data.items.length === 0) {
+      return NextResponse.json({ error: "Name and at least one item are required" }, { status: 400 });
     }
+
+    const totalPrice = data.price !== undefined && data.price !== null && data.price !== "" 
+      ? Number(data.price) 
+      : 0;
 
     const newDeal = await prisma.deal.create({
       data: {
         name: data.name,
-        total_price: data.price,
+        total_price: totalPrice,
         items: {
           create: data.items.map((item: any) => ({
             product_id: item.product_id,
@@ -59,6 +61,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(newDeal, { status: 201 });
+
   } catch (error) {
     console.error("POST /api/deals error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth";
-
-const prisma = new PrismaClient();
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession();
@@ -37,18 +35,31 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       return NextResponse.json({ error: "Name and Category are required" }, { status: 400 });
     }
 
+    const sellingPrice = data.selling_price !== undefined && data.selling_price !== null && data.selling_price !== "" 
+      ? Number(data.selling_price) 
+      : 0;
+
+    const costPrice = data.cost_price !== undefined && data.cost_price !== null && data.cost_price !== "" 
+      ? Number(data.cost_price) 
+      : 0;
+
+    const stockQuantity = data.stock_quantity !== undefined && data.stock_quantity !== null && data.stock_quantity !== "" 
+      ? parseInt(data.stock_quantity, 10) 
+      : 0;
+
     const updatedProduct = await prisma.product.update({
       where: { id: params.id },
       data: {
         name: data.name,
         category_id: data.category_id,
-        cost_price: data.cost_price,
-        selling_price: data.selling_price,
-        tax_class: data.tax_class,
-        stock_quantity: data.stock_quantity,
+        cost_price: costPrice,
+        selling_price: sellingPrice,
+        tax_class: data.tax_class || "Standard",
+        stock_quantity: stockQuantity,
       }
     });
     return NextResponse.json(updatedProduct);
+
   } catch (error) {
     console.error("PUT /api/products/[id] error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

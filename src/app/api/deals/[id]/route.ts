@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth";
-
-const prisma = new PrismaClient();
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession();
@@ -32,18 +30,22 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   try {
     const data = await request.json();
     
-    // First, delete existing items to replace them (simplest way to handle updates for a one-to-many relationship)
+    // First, delete existing items to replace them
     await prisma.dealItem.deleteMany({
       where: { deal_id: params.id }
     });
+
+    const totalPrice = data.price !== undefined && data.price !== null && data.price !== "" 
+      ? Number(data.price) 
+      : 0;
 
     const updatedDeal = await prisma.deal.update({
       where: { id: params.id },
       data: {
         name: data.name,
-        total_price: data.price,
+        total_price: totalPrice,
         items: {
-          create: data.items.map((item: any) => ({
+          create: (data.items || []).map((item: any) => ({
             product_id: item.product_id,
             sessions_allowed: item.sessions || 1,
             quantity: 1
@@ -56,6 +58,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     });
 
     return NextResponse.json(updatedDeal);
+
   } catch (error) {
     console.error("PUT /api/deals/[id] error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

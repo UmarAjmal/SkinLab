@@ -14,16 +14,16 @@ const categorySchema = z.object({
 const productSchema = z.object({
   name: z.string().min(1, "Name is required"),
   category_id: z.string().min(1, "Category is required"),
-  cost_price: z.coerce.number().min(0).default(0),
-  selling_price: z.coerce.number().min(0, "Selling price must be >= 0"),
+  cost_price: z.preprocess((val) => (val === "" || val === undefined || val === null ? 0 : val), z.coerce.number().min(0)).default(0),
+  selling_price: z.preprocess((val) => (val === "" || val === undefined || val === null ? 0 : val), z.coerce.number().min(0)).default(0),
   tax_class: z.string().default("Standard"),
-  stock_quantity: z.coerce.number().default(0),
+  stock_quantity: z.preprocess((val) => (val === "" || val === undefined || val === null ? 0 : val), z.coerce.number().min(0)).default(0),
 });
 
 const dealSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
-  price: z.coerce.number().min(0, "Price must be >= 0"),
+  price: z.preprocess((val) => (val === "" || val === undefined || val === null ? 0 : val), z.coerce.number().min(0)).default(0),
   items: z.array(z.object({
     product_id: z.string().min(1, "Product is required"),
     sessions: z.coerce.number().min(1, "Must be at least 1 session")
@@ -304,19 +304,21 @@ export default function ServicesPage() {
                   {productForm.formState.errors.category_id && <p className="mt-1 text-xs text-red-500">{productForm.formState.errors.category_id.message as string}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Selling Price ($) <span className="text-red-500">*</span></label>
-                  <input type="number" step="0.01" {...productForm.register("selling_price")} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Selling Price ($) <span className="text-gray-400 font-normal text-xs">(Optional)</span>
+                  </label>
+                  <input type="number" step="0.01" placeholder="0.00" {...productForm.register("selling_price")} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" />
                   {productForm.formState.errors.selling_price && <p className="mt-1 text-xs text-red-500">{productForm.formState.errors.selling_price.message as string}</p>}
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Cost Price ($)</label>
-                  <input type="number" step="0.01" {...productForm.register("cost_price")} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" />
+                  <input type="number" step="0.01" placeholder="0.00" {...productForm.register("cost_price")} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Stock (Retail only)</label>
-                  <input type="number" {...productForm.register("stock_quantity")} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" />
+                  <input type="number" placeholder="0" {...productForm.register("stock_quantity")} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" />
                 </div>
               </div>
               </form>
@@ -346,8 +348,10 @@ export default function ServicesPage() {
                     {dealForm.formState.errors.name && <p className="mt-1 text-xs text-red-500">{dealForm.formState.errors.name.message as string}</p>}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Bundle Price ($) <span className="text-red-500">*</span></label>
-                    <input type="number" step="0.01" {...dealForm.register("price")} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" />
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Bundle Price ($) <span className="text-gray-400 font-normal text-xs">(Optional)</span>
+                    </label>
+                    <input type="number" step="0.01" placeholder="0.00" {...dealForm.register("price")} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" />
                     {dealForm.formState.errors.price && <p className="mt-1 text-xs text-red-500">{dealForm.formState.errors.price.message as string}</p>}
                   </div>
                 </div>
