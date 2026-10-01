@@ -9,24 +9,24 @@ export default function POSPage() {
   const [employees, setEmployees] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [deals, setDeals] = useState<any[]>([]);
-  
+
   // Selection States
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
   const [selectedDoctorId, setSelectedDoctorId] = useState<string>("");
   const [sessionRemarks, setSessionRemarks] = useState<string>("");
-  
+
   // Search States
   const [patientSearch, setPatientSearch] = useState("");
   const [serviceSearch, setServiceSearch] = useState("");
 
   // Cart State
   const [cart, setCart] = useState<any[]>([]);
-  
+
   // Checkout States
   const [discountAmount, setDiscountAmount] = useState<number>(0);
   const [paidAmount, setPaidAmount] = useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState<string>("Cash");
-  
+
   // Token & Success State
   const [nextToken, setNextToken] = useState("");
   const [nextInvoice, setNextInvoice] = useState("");
@@ -48,12 +48,12 @@ export default function POSPage() {
           fetch("/api/deals"),
           fetch("/api/sales/next-invoice")
         ]);
-        
+
         setPatients(await patRes.json() || []);
         setEmployees(await empRes.json() || []);
         setProducts(await prodRes.json() || []);
         setDeals(await dealRes.json() || []);
-        
+
         const tokenData = await tokenRes.json();
         setNextToken(tokenData.token);
         setNextInvoice(tokenData.invoiceNumber);
@@ -71,8 +71,8 @@ export default function POSPage() {
   const filteredPatients = useMemo(() => {
     if (!patientSearch) return patients.slice(0, 10);
     const lower = patientSearch.toLowerCase();
-    return patients.filter(p => 
-      p.name.toLowerCase().includes(lower) || 
+    return patients.filter(p =>
+      p.name.toLowerCase().includes(lower) ||
       (p.phone && p.phone.includes(lower)) ||
       p.medical_id.toLowerCase().includes(lower)
     ).slice(0, 10);
@@ -131,9 +131,9 @@ export default function POSPage() {
         // We need the items to have a price. For Deals, the total price is on the Deal. We can divide equally or just put it on the first item, or assign unit price based on prorated normal prices.
         // Let's divide equally for simplicity, or 0 for items and a master deal item.
         return {
-          id: `${item.id}-${di.product_id}-${Date.now()}`,
+          id: ` {item.id}- {di.product_id}- {Date.now()}`,
           product_id: di.product_id,
-          name: `${item.name} - ${product?.name || 'Service'}`,
+          name: ` {item.name} -  {product?.name || 'Service'}`,
           unit_price: item.total_price / item.items.length,
           quantity: 1,
           sessions_allowed: di.sessions_allowed || 1,
@@ -144,7 +144,7 @@ export default function POSPage() {
       setCart([...cart, ...dealItems]);
     } else {
       setCart([...cart, {
-        id: `${item.id}-${Date.now()}`,
+        id: ` {item.id}- {Date.now()}`,
         product_id: item.id,
         name: item.name,
         unit_price: item.selling_price,
@@ -206,7 +206,7 @@ export default function POSPage() {
         setIsSuccess(true);
       } else {
         const err = await res.json();
-        alert(`Error: ${err.error}`);
+        alert(`Error:  {err.error}`);
       }
     } catch (e) {
       console.error(e);
@@ -225,7 +225,7 @@ export default function POSPage() {
     setServiceSearch("");
     setIsSuccess(false);
     setSuccessData(null);
-    
+
     // Refresh token and patients to get updated balances
     const [patRes, tokenRes] = await Promise.all([
       fetch("/api/patients"),
@@ -245,7 +245,7 @@ export default function POSPage() {
         </div>
         <h2 className="text-3xl font-bold text-gray-900 mb-2">Sale Completed!</h2>
         <p className="text-gray-500 mb-8">Invoice has been successfully generated.</p>
-        
+
         <div className="bg-gray-50 rounded-xl p-6 mb-8 max-w-sm mx-auto space-y-4">
           <div className="flex justify-between items-center border-b border-gray-200 pb-4">
             <span className="text-gray-500">Queue Token</span>
@@ -271,30 +271,30 @@ export default function POSPage() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex flex-col lg:flex-row gap-6 w-full min-w-0 p-4 sm:p-0">
-      
+
       {/* LEFT PANEL */}
       <div className="flex-1 flex flex-col gap-6 overflow-hidden w-full min-w-0">
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 shrink-0">
           <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center"><User className="w-5 h-5 mr-2" /> Patient Selection</h2>
-          
+
           {!selectedPatient ? (
             <div className="relative">
               <div className="relative">
                 <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                   placeholder="Search by name, phone, or medical ID..."
                   value={patientSearch}
                   onChange={e => setPatientSearch(e.target.value)}
                 />
               </div>
-              
+
               {patientSearch && (
                 <div className="absolute z-10 w-full mt-2 bg-white border border-gray-100 shadow-xl rounded-lg overflow-hidden max-h-60 overflow-y-auto">
                   {filteredPatients.map(p => (
-                    <div 
-                      key={p.id} 
+                    <div
+                      key={p.id}
                       onClick={() => { setSelectedPatientId(p.id); setPatientSearch(""); }}
                       className="p-3 border-b border-gray-50 hover:bg-indigo-50 cursor-pointer flex justify-between items-center"
                     >
@@ -307,7 +307,7 @@ export default function POSPage() {
                   {filteredPatients.length === 0 && (
                     <div className="p-4 text-center text-gray-500">No patients found.</div>
                   )}
-                  <div 
+                  <div
                     onClick={() => { setIsPatientModalOpen(true); setPatientSearch(""); }}
                     className="p-3 bg-gray-50 hover:bg-gray-100 cursor-pointer flex items-center justify-center text-indigo-600 font-medium"
                   >
@@ -320,20 +320,20 @@ export default function POSPage() {
             <div className="flex items-center justify-between p-4 border border-indigo-100 bg-indigo-50/30 rounded-lg">
               <div>
                 <div className="font-bold text-gray-900 flex items-center gap-2">
-                  {selectedPatient.name} 
+                  {selectedPatient.name}
                   <span className="text-xs font-normal bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">{selectedPatient.medical_id}</span>
                 </div>
                 <div className="flex gap-4 mt-2 text-sm">
-                  <span className={`font-medium ${selectedPatient.current_balance > 0 ? 'text-red-600' : 'text-gray-600'}`}>
-                    Due: ${selectedPatient.current_balance.toFixed(2)}
+                  <span className={`font-medium  {selectedPatient.current_balance > 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                    Due:  {selectedPatient.current_balance.toFixed(2)}
                   </span>
-                  <span className={`font-medium ${selectedPatient.advance_balance > 0 ? 'text-green-600' : 'text-gray-600'}`}>
-                    Credit: ${selectedPatient.advance_balance.toFixed(2)}
+                  <span className={`font-medium  {selectedPatient.advance_balance > 0 ? 'text-green-600' : 'text-gray-600'}`}>
+                    Credit:  {selectedPatient.advance_balance.toFixed(2)}
                   </span>
                 </div>
               </div>
-              <button 
-                onClick={() => setSelectedPatientId("")} 
+              <button
+                onClick={() => setSelectedPatientId("")}
                 className="text-sm text-gray-500 hover:text-gray-700 underline"
               >
                 Change Patient
@@ -344,7 +344,7 @@ export default function POSPage() {
           <div className="mt-4 grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Assign Doctor/Staff</label>
-              <select 
+              <select
                 className="w-full border-gray-200 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                 value={selectedDoctorId}
                 onChange={e => setSelectedDoctorId(e.target.value)}
@@ -357,8 +357,8 @@ export default function POSPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Session Remarks</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 className="w-full border-gray-200 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                 placeholder="Notes for this visit..."
                 value={sessionRemarks}
@@ -370,31 +370,31 @@ export default function POSPage() {
 
         <div className="bg-white flex-1 p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col min-h-0">
           <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center"><ShoppingCart className="w-5 h-5 mr-2" /> Services & Cart</h2>
-          
+
           <div className="relative mb-6">
             <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input 
-              type="text" 
+            <input
+              type="text"
               className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
               placeholder="Search services or deals to add..."
               value={serviceSearch}
               onChange={e => setServiceSearch(e.target.value)}
             />
-            
+
             {serviceSearch && (
               <div className="absolute z-10 w-full mt-2 bg-white border border-gray-100 shadow-xl rounded-lg overflow-hidden max-h-60 overflow-y-auto">
                 {filteredServices.map((s: any) => (
-                  <div 
-                    key={s.id + s.type} 
+                  <div
+                    key={s.id + s.type}
                     onClick={() => addToCart(s)}
                     className="p-3 border-b border-gray-50 hover:bg-indigo-50 cursor-pointer flex justify-between items-center"
                   >
                     <div>
                       <div className="font-medium text-gray-900 flex items-center gap-2">
-                        {s.name} 
+                        {s.name}
                         {s.type === 'deal' && <span className="bg-purple-100 text-purple-700 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase">Deal</span>}
                       </div>
-                      <div className="text-xs text-gray-500">${(s.selling_price || s.total_price || 0).toFixed(2)}</div>
+                      <div className="text-xs text-gray-500"> {(s.selling_price || s.total_price || 0).toFixed(2)}</div>
                     </div>
                     <Plus className="w-4 h-4 text-indigo-600" />
                   </div>
@@ -429,9 +429,9 @@ export default function POSPage() {
                         <div className="text-xs text-gray-400">Allows up to {item.sessions_allowed} sessions</div>
                       </td>
                       <td className="p-3">
-                        <input 
-                          type="number" 
-                          min="1" 
+                        <input
+                          type="number"
+                          min="1"
                           max={item.sessions_allowed}
                           className="w-full border-gray-200 rounded text-center py-1 px-2 text-sm"
                           value={item.sessions_consumed}
@@ -439,10 +439,10 @@ export default function POSPage() {
                         />
                       </td>
                       <td className="p-3 text-right font-medium text-gray-600">
-                        ${item.unit_price.toFixed(2)}
+                        {item.unit_price.toFixed(2)}
                       </td>
                       <td className="p-3 text-right font-bold text-gray-900">
-                        ${(item.unit_price * item.quantity).toFixed(2)}
+                        {(item.unit_price * item.quantity).toFixed(2)}
                       </td>
                       <td className="p-3 text-right">
                         <button onClick={() => removeFromCart(idx)} className="text-red-400 hover:text-red-600 p-1">
@@ -471,34 +471,34 @@ export default function POSPage() {
               <div className="text-lg font-bold">{nextInvoice || "---"}</div>
             </div>
           </div>
-          
+
           <div className="space-y-4 border-t border-gray-700 pt-6">
             <div className="flex justify-between items-center">
               <span className="text-gray-400">Subtotal</span>
-              <span className="font-medium">${subtotal.toFixed(2)}</span>
+              <span className="font-medium"> {subtotal.toFixed(2)}</span>
             </div>
-            
+
             <div className="flex justify-between items-center">
-              <span className="text-gray-400">Discount ($)</span>
-              <input 
-                type="number" 
+              <span className="text-gray-400">Discount ( )</span>
+              <input
+                type="number"
                 min="0"
                 className="w-24 bg-gray-800 border border-gray-700 rounded text-right px-2 py-1 focus:outline-none focus:border-indigo-500 text-white"
                 value={discountAmount}
                 onChange={e => setDiscountAmount(parseFloat(e.target.value) || 0)}
               />
             </div>
-            
+
             <div className="flex justify-between items-center pt-4 border-t border-gray-700">
               <span className="text-lg font-medium">Grand Total</span>
-              <span className="text-2xl font-bold text-white">${grandTotal.toFixed(2)}</span>
+              <span className="text-2xl font-bold text-white"> {grandTotal.toFixed(2)}</span>
             </div>
           </div>
         </div>
 
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col">
           <h3 className="font-bold text-gray-900 mb-4">Payment</h3>
-          
+
           <div className="space-y-4 flex-1">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
@@ -507,18 +507,18 @@ export default function POSPage() {
                   <button
                     key={method}
                     onClick={() => setPaymentMethod(method)}
-                    className={`py-2 px-3 text-sm font-medium rounded-lg border ${paymentMethod === method ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                    className={`py-2 px-3 text-sm font-medium rounded-lg border  {paymentMethod === method ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
                   >
                     {method}
                   </button>
                 ))}
               </div>
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Amount Paid Now ($)</label>
-              <input 
-                type="number" 
+              <label className="block text-sm font-medium text-gray-700 mb-1">Amount Paid Now ( )</label>
+              <input
+                type="number"
                 min="0"
                 className="w-full border-gray-200 rounded-lg text-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-bold"
                 value={paidAmount}
@@ -526,13 +526,13 @@ export default function POSPage() {
               />
             </div>
 
-            <div className={`p-4 rounded-lg mt-4 flex justify-between items-center ${remainingDue > 0 ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+            <div className={`p-4 rounded-lg mt-4 flex justify-between items-center  {remainingDue > 0 ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
               <span className="font-medium">{remainingDue > 0 ? 'Remaining Due' : 'Change / Advance'}</span>
-              <span className="text-xl font-bold">${Math.abs(paidAmount - grandTotal).toFixed(2)}</span>
+              <span className="text-xl font-bold"> {Math.abs(paidAmount - grandTotal).toFixed(2)}</span>
             </div>
           </div>
 
-          <button 
+          <button
             onClick={completeSale}
             disabled={!selectedPatientId || cart.length === 0}
             className="w-full py-4 mt-6 bg-indigo-600 text-white rounded-xl font-bold text-lg hover:bg-indigo-700 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -553,15 +553,15 @@ export default function POSPage() {
             <form onSubmit={handleAddPatient} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                <input required type="text" className="w-full border-gray-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" value={newPatient.name} onChange={e => setNewPatient({...newPatient, name: e.target.value})} />
+                <input required type="text" className="w-full border-gray-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" value={newPatient.name} onChange={e => setNewPatient({ ...newPatient, name: e.target.value })} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                <input required type="tel" className="w-full border-gray-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" value={newPatient.phone} onChange={e => setNewPatient({...newPatient, phone: e.target.value})} />
+                <input required type="tel" className="w-full border-gray-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" value={newPatient.phone} onChange={e => setNewPatient({ ...newPatient, phone: e.target.value })} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email (Optional)</label>
-                <input type="email" className="w-full border-gray-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" value={newPatient.email} onChange={e => setNewPatient({...newPatient, email: e.target.value})} />
+                <input type="email" className="w-full border-gray-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" value={newPatient.email} onChange={e => setNewPatient({ ...newPatient, email: e.target.value })} />
               </div>
               <div className="pt-4 flex gap-3">
                 <button type="button" onClick={() => setIsPatientModalOpen(false)} className="flex-1 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium">Cancel</button>

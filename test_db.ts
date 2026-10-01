@@ -9,11 +9,11 @@ async function checkAuth(email: string, pass: string) {
     include: { role: true },
   });
   if (!user) {
-    console.log(`[TEST] User not found: ${email}`);
+    console.log(`[TEST] User not found:  {email}`);
     return;
   }
   const isMatch = await bcrypt.compare(pass, user.password);
-  console.log(`[TEST] Login for ${email} with '${pass}': ${isMatch ? 'SUCCESS (Authenticated)' : 'FAILED'}, Role: ${user.role.name}`);
+  console.log(`[TEST] Login for  {email} with ' {pass}':  {isMatch ? 'SUCCESS (Authenticated)' : 'FAILED'}, Role:  {user.role.name}`);
 }
 
 async function main() {
@@ -21,5 +21,5 @@ async function main() {
   await checkAuth('admin@skinlab.local', 'password123');
 }
 
-main().catch(console.error).finally(() => prisma.$disconnect());
+main().catch(console.error).finally(() => prisma.disconnect());
 

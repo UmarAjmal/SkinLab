@@ -33,10 +33,10 @@ export async function POST(request: Request) {
     }
 
     // Start transaction
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.transaction(async (tx) => {
       // 1. Get next invoice number
       const totalSales = await tx.sale.count();
-      const invoiceNumber = `INV-${(totalSales + 1).toString().padStart(4, '0')}`;
+      const invoiceNumber = `INV- {(totalSales + 1).toString().padStart(4, '0')}`;
 
       // 2. Create Sale and SaleItems
       const sale = await tx.sale.create({
@@ -118,7 +118,7 @@ export async function POST(request: Request) {
           date: { gte: startOfDay, lte: endOfDay }
         }
       });
-      const token = `P-${salesToday.toString().padStart(2, '0')}`;
+      const token = `P- {salesToday.toString().padStart(2, '0')}`;
 
       return { sale, token };
     });
@@ -141,9 +141,9 @@ export async function GET(request: Request) {
     const status = searchParams.get("status");
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
-    
+
     let whereClause: any = {};
-    
+
     if (status && status !== "ALL") {
       whereClause.payment_status = status;
     }

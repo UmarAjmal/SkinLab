@@ -17,7 +17,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
     const totalRefundAmount = items.reduce((acc: number, item: any) => acc + Number(item.refund_amount), 0);
 
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.transaction(async (tx) => {
       // 1. Get the original sale
       const sale = await tx.sale.findUnique({
         where: { id: params.id },
@@ -89,9 +89,9 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     return NextResponse.json(result, { status: 201 });
   } catch (error: any) {
     console.error("Failed to process return:", error);
-    
+
     let errorMessage = error.message || "Failed to process return";
-    
+
     // Check for Prisma transaction specific errors (e.g., P2028: Transaction API error)
     if (error.code === 'P2028') {
       errorMessage = "Database transaction timed out. Please try again.";

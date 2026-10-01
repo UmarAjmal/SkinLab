@@ -57,17 +57,17 @@ export default function InvoiceModal({
         return;
       }
 
-      const res = await fetch(`/api/sales/${selectedSale.id}/return`, {
+      const res = await fetch(`/api/sales/ {selectedSale.id}/return`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reason: refundReason, items: itemsToReturn })
       });
-      
+
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || "Failed to process refund");
       }
-      
+
       setIsRefundMode(false);
       onRefundComplete?.();
       onClose();
@@ -81,11 +81,11 @@ export default function InvoiceModal({
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-        
+
         <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
           <div>
             <h3 className="font-bold text-gray-900 text-lg flex items-center">
-              <FileText className="w-5 h-5 mr-2 text-indigo-600" /> 
+              <FileText className="w-5 h-5 mr-2 text-indigo-600" />
               Invoice {selectedSale.invoice_number} {isRefundMode ? "- REFUND MODE" : ""}
             </h3>
             <p className="text-xs text-gray-500 mt-1">{dayjs(selectedSale.date).format("MMMM D, YYYY h:mm A")}</p>
@@ -96,7 +96,7 @@ export default function InvoiceModal({
         </div>
 
         <div className="p-6 overflow-y-auto flex-1">
-          
+
           {!isRefundMode && (
             <>
               <div className="flex justify-between mb-8 border-b border-gray-100 pb-6">
@@ -125,8 +125,8 @@ export default function InvoiceModal({
                     <tr key={item.id}>
                       <td className="py-3 text-sm font-medium text-gray-900">{item.product?.name || "Unknown Product"}</td>
                       <td className="py-3 text-sm text-center text-gray-600">{item.quantity}</td>
-                      <td className="py-3 text-sm text-right text-gray-600">${item.unit_price.toFixed(2)}</td>
-                      <td className="py-3 text-sm text-right font-medium text-gray-900">${item.total_price.toFixed(2)}</td>
+                      <td className="py-3 text-sm text-right text-gray-600"> {item.unit_price.toFixed(2)}</td>
+                      <td className="py-3 text-sm text-right font-medium text-gray-900"> {item.total_price.toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -135,11 +135,11 @@ export default function InvoiceModal({
               <div className="w-64 ml-auto space-y-2 text-sm">
                 <div className="flex justify-between font-bold text-lg text-gray-900 border-t border-gray-200 pt-2 mt-2">
                   <span>Grand Total</span>
-                  <span>${selectedSale.grand_total.toFixed(2)}</span>
+                  <span> {selectedSale.grand_total.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-lg text-indigo-700 border-t border-gray-200 pt-2 mt-2">
                   <span>Balance Due</span>
-                  <span>${(selectedSale.grand_total - (selectedSale.paid_amount || 0)).toFixed(2)}</span>
+                  <span> {(selectedSale.grand_total - (selectedSale.paid_amount || 0)).toFixed(2)}</span>
                 </div>
               </div>
             </>
@@ -157,7 +157,7 @@ export default function InvoiceModal({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Reason for Return</label>
-                <select 
+                <select
                   value={refundReason}
                   onChange={e => setRefundReason(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500"
@@ -189,21 +189,21 @@ export default function InvoiceModal({
                         <td className="py-3 text-sm font-medium text-gray-900 px-2">{item.product?.name}</td>
                         <td className="py-3 text-sm text-center text-gray-600">{maxReturnable}</td>
                         <td className="py-3 text-center">
-                          <input 
-                            type="number" 
-                            min="0" 
+                          <input
+                            type="number"
+                            min="0"
                             max={maxReturnable}
                             value={currentQty}
                             onChange={(e) => {
                               let val = parseInt(e.target.value) || 0;
                               if (val > maxReturnable) val = maxReturnable;
-                              setRefundQuantities(prev => ({...prev, [item.id]: val}));
+                              setRefundQuantities(prev => ({ ...prev, [item.id]: val }));
                             }}
                             className="w-16 px-2 py-1 text-center border border-gray-300 rounded text-sm mx-auto focus:ring-red-500 focus:border-red-500"
                           />
                         </td>
                         <td className="py-3 text-sm text-right font-medium text-red-600 px-2">
-                          ${lineRefund.toFixed(2)}
+                          {lineRefund.toFixed(2)}
                         </td>
                       </tr>
                     );
@@ -214,7 +214,7 @@ export default function InvoiceModal({
               <div className="flex justify-end pt-4 border-t border-gray-200">
                 <div className="text-right">
                   <div className="text-sm text-gray-500">Total Refund Amount</div>
-                  <div className="text-2xl font-bold text-red-600">${calculateRefundTotal().toFixed(2)}</div>
+                  <div className="text-2xl font-bold text-red-600"> {calculateRefundTotal().toFixed(2)}</div>
                 </div>
               </div>
             </div>
@@ -229,9 +229,9 @@ export default function InvoiceModal({
               <button onClick={() => window.print()} className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-sm flex items-center">
                 <FileText className="w-4 h-4 mr-2" /> Print
               </button>
-              
+
               {(userRole === "Admin" || userRole === "Manager") && onRefundComplete && (
-                <button 
+                <button
                   onClick={() => setIsRefundMode(true)}
                   className="px-4 py-2 bg-white border border-red-200 text-red-600 hover:bg-red-50 rounded-lg font-medium text-sm flex items-center"
                 >
@@ -240,7 +240,7 @@ export default function InvoiceModal({
               )}
 
               {selectedSale.payment_status !== "PAID" && userRole !== "Doctor" && onOpenPayment && (
-                <button 
+                <button
                   onClick={() => {
                     const amount = (selectedSale.grand_total - (selectedSale.paid_amount || 0)).toFixed(2);
                     onOpenPayment(amount.toString());
@@ -253,13 +253,13 @@ export default function InvoiceModal({
             </>
           ) : (
             <>
-              <button 
+              <button
                 onClick={() => { setIsRefundMode(false); setRefundQuantities({}); }}
                 className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-sm"
               >
                 Cancel Return
               </button>
-              <button 
+              <button
                 onClick={processRefund}
                 disabled={refundProcessing || calculateRefundTotal() === 0}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium text-sm disabled:opacity-50"

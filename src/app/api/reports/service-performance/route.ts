@@ -39,8 +39,8 @@ export async function GET(request: Request) {
 
     for (const item of saleItems) {
       const pId = item.product_id;
-      const pName = item.item_group_name ? `${item.item_group_name} - ${item.product.name}` : item.product.name;
-      
+      const pName = item.item_group_name ? ` {item.item_group_name} -  {item.product.name}` : item.product.name;
+
       if (!performanceMap.has(pId)) {
         performanceMap.set(pId, {
           id: pId,
@@ -53,7 +53,7 @@ export async function GET(request: Request) {
 
       const current = performanceMap.get(pId);
       current.quantity_sold += item.quantity;
-      
+
       // Calculate effective revenue considering discounts
       // If sale had discount, prorate it, or just use total_price (it's simpler and standard unless discount is itemized)
       // We will use item.total_price as the base revenue.

@@ -30,15 +30,15 @@ export default function SuppliersPage() {
 
   const onSubmit = async (data: any) => {
     try {
-      const url = selectedSupplier ? `/api/suppliers/${selectedSupplier.id}` : "/api/suppliers";
+      const url = selectedSupplier ? `/api/suppliers/ {selectedSupplier.id}` : "/api/suppliers";
       const method = selectedSupplier ? "PUT" : "POST";
-      
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      
+
       if (res.ok) {
         setIsModalOpen(false);
         reset();
@@ -64,7 +64,7 @@ export default function SuppliersPage() {
   const deleteSupplier = async (id: string) => {
     if (!confirm("Are you sure you want to delete this supplier?")) return;
     try {
-      await fetch(`/api/suppliers/${id}`, { method: "DELETE" });
+      await fetch(`/api/suppliers/ {id}`, { method: "DELETE" });
       fetchSuppliers();
     } catch (e) {
       console.error(e);
@@ -91,38 +91,38 @@ export default function SuppliersPage() {
           <div className="overflow-x-auto w-full">
             <table className="min-w-full divide-y divide-gray-200 min-w-[600px]">
               <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200 text-sm">
-              {suppliers.map((s) => (
-                <tr key={s.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{s.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">{s.contact_person || "-"}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">{s.phone || "-"}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-900 font-medium">${s.balance?.toFixed(2)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right font-medium">
-                    <button onClick={() => openEditModal(s)} className="text-indigo-600 hover:text-indigo-900 mr-4">
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => deleteSupplier(s.id)} className="text-red-600 hover:text-red-900">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {suppliers.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">No suppliers found.</td>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200 text-sm">
+                {suppliers.map((s) => (
+                  <tr key={s.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{s.name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-500">{s.contact_person || "-"}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-500">{s.phone || "-"}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-900 font-medium"> {s.balance?.toFixed(2)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right font-medium">
+                      <button onClick={() => openEditModal(s)} className="text-indigo-600 hover:text-indigo-900 mr-4">
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => deleteSupplier(s.id)} className="text-red-600 hover:text-red-900">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {suppliers.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">No suppliers found.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
@@ -157,7 +157,7 @@ export default function SuppliersPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Tax Number</label>
                   <input {...register("tax_number")} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm" />
                 </div>
-                
+
                 <div className="mt-6 flex justify-end space-x-3">
                   <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
                   <button type="submit" disabled={isSubmitting} className="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">Save</button>

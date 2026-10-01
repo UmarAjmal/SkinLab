@@ -22,7 +22,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
       return NextResponse.json({ error: "Invalid payment amount" }, { status: 400 });
     }
 
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.transaction(async (tx) => {
       // 1. Fetch sale
       const sale = await tx.sale.findUnique({ where: { id: saleId }, include: { customer: true } });
       if (!sale) throw new Error("Sale not found");

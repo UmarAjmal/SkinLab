@@ -41,12 +41,12 @@ export async function POST(request: Request) {
 
   try {
     const data = await request.json();
-    
+
     // Generate medical_id format 0001-MM-YYYY
     const now = new Date();
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const year = now.getFullYear();
-    const suffix = `${month}-${year}`;
+    const suffix = ` {month}- {year}`;
 
     // Find the latest patient for this month/year
     const latestPatient = await prisma.customer.findFirst({
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const medical_id = `${String(nextSequence).padStart(4, '0')}-${suffix}`;
+    const medical_id = ` {String(nextSequence).padStart(4, '0')}- {suffix}`;
 
     const newPatient = await prisma.customer.create({
       data: {

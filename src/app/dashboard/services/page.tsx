@@ -84,7 +84,7 @@ export default function ServicesPage() {
   };
 
   const onProductSubmit = async (values: any) => {
-    const url = editingProductId ? `/api/products/${editingProductId}` : "/api/products";
+    const url = editingProductId ? `/api/products/ {editingProductId}` : "/api/products";
     const method = editingProductId ? "PUT" : "POST";
     await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(values) });
     setIsProductModalOpen(false);
@@ -94,7 +94,7 @@ export default function ServicesPage() {
   };
 
   const onDealSubmit = async (values: any) => {
-    const url = editingDealId ? `/api/deals/${editingDealId}` : "/api/deals";
+    const url = editingDealId ? `/api/deals/ {editingDealId}` : "/api/deals";
     const method = editingDealId ? "PUT" : "POST";
     await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(values) });
     setIsDealModalOpen(false);
@@ -105,14 +105,14 @@ export default function ServicesPage() {
 
   const deleteProduct = async (id: string) => {
     if (confirm("Are you sure you want to delete this service?")) {
-      await fetch(`/api/products/${id}`, { method: "DELETE" });
+      await fetch(`/api/products/ {id}`, { method: "DELETE" });
       fetchData();
     }
   };
 
   const deleteDeal = async (id: string) => {
     if (confirm("Are you sure you want to delete this package?")) {
-      await fetch(`/api/deals/${id}`, { method: "DELETE" });
+      await fetch(`/api/deals/ {id}`, { method: "DELETE" });
       fetchData();
     }
   };
@@ -137,10 +137,10 @@ export default function ServicesPage() {
 
       <div className="px-8 pt-6">
         <div className="flex space-x-1 border-b border-gray-200">
-          <button type="button" onClick={() => setActiveTab("services")} className={`px-4 py-2 border-b-2 text-sm font-medium flex items-center ${activeTab === "services" ? "border-indigo-500 text-indigo-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}>
+          <button type="button" onClick={() => setActiveTab("services")} className={`px-4 py-2 border-b-2 text-sm font-medium flex items-center  {activeTab === "services" ? "border-indigo-500 text-indigo-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}>
             <LayoutList className="w-4 h-4 mr-2" /> Services & Products
           </button>
-          <button type="button" onClick={() => setActiveTab("deals")} className={`px-4 py-2 border-b-2 text-sm font-medium flex items-center ${activeTab === "deals" ? "border-indigo-500 text-indigo-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}>
+          <button type="button" onClick={() => setActiveTab("deals")} className={`px-4 py-2 border-b-2 text-sm font-medium flex items-center  {activeTab === "deals" ? "border-indigo-500 text-indigo-600" : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"}`}>
             <Package className="w-4 h-4 mr-2" /> Packages & Deals
           </button>
         </div>
@@ -180,7 +180,7 @@ export default function ServicesPage() {
                             {p.category?.name || "Uncategorized"}
                           </span>
                         </td>
-                        <td className="py-4 px-6 font-semibold text-gray-900">${p.selling_price.toFixed(2)}</td>
+                        <td className="py-4 px-6 font-semibold text-gray-900"> {p.selling_price.toFixed(2)}</td>
                         <td className="py-4 px-6 text-right">
                           <button type="button" onClick={() => { setEditingProductId(p.id); productForm.reset({ ...p, category_id: p.category_id || "" }); setIsProductModalOpen(true); }} className="text-indigo-600 hover:text-indigo-900 mr-4">
                             <Edit2 className="w-4 h-4" />
@@ -215,7 +215,7 @@ export default function ServicesPage() {
                   <div className="p-5 border-b border-gray-100 flex justify-between items-start bg-indigo-50/30">
                     <div>
                       <h3 className="font-bold text-lg text-gray-900">{d.name}</h3>
-                      <p className="text-indigo-600 font-bold mt-1">${(d.total_price || d.price || 0).toFixed(2)}</p>
+                      <p className="text-indigo-600 font-bold mt-1"> {(d.total_price || d.price || 0).toFixed(2)}</p>
                     </div>
                     <div className="flex space-x-2">
                       <button type="button" onClick={() => {
@@ -289,38 +289,38 @@ export default function ServicesPage() {
             </div>
             <div className="overflow-y-auto p-6">
               <form id="productForm" onSubmit={productForm.handleSubmit(onProductSubmit)} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name <span className="text-red-500">*</span></label>
-                <input {...productForm.register("name")} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" />
-                {productForm.formState.errors.name && <p className="mt-1 text-xs text-red-500">{productForm.formState.errors.name.message as string}</p>}
-              </div>
-              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Category <span className="text-red-500">*</span></label>
-                  <select {...productForm.register("category_id")} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                    <option value="">Select Category...</option>
-                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
-                  {productForm.formState.errors.category_id && <p className="mt-1 text-xs text-red-500">{productForm.formState.errors.category_id.message as string}</p>}
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Name <span className="text-red-500">*</span></label>
+                  <input {...productForm.register("name")} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" />
+                  {productForm.formState.errors.name && <p className="mt-1 text-xs text-red-500">{productForm.formState.errors.name.message as string}</p>}
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Selling Price ($) <span className="text-gray-400 font-normal text-xs">(Optional)</span>
-                  </label>
-                  <input type="number" step="0.01" placeholder="0.00" {...productForm.register("selling_price")} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" />
-                  {productForm.formState.errors.selling_price && <p className="mt-1 text-xs text-red-500">{productForm.formState.errors.selling_price.message as string}</p>}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Category <span className="text-red-500">*</span></label>
+                    <select {...productForm.register("category_id")} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                      <option value="">Select Category...</option>
+                      {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                    {productForm.formState.errors.category_id && <p className="mt-1 text-xs text-red-500">{productForm.formState.errors.category_id.message as string}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Selling Price ( ) <span className="text-gray-400 font-normal text-xs">(Optional)</span>
+                    </label>
+                    <input type="number" step="0.01" placeholder="0.00" {...productForm.register("selling_price")} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" />
+                    {productForm.formState.errors.selling_price && <p className="mt-1 text-xs text-red-500">{productForm.formState.errors.selling_price.message as string}</p>}
+                  </div>
                 </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Cost Price ($)</label>
-                  <input type="number" step="0.01" placeholder="0.00" {...productForm.register("cost_price")} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Cost Price ( )</label>
+                    <input type="number" step="0.01" placeholder="0.00" {...productForm.register("cost_price")} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Stock (Retail only)</label>
+                    <input type="number" placeholder="0" {...productForm.register("stock_quantity")} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Stock (Retail only)</label>
-                  <input type="number" placeholder="0" {...productForm.register("stock_quantity")} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" />
-                </div>
-              </div>
               </form>
             </div>
             <div className="p-5 border-t bg-gray-50 flex justify-end space-x-3 shrink-0">
@@ -349,7 +349,7 @@ export default function ServicesPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Bundle Price ($) <span className="text-gray-400 font-normal text-xs">(Optional)</span>
+                      Bundle Price ( ) <span className="text-gray-400 font-normal text-xs">(Optional)</span>
                     </label>
                     <input type="number" step="0.01" placeholder="0.00" {...dealForm.register("price")} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" />
                     {dealForm.formState.errors.price && <p className="mt-1 text-xs text-red-500">{dealForm.formState.errors.price.message as string}</p>}
@@ -368,13 +368,13 @@ export default function ServicesPage() {
                     {dealItems.map((field, index) => (
                       <div key={field.id} className="flex items-center space-x-3">
                         <div className="flex-1">
-                          <select {...dealForm.register(`items.${index}.product_id`)} className="w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white">
+                          <select {...dealForm.register(`items. {index}.product_id`)} className="w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white">
                             <option value="">Select Service...</option>
                             {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                           </select>
                         </div>
                         <div className="w-24">
-                          <input type="number" min="1" {...dealForm.register(`items.${index}.sessions`)} className="w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Sessions" />
+                          <input type="number" min="1" {...dealForm.register(`items. {index}.sessions`)} className="w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Sessions" />
                         </div>
                         <button type="button" onClick={() => removeDealItem(index)} className="text-red-500 hover:text-red-700 p-1"><Trash2 className="w-4 h-4" /></button>
                       </div>

@@ -2,25 +2,25 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { 
-  Building2, 
-  Users, 
-  Save, 
-  Plus, 
-  Shield, 
-  ShieldOff, 
+import {
+  Building2,
+  Users,
+  Save,
+  Plus,
+  Shield,
+  ShieldOff,
   ShieldCheck,
-  Lock, 
-  CheckCircle2, 
-  Edit3, 
-  Trash2, 
-  Check, 
-  X, 
-  Search, 
-  AlertCircle, 
-  Eye, 
-  PenLine, 
-  Trash, 
+  Lock,
+  CheckCircle2,
+  Edit3,
+  Trash2,
+  Check,
+  X,
+  Search,
+  AlertCircle,
+  Eye,
+  PenLine,
+  Trash,
   Sparkles,
   UserCheck
 } from "lucide-react";
@@ -109,7 +109,7 @@ export default function SettingsPage() {
   const [rolesList, setRolesList] = useState<RoleItem[]>([]);
   const [rolesLoading, setRolesLoading] = useState(true);
   const [roleSearch, setRoleSearch] = useState("");
-  
+
   // Create / Edit Role Modal State
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [roleModalMode, setRoleModalMode] = useState<"create" | "edit">("create");
@@ -270,7 +270,7 @@ export default function SettingsPage() {
         payload.password = editUserData.password.trim();
       }
 
-      const res = await fetch(`/api/users/${editingUser.id}`, {
+      const res = await fetch(`/api/users/ {editingUser.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -295,7 +295,7 @@ export default function SettingsPage() {
   // ─── Toggle User Active ───────────────────────────────
   const toggleUserActive = async (userId: string, currentActive: boolean) => {
     try {
-      const res = await fetch(`/api/users/${userId}`, {
+      const res = await fetch(`/api/users/ {userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ is_active: !currentActive })
@@ -315,7 +315,7 @@ export default function SettingsPage() {
     setDeleteUserModal(prev => ({ ...prev, isDeleting: true, error: "" }));
 
     try {
-      const res = await fetch(`/api/users/${deleteUserModal.user.id}`, {
+      const res = await fetch(`/api/users/ {deleteUserModal.user.id}`, {
         method: "DELETE",
       });
       const data = await res.json();
@@ -352,7 +352,7 @@ export default function SettingsPage() {
 
   const openEditRole = (role: RoleItem) => {
     const permsMap: Record<string, { read: boolean; write: boolean; delete: boolean }> = {};
-    
+
     SYSTEM_MODULES.forEach(m => {
       const existing = role.permissions?.find(p => p.module === m.id);
       permsMap[m.id] = {
@@ -405,7 +405,7 @@ export default function SettingsPage() {
     setRoleForm(prev => {
       const current = prev.permissions[moduleId] || { read: false, write: false, delete: false };
       const nextVal = !current[action];
-      
+
       const newPerm = { ...current, [action]: nextVal };
       if ((action === "write" || action === "delete") && nextVal) {
         newPerm.read = true;
@@ -471,7 +471,7 @@ export default function SettingsPage() {
           body: JSON.stringify(payload),
         });
       } else {
-        res = await fetch(`/api/roles/${currentRoleId}`, {
+        res = await fetch(`/api/roles/ {currentRoleId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -498,7 +498,7 @@ export default function SettingsPage() {
     setDeleteRoleModal(prev => ({ ...prev, isDeleting: true, error: "" }));
 
     try {
-      const res = await fetch(`/api/roles/${deleteRoleModal.role.id}`, {
+      const res = await fetch(`/api/roles/ {deleteRoleModal.role.id}`, {
         method: "DELETE",
       });
       const data = await res.json();
@@ -515,13 +515,13 @@ export default function SettingsPage() {
   };
 
   // Filtered lists
-  const filteredUsers = users.filter(u => 
+  const filteredUsers = users.filter(u =>
     u.email.toLowerCase().includes(userSearch.toLowerCase()) ||
     u.role.toLowerCase().includes(userSearch.toLowerCase()) ||
     (u.employee?.name && u.employee.name.toLowerCase().includes(userSearch.toLowerCase()))
   );
 
-  const filteredRoles = rolesList.filter(r => 
+  const filteredRoles = rolesList.filter(r =>
     r.name.toLowerCase().includes(roleSearch.toLowerCase()) ||
     (r.description && r.description.toLowerCase().includes(roleSearch.toLowerCase()))
   );
@@ -547,7 +547,7 @@ export default function SettingsPage() {
         {/* Tabs Navigation Header */}
         <div className="flex border-b border-gray-100 bg-gray-50/70 px-4 pt-4 overflow-x-auto whitespace-nowrap shrink-0 gap-2">
           <button
-            className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-all ${
+            className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-all  {
               activeTab === 'clinic' 
                 ? 'border-indigo-600 text-indigo-700 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)]' 
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/60'
@@ -558,7 +558,7 @@ export default function SettingsPage() {
           </button>
 
           <button
-            className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-all ${
+            className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-all  {
               activeTab === 'users' 
                 ? 'border-indigo-600 text-indigo-700 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)]' 
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/60'
@@ -569,7 +569,7 @@ export default function SettingsPage() {
           </button>
 
           <button
-            className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-all ${
+            className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-all  {
               activeTab === 'roles' 
                 ? 'border-indigo-600 text-indigo-700 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)]' 
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/60'
@@ -784,7 +784,7 @@ export default function SettingsPage() {
                                     <button
                                       onClick={() => toggleUserActive(u.id, u.is_active)}
                                       title={u.is_active ? "Suspend User" : "Enable User"}
-                                      className={`text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors cursor-pointer ${
+                                      className={`text-xs font-medium px-2.5 py-1.5 rounded-lg border transition-colors cursor-pointer  {
                                         u.is_active 
                                           ? 'border-amber-200 text-amber-700 hover:bg-amber-50' 
                                           : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'
@@ -881,7 +881,7 @@ export default function SettingsPage() {
                       const userCount = role._count?.users ?? 0;
 
                       return (
-                        <div 
+                        <div
                           key={role.id}
                           className="bg-white border border-gray-200/90 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between relative group"
                         >
@@ -996,8 +996,8 @@ export default function SettingsPage() {
                 </div>
                 <h3 className="font-bold text-gray-900 text-base">Add New System User</h3>
               </div>
-              <button 
-                onClick={() => { setIsAddUserOpen(false); setAddUserError(""); }} 
+              <button
+                onClick={() => { setIsAddUserOpen(false); setAddUserError(""); }}
                 className="text-gray-400 hover:text-gray-600 text-xl font-bold p-1 rounded-lg hover:bg-gray-200/50"
               >
                 &times;
@@ -1099,8 +1099,8 @@ export default function SettingsPage() {
                 </div>
                 <h3 className="font-bold text-gray-900 text-base">Edit User & Role</h3>
               </div>
-              <button 
-                onClick={() => setEditingUser(null)} 
+              <button
+                onClick={() => setEditingUser(null)}
                 className="text-gray-400 hover:text-gray-600 text-xl font-bold p-1 rounded-lg hover:bg-gray-200/50"
               >
                 &times;
@@ -1237,13 +1237,13 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-gray-900 text-lg">
-                    {roleModalMode === "create" ? "Create New System Role" : `Edit Role: ${roleForm.name}`}
+                    {roleModalMode === "create" ? "Create New System Role" : `Edit Role:  {roleForm.name}`}
                   </h3>
                   <p className="text-xs text-gray-500">Configure role metadata and granular Read/Write/Delete module matrix.</p>
                 </div>
               </div>
-              <button 
-                onClick={() => setIsRoleModalOpen(false)} 
+              <button
+                onClick={() => setIsRoleModalOpen(false)}
                 className="text-gray-400 hover:text-gray-600 text-2xl font-bold p-1 rounded-lg hover:bg-gray-200/50"
               >
                 &times;
@@ -1369,7 +1369,7 @@ export default function SettingsPage() {
                           <td className="py-3.5 px-4 sm:px-6">
                             <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
                               <span className="font-bold text-gray-900 text-sm">{m.name}</span>
-                              <span className={`inline-block w-fit px-2 py-0.5 rounded text-[10px] font-bold border ${catStyle.bg} ${catStyle.text} ${catStyle.border}`}>
+                              <span className={`inline-block w-fit px-2 py-0.5 rounded text-[10px] font-bold border  {catStyle.bg}  {catStyle.text}  {catStyle.border}`}>
                                 {m.category}
                               </span>
                             </div>
@@ -1417,7 +1417,7 @@ export default function SettingsPage() {
                             <button
                               type="button"
                               onClick={() => toggleEntireModule(m.id)}
-                              className={`text-xs font-semibold px-2.5 py-1 rounded-lg border transition-colors cursor-pointer ${
+                              className={`text-xs font-semibold px-2.5 py-1 rounded-lg border transition-colors cursor-pointer  {
                                 allChecked 
                                   ? 'bg-indigo-50 text-indigo-700 border-indigo-200' 
                                   : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'

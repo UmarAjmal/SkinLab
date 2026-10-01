@@ -33,25 +33,25 @@ export async function POST(request: Request) {
 
   try {
     const data = await request.json();
-    
+
     if (!data.name || !data.category_id) {
       return NextResponse.json({ error: "Name and Category are required" }, { status: 400 });
     }
 
     // Auto-generate SKU
     const count = await prisma.product.count();
-    const sku = `SRV-${String(count + 1).padStart(4, '0')}`;
+    const sku = `SRV- {String(count + 1).padStart(4, '0')}`;
 
-    const sellingPrice = data.selling_price !== undefined && data.selling_price !== null && data.selling_price !== "" 
-      ? Number(data.selling_price) 
+    const sellingPrice = data.selling_price !== undefined && data.selling_price !== null && data.selling_price !== ""
+      ? Number(data.selling_price)
       : 0;
 
-    const costPrice = data.cost_price !== undefined && data.cost_price !== null && data.cost_price !== "" 
-      ? Number(data.cost_price) 
+    const costPrice = data.cost_price !== undefined && data.cost_price !== null && data.cost_price !== ""
+      ? Number(data.cost_price)
       : 0;
 
-    const stockQuantity = data.stock_quantity !== undefined && data.stock_quantity !== null && data.stock_quantity !== "" 
-      ? parseInt(data.stock_quantity, 10) 
+    const stockQuantity = data.stock_quantity !== undefined && data.stock_quantity !== null && data.stock_quantity !== ""
+      ? parseInt(data.stock_quantity, 10)
       : 0;
 
     const newProduct = await prisma.product.create({

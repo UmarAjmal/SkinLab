@@ -42,7 +42,7 @@ export default function PatientDetailPage() {
 
   const fetchPatient = async () => {
     try {
-      const res = await fetch(`/api/patients/${id}`);
+      const res = await fetch(`/api/patients/ {id}`);
       if (!res.ok) throw new Error("Not found");
       const data = await res.json();
       setPatient(data);
@@ -61,7 +61,7 @@ export default function PatientDetailPage() {
 
   const onSubmit = async (values: PatientFormValues) => {
     try {
-      const res = await fetch(`/api/patients/${id}`, {
+      const res = await fetch(`/api/patients/ {id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
@@ -79,17 +79,17 @@ export default function PatientDetailPage() {
     if (!selectedSale) return;
     setPaymentError("");
     setPaymentProcessing(true);
-    
+
     try {
-      const res = await fetch(`/api/sales/${selectedSale.id}/payment`, {
+      const res = await fetch(`/api/sales/ {selectedSale.id}/payment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount: parseFloat(paymentAmount), payment_method: paymentMethod })
       });
-      
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to process payment");
-      
+
       setIsPaymentModalOpen(false);
       setSelectedSale(null);
       fetchPatient(); // Refresh patient data to get updated balances and sales
@@ -130,7 +130,7 @@ export default function PatientDetailPage() {
 
       <div className="p-8 flex-1 overflow-auto w-full">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
+
           {/* Patient Details Card */}
           <div className="col-span-1 space-y-6">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-all hover:shadow-md">
@@ -193,11 +193,11 @@ export default function PatientDetailPage() {
               <div className="p-6 space-y-4">
                 <div className="flex justify-between items-center p-4 rounded-xl bg-red-50/50 border border-red-100">
                   <span className="text-sm font-medium text-red-800">Due Balance</span>
-                  <span className="text-xl font-bold text-red-600">${patient.current_balance?.toFixed(2) || '0.00'}</span>
+                  <span className="text-xl font-bold text-red-600"> {patient.current_balance?.toFixed(2) || '0.00'}</span>
                 </div>
                 <div className="flex justify-between items-center p-4 rounded-xl bg-emerald-50/50 border border-emerald-100">
                   <span className="text-sm font-medium text-emerald-800">Advance Wallet</span>
-                  <span className="text-xl font-bold text-emerald-600">${patient.advance_balance?.toFixed(2) || '0.00'}</span>
+                  <span className="text-xl font-bold text-emerald-600"> {patient.advance_balance?.toFixed(2) || '0.00'}</span>
                 </div>
               </div>
             </div>
@@ -226,7 +226,7 @@ export default function PatientDetailPage() {
                   Visit History (Invoices)
                 </h2>
               </div>
-              
+
               {!patient.sales || patient.sales.length === 0 ? (
                 <div className="p-16 text-center text-gray-500 flex flex-col items-center justify-center bg-gray-50/30">
                   <Calendar className="w-12 h-12 text-gray-300 mb-4" />
@@ -255,14 +255,14 @@ export default function PatientDetailPage() {
                             <span className="font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded text-sm">{sale.invoice_number}</span>
                           </td>
                           <td className="p-4 text-right font-medium text-gray-900 text-sm">
-                            ${sale.grand_total.toFixed(2)}
+                            {sale.grand_total.toFixed(2)}
                           </td>
                           <td className="p-4">
                             <StatusBadge status={sale.payment_status} />
                           </td>
                           <td className="p-4">
                             {sale.payment_status !== "PAID" && userRole !== "Doctor" && (
-                              <button 
+                              <button
                                 onClick={() => {
                                   setSelectedSale(sale);
                                   setPaymentAmount(((sale.grand_total - (sale.paid_amount || 0)).toFixed(2)).toString());
@@ -293,13 +293,13 @@ export default function PatientDetailPage() {
           <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
             <h3 className="font-bold text-gray-900 text-lg mb-4">Process Payment</h3>
             <p className="text-sm text-gray-500 mb-4">Invoice: {selectedSale.invoice_number}</p>
-            
+
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">Amount to collect</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
-                <input 
-                  type="number" 
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"> </span>
+                <input
+                  type="number"
                   step="0.01"
                   max={(selectedSale.grand_total - (selectedSale.paid_amount || 0)).toFixed(2)}
                   className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
@@ -308,13 +308,13 @@ export default function PatientDetailPage() {
                 />
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                Remaining Due: ${(selectedSale.grand_total - (selectedSale.paid_amount || 0)).toFixed(2)}
+                Remaining Due:  {(selectedSale.grand_total - (selectedSale.paid_amount || 0)).toFixed(2)}
               </p>
             </div>
 
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
-              <select 
+              <select
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
@@ -328,18 +328,18 @@ export default function PatientDetailPage() {
             {paymentError && <div className="text-red-600 text-sm mb-4 bg-red-50 p-2 rounded">{paymentError}</div>}
 
             <div className="flex justify-end gap-3">
-              <button 
+              <button
                 onClick={() => {
                   setIsPaymentModalOpen(false);
                   setPaymentError("");
                   setSelectedSale(null);
-                }} 
+                }}
                 className="px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg font-medium text-sm"
               >
                 Cancel
               </button>
-              <button 
-                onClick={processPayment} 
+              <button
+                onClick={processPayment}
                 disabled={paymentProcessing || !paymentAmount}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-sm disabled:opacity-50"
               >

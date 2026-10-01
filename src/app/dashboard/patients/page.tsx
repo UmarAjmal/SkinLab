@@ -43,7 +43,7 @@ const columns = [
   columnHelper.accessor("name", {
     header: "Name",
     cell: info => (
-      <Link href={`/dashboard/patients/${info.row.original.id}`} className="font-medium text-indigo-600 hover:text-indigo-800 hover:underline">
+      <Link href={`/dashboard/patients/ {info.row.original.id}`} className="font-medium text-indigo-600 hover:text-indigo-800 hover:underline">
         {info.getValue()}
       </Link>
     )
@@ -54,11 +54,11 @@ const columns = [
   }),
   columnHelper.accessor("current_balance", {
     header: "Due Balance",
-    cell: info => <span className={info.getValue() > 0 ? "text-red-600 font-semibold" : ""}>${info.getValue().toFixed(2)}</span>
+    cell: info => <span className={info.getValue() > 0 ? "text-red-600 font-semibold" : ""}> {info.getValue().toFixed(2)}</span>
   }),
   columnHelper.accessor("advance_balance", {
     header: "Wallet",
-    cell: info => <span className="text-emerald-600 font-semibold">${info.getValue().toFixed(2)}</span>
+    cell: info => <span className="text-emerald-600 font-semibold"> {info.getValue().toFixed(2)}</span>
   }),
 ];
 
@@ -125,7 +125,7 @@ export default function PatientsPage() {
           <p className="text-sm text-gray-500">Manage patient records, wallets, and visit history</p>
         </div>
         {userRole !== "Doctor" && (
-          <button 
+          <button
             onClick={() => setIsModalOpen(true)}
             className="bg-indigo-600 text-white px-4 py-2.5 rounded-lg hover:bg-indigo-700 flex items-center text-sm font-medium transition-all shadow-sm active:scale-95"
           >
@@ -152,38 +152,38 @@ export default function PatientsPage() {
           <div className="overflow-x-auto w-full">
             <table className="w-full text-left border-collapse min-w-[600px]">
               <thead className="bg-gray-50/80 border-b border-gray-200 text-gray-600 text-xs uppercase tracking-wider">
-              {table.getHeaderGroups().map(headerGroup => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map(header => (
-                    <th key={header.id} className="py-4 px-6 font-semibold">
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(header.column.columnDef.header, header.getContext())}
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody className="text-sm text-gray-700 divide-y divide-gray-100">
-              {table.getRowModel().rows.map(row => (
-                <tr key={row.id} className="hover:bg-indigo-50/30 transition-colors group">
-                  {row.getVisibleCells().map(cell => (
-                    <td key={cell.id} className="py-4 px-6">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                {table.getHeaderGroups().map(headerGroup => (
+                  <tr key={headerGroup.id}>
+                    {headerGroup.headers.map(header => (
+                      <th key={header.id} className="py-4 px-6 font-semibold">
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(header.column.columnDef.header, header.getContext())}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              <tbody className="text-sm text-gray-700 divide-y divide-gray-100">
+                {table.getRowModel().rows.map(row => (
+                  <tr key={row.id} className="hover:bg-indigo-50/30 transition-colors group">
+                    {row.getVisibleCells().map(cell => (
+                      <td key={cell.id} className="py-4 px-6">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+                {table.getRowModel().rows.length === 0 && (
+                  <tr>
+                    <td colSpan={columns.length} className="py-12 text-center text-gray-500">
+                      <div className="flex flex-col items-center justify-center space-y-2">
+                        <Search className="w-8 h-8 text-gray-300" />
+                        <p>No patients found.</p>
+                      </div>
                     </td>
-                  ))}
-                </tr>
-              ))}
-              {table.getRowModel().rows.length === 0 && (
-                <tr>
-                  <td colSpan={columns.length} className="py-12 text-center text-gray-500">
-                    <div className="flex flex-col items-center justify-center space-y-2">
-                      <Search className="w-8 h-8 text-gray-300" />
-                      <p>No patients found.</p>
-                    </div>
-                  </td>
-                </tr>
-              )}
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -221,7 +221,7 @@ export default function PatientsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Home Address</label>
                 <textarea {...register("address")} rows={3} className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm" placeholder="Street address, City, etc."></textarea>
               </div>
-              
+
               <div className="pt-5 flex justify-end space-x-3 border-t border-gray-100 mt-6">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 shadow-sm transition-colors">
                   Cancel

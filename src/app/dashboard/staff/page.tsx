@@ -28,7 +28,7 @@ export default function StaffPage() {
   const [departments, setDepartments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [sorting, setSorting] = useState<SortingState>([]);
-  
+
   // Modals
   const [isEmployeeModalOpen, setIsEmployeeModalOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<any>(null);
@@ -54,7 +54,7 @@ export default function StaffPage() {
         const empData = await empRes.json();
         setEmployees(Array.isArray(empData) ? empData : []);
       }
-      
+
       const deptRes = await fetch("/api/departments");
       if (deptRes.ok) {
         const deptData = await deptRes.json();
@@ -89,9 +89,9 @@ export default function StaffPage() {
 
   const onSubmitEmployee = async (data: EmployeeForm) => {
     try {
-      const url = editingEmployee ? `/api/employees/${editingEmployee.id}` : "/api/employees";
+      const url = editingEmployee ? `/api/employees/ {editingEmployee.id}` : "/api/employees";
       const method = editingEmployee ? "PUT" : "POST";
-      
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -112,7 +112,7 @@ export default function StaffPage() {
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this employee?")) return;
     try {
-      const res = await fetch(`/api/employees/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/employees/ {id}`, { method: "DELETE" });
       if (res.ok) fetchData();
     } catch (e) {
       console.error(e);
@@ -282,7 +282,7 @@ export default function StaffPage() {
                       {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                     </select>
                   </div>
-                  
+
                   {/* Inline Create Department */}
                   <div className="flex gap-2">
                     <input
