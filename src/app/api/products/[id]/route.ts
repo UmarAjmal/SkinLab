@@ -47,10 +47,38 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       ? parseInt(data.stock_quantity, 10) 
       : 0;
 
+    const currentProduct = await prisma.product.findUnique({ where: { id: params.id } });
+    if (!currentProduct) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+
+    let finalSku = currentProduct.sku;
+    if (data.sku && data.sku.trim() !== "") {
+      const trimmedSku = data.sku.trim();
+      const existing = await prisma.product.findFirst({
+        where: { sku: trimmedSku, NOT: { id: params.id } }
+      });
+      if (existing) {
+        return NextResponse.json({ error: "Another product already uses this SKU" }, { status: 400 });
+      }
+      finalSku = trimmedSku;
+    } else if (!finalSku || finalSku.includes("{") || finalSku.includes("count") || finalSku.includes("padStart")) {
+      // Auto-heal corrupt or missing SKU
+      const totalCount = await prisma.product.count();
+      let skuNum = totalCount + 1;
+      let candidateSku = `SRV-${String(skuNum).padStart(4, '0')}`;
+      while (await prisma.product.findFirst({ where: { sku: candidateSku, NOT: { id: params.id } } })) {
+        skuNum++;
+        candidateSku = `SRV-${String(skuNum).padStart(4, '0')}`;
+      }
+      finalSku = candidateSku;
+    }
+
     const updatedProduct = await prisma.product.update({
       where: { id: params.id },
       data: {
-        name: data.name,
+        name: data.name.trim(),
+        sku: finalSku,
         category_id: data.category_id,
         cost_price: costPrice,
         selling_price: sellingPrice,

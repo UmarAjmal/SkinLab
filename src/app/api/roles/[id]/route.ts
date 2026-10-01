@@ -163,7 +163,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
 
     if (role.is_system) {
       return NextResponse.json(
-        { error: `The system default role " {role.name}" cannot be deleted.` },
+        { error: `The system default role "${role.name}" cannot be deleted.` },
         { status: 400 }
       );
     }
@@ -171,7 +171,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     if (role._count.users > 0) {
       return NextResponse.json(
         {
-          error: `Cannot delete role " {role.name}" because it is currently assigned to  {role._count.users} user(s). Please reassign them to another role first.`,
+          error: `Cannot delete role "${role.name}" because it is currently assigned to ${role._count.users} user(s). Please reassign them to another role first.`,
         },
         { status: 400 }
       );
@@ -181,7 +181,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
       where: { id: params.id },
     });
 
-    return NextResponse.json({ success: true, message: `Role " {role.name}" was deleted successfully.` });
+    return NextResponse.json({ success: true, message: `Role "${role.name}" was deleted successfully.` });
   } catch (error) {
     console.error("DELETE /api/roles/[id] error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

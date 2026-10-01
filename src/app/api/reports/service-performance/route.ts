@@ -37,7 +37,7 @@ export async function GET(request: Request) {
 
     for (const item of saleItems) {
       const pId = item.product_id;
-      const pName = item.item_group_name ? ` {item.item_group_name} -  {item.product.name}` : item.product.name;
+      const pName = item.item_group_name ? `${item.item_group_name} - ${item.product.name}` : item.product.name;
 
       if (!performanceMap.has(pId)) {
         performanceMap.set(pId, {

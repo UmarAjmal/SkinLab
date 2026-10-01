@@ -36,7 +36,7 @@ export default function RootLayout({
   return (
     <html lang="en" style={{ colorScheme: "light" }}>
       <body
-        className={` {geistSans.variable}  {geistMono.variable} antialiased text-slate-900 bg-slate-50`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased text-slate-900 bg-slate-50`}
       >
         <Providers>
           {children}

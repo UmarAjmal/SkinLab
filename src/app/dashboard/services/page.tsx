@@ -14,6 +14,7 @@ const categorySchema = z.object({
 const productSchema = z.object({
   name: z.string().min(1, "Name is required"),
   category_id: z.string().min(1, "Category is required"),
+  sku: z.string().optional(),
   cost_price: z.preprocess((val) => (val === "" || val === undefined || val === null ? 0 : val), z.coerce.number().min(0)).default(0),
   selling_price: z.preprocess((val) => (val === "" || val === undefined || val === null ? 0 : val), z.coerce.number().min(0)).default(0),
   tax_class: z.string().default("Standard"),
@@ -77,20 +78,40 @@ export default function ServicesPage() {
 
   // Submit Handlers
   const onCategorySubmit = async (values: any) => {
-    await fetch("/api/categories", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(values) });
-    setIsCategoryModalOpen(false);
-    categoryForm.reset();
-    fetchData();
+    try {
+      const res = await fetch("/api/categories", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(values) });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        alert(errorData.error || "Failed to create category");
+        return;
+      }
+      setIsCategoryModalOpen(false);
+      categoryForm.reset();
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      alert("Error saving category");
+    }
   };
 
   const onProductSubmit = async (values: any) => {
-    const url = editingProductId ? `/api/products/${editingProductId}` : "/api/products";
-    const method = editingProductId ? "PUT" : "POST";
-    await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(values) });
-    setIsProductModalOpen(false);
-    setEditingProductId(null);
-    productForm.reset();
-    fetchData();
+    try {
+      const url = editingProductId ? `/api/products/${editingProductId}` : "/api/products";
+      const method = editingProductId ? "PUT" : "POST";
+      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(values) });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        alert(errorData.error || "Failed to save service");
+        return;
+      }
+      setIsProductModalOpen(false);
+      setEditingProductId(null);
+      productForm.reset();
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      alert("Error saving service");
+    }
   };
 
   const onDealSubmit = async (values: any) => {
@@ -139,7 +160,19 @@ export default function ServicesPage() {
           </button>
           <button
             type="button"
-            onClick={() => { setEditingProductId(null); productForm.reset(); setIsProductModalOpen(true); }}
+            onClick={() => { 
+              setEditingProductId(null); 
+              productForm.reset({ 
+                name: "", 
+                category_id: "", 
+                sku: "", 
+                cost_price: 0, 
+                selling_price: 0, 
+                stock_quantity: 0, 
+                tax_class: "Standard" 
+              }); 
+              setIsProductModalOpen(true); 
+            }}
             className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 text-xs sm:text-sm font-semibold flex items-center shadow-xs transition-all active:scale-95"
           >
             <Plus className="w-4 h-4 mr-1.5" /> Add Service
@@ -219,7 +252,19 @@ export default function ServicesPage() {
                           <div className="flex items-center justify-end gap-2">
                             <button
                               type="button"
-                              onClick={() => { setEditingProductId(p.id); productForm.reset({ ...p, category_id: p.category_id || "" }); setIsProductModalOpen(true); }}
+                              onClick={() => { 
+                                setEditingProductId(p.id); 
+                                productForm.reset({ 
+                                  name: p.name, 
+                                  category_id: p.category_id || "", 
+                                  sku: p.sku || "", 
+                                  cost_price: p.cost_price || 0, 
+                                  selling_price: p.selling_price || 0, 
+                                  stock_quantity: p.stock_quantity || 0, 
+                                  tax_class: p.tax_class || "Standard" 
+                                }); 
+                                setIsProductModalOpen(true); 
+                              }}
                               className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-gray-200"
                               title="Edit Service"
                             >
@@ -369,21 +414,32 @@ export default function ServicesPage() {
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                      SKU Code <span className="text-gray-400 font-normal text-xs">(Auto if blank)</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. SRV-0002" 
+                      {...productForm.register("sku")} 
+                      className="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm font-mono focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-xs" 
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
                       Selling Price (Rs.) <span className="text-gray-400 font-normal text-xs">(Optional)</span>
                     </label>
                     <input type="number" step="0.01" placeholder="0.00" {...productForm.register("selling_price")} className="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-xs" />
                     {productForm.formState.errors.selling_price && <p className="mt-1 text-xs text-red-500 font-medium">{productForm.formState.errors.selling_price.message as string}</p>}
                   </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Cost Price (Rs.)</label>
                     <input type="number" step="0.01" placeholder="0.00" {...productForm.register("cost_price")} className="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-xs" />
                   </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Stock (Retail only)</label>
-                    <input type="number" placeholder="0" {...productForm.register("stock_quantity")} className="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-xs" />
-                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Stock (Retail only)</label>
+                  <input type="number" placeholder="0" {...productForm.register("stock_quantity")} className="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-xs" />
                 </div>
               </form>
             </div>

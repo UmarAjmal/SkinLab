@@ -1369,7 +1369,7 @@ export default function SettingsPage() {
                           <td className="py-3.5 px-4 sm:px-6">
                             <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
                               <span className="font-bold text-gray-900 text-sm">{m.name}</span>
-                              <span className={`inline-block w-fit px-2 py-0.5 rounded text-[10px] font-bold border  {catStyle.bg}  {catStyle.text}  {catStyle.border}`}>
+                              <span className={`inline-block w-fit px-2 py-0.5 rounded text-[10px] font-bold border ${catStyle.bg} ${catStyle.text} ${catStyle.border}`}>
                                 {m.category}
                               </span>
                             </div>

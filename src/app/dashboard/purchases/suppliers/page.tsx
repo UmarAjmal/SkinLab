@@ -30,7 +30,7 @@ export default function SuppliersPage() {
 
   const onSubmit = async (data: any) => {
     try {
-      const url = selectedSupplier ? `/api/suppliers/ {selectedSupplier.id}` : "/api/suppliers";
+      const url = selectedSupplier ? `/api/suppliers/${selectedSupplier.id}` : "/api/suppliers";
       const method = selectedSupplier ? "PUT" : "POST";
 
       const res = await fetch(url, {
@@ -64,7 +64,7 @@ export default function SuppliersPage() {
   const deleteSupplier = async (id: string) => {
     if (!confirm("Are you sure you want to delete this supplier?")) return;
     try {
-      await fetch(`/api/suppliers/ {id}`, { method: "DELETE" });
+      await fetch(`/api/suppliers/${id}`, { method: "DELETE" });
       fetchSuppliers();
     } catch (e) {
       console.error(e);
