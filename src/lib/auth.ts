@@ -24,7 +24,13 @@ export const authOptions: NextAuthOptions = {
                 mode: "insensitive",
               },
             },
-            include: { role: true },
+            include: {
+              role: {
+                include: {
+                  permissions: true,
+                },
+              },
+            },
           });
 
           if (!user || !user.password) {
@@ -46,6 +52,13 @@ export const authOptions: NextAuthOptions = {
             id: user.id,
             email: user.email,
             role: user.role?.name || "User",
+            role_id: user.role_id,
+            permissions: user.role?.permissions?.map((p) => ({
+              module: p.module,
+              can_read: p.can_read,
+              can_write: p.can_write,
+              can_delete: p.can_delete,
+            })) || [],
           };
         } catch (error) {
           console.error("[Auth Exception in authorize]:", error);
@@ -60,6 +73,8 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = (user as any).role;
+        token.role_id = (user as any).role_id;
+        token.permissions = (user as any).permissions;
       }
       return token;
     },
@@ -67,6 +82,8 @@ export const authOptions: NextAuthOptions = {
       if (token) {
         (session.user as any).id = token.id;
         (session.user as any).role = token.role;
+        (session.user as any).role_id = token.role_id;
+        (session.user as any).permissions = token.permissions || [];
       }
       return session;
     },
@@ -80,8 +97,13 @@ export function getServerSession() {
 
 export async function requireRole(allowedRoles: string[]) {
   const session = await getServerSession();
-  if (!session || !allowedRoles.includes((session.user as any).role)) {
+  if (!session || !session.user) {
     throw new Error("Unauthorized");
   }
-  return session;
+  const userRole = (session.user as any).role;
+  if (userRole === "Admin" || allowedRoles.includes(userRole)) {
+    return session;
+  }
+  throw new Error("Unauthorized");
 }
+

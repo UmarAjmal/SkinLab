@@ -9,9 +9,26 @@ datasource db {
 }
 
 model Role {
-  id    String @id @default(uuid())
-  name  String @unique // Admin, Manager, Doctor, Cashier
-  users User[]
+  id          String           @id @default(uuid())
+  name        String           @unique // Admin, Manager, Doctor, Cashier, etc.
+  description String?
+  is_system   Boolean          @default(false)
+  users       User[]
+  permissions RolePermission[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @default(now()) @updatedAt
+}
+
+model RolePermission {
+  id         String   @id @default(uuid())
+  role_id    String
+  role       Role     @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  module     String   // dashboard, patients, services, staff, purchases, pos, sales, reports, settings, users
+  can_read   Boolean  @default(false)
+  can_write  Boolean  @default(false)
+  can_delete Boolean  @default(false)
+
+  @@unique([role_id, module])
 }
 
 model Department {

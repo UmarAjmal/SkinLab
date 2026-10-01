@@ -1,11 +1,12 @@
-import { requireRole } from "@/lib/auth";
+import { requireModulePermission } from "@/lib/permissions";
 import { redirect } from "next/navigation";
 
 export default async function StaffLayout({ children }: { children: React.ReactNode }) {
   try {
-    await requireRole(["Admin", "Manager"]);
+    await requireModulePermission("staff", "read");
   } catch (error) {
     redirect("/dashboard");
   }
   return <>{children}</>;
 }
+

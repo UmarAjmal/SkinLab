@@ -1,9 +1,14 @@
-import { requireRole } from "@/lib/auth";
+import { requireModulePermission } from "@/lib/permissions";
 import Link from "next/link";
-import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 export default async function PurchasesLayout({ children }: { children: React.ReactNode }) {
-  await requireRole(["Admin", "Manager"]);
+  try {
+    await requireModulePermission("purchases", "read");
+  } catch (error) {
+    redirect("/dashboard");
+  }
+
   
   // Minimal tab navigation layout
   return (

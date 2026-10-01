@@ -22,9 +22,10 @@ import {
 interface SidebarProps {
   userEmail: string;
   userRole: string;
+  userPermissions?: any[];
 }
 
-export default function Sidebar({ userEmail, userRole }: SidebarProps) {
+export default function Sidebar({ userEmail, userRole, userPermissions = [] }: SidebarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -53,18 +54,28 @@ export default function Sidebar({ userEmail, userRole }: SidebarProps) {
   const toggleMobileSidebar = () => setIsMobileOpen(!isMobileOpen);
 
   const allLinks = [
-    { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", roles: ["Admin", "Manager", "Doctor", "Cashier"] },
-    { href: "/dashboard/patients", icon: Users, label: "Patients (PRM)", roles: ["Admin", "Manager", "Doctor", "Cashier"] },
-    { href: "/dashboard/services", icon: Stethoscope, label: "Services", roles: ["Admin", "Manager"] },
-    { href: "/dashboard/staff", icon: Users, label: "Staff", roles: ["Admin", "Manager"] },
-    { href: "/dashboard/purchases", icon: Package, label: "Purchases", roles: ["Admin", "Manager"] },
-    { href: "/dashboard/pos", icon: ShoppingCart, label: "POS", roles: ["Admin", "Manager", "Cashier"] },
-    { href: "/dashboard/sales", icon: BarChart3, label: "Sales History", roles: ["Admin", "Manager", "Doctor", "Cashier"] },
-    { href: "/dashboard/reports", icon: BarChart3, label: "Reports", roles: ["Admin", "Manager"] },
-    { href: "/dashboard/settings", icon: Settings, label: "Settings", roles: ["Admin", "Manager"] },
+    { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", module: "dashboard", roles: ["Admin", "Manager", "Doctor", "Cashier"] },
+    { href: "/dashboard/patients", icon: Users, label: "Patients (PRM)", module: "patients", roles: ["Admin", "Manager", "Doctor", "Cashier"] },
+    { href: "/dashboard/services", icon: Stethoscope, label: "Services", module: "services", roles: ["Admin", "Manager"] },
+    { href: "/dashboard/staff", icon: Users, label: "Staff", module: "staff", roles: ["Admin", "Manager"] },
+    { href: "/dashboard/purchases", icon: Package, label: "Purchases", module: "purchases", roles: ["Admin", "Manager"] },
+    { href: "/dashboard/pos", icon: ShoppingCart, label: "POS", module: "pos", roles: ["Admin", "Manager", "Cashier"] },
+    { href: "/dashboard/sales", icon: BarChart3, label: "Sales History", module: "sales", roles: ["Admin", "Manager", "Doctor", "Cashier"] },
+    { href: "/dashboard/reports", icon: BarChart3, label: "Reports", module: "reports", roles: ["Admin", "Manager"] },
+    { href: "/dashboard/settings", icon: Settings, label: "Settings", module: "settings", roles: ["Admin", "Manager"] },
   ];
 
-  const navLinks = allLinks.filter(link => link.roles.includes(userRole));
+  const navLinks = allLinks.filter((link) => {
+    if (userRole === "Admin") return true;
+    if (Array.isArray(userPermissions) && userPermissions.length > 0) {
+      const p = userPermissions.find((perm: any) => perm.module === link.module);
+      if (p !== undefined) {
+        return p.can_read === true;
+      }
+    }
+    return link.roles.includes(userRole);
+  });
+
 
   // Desktop sidebar is effectively expanded if pinned open OR temporarily hovered while collapsed
   const isDesktopExpanded = !isCollapsed || isHovered;
