@@ -17,7 +17,7 @@ export const authOptions: NextAuthOptions = {
           if (!credentials?.email || !credentials?.password) return null;
 
           const email = credentials.email.trim().toLowerCase();
-          const user = await prisma.user.findFirst({
+          const user = (await (prisma.user as any).findFirst({
             where: {
               email: {
                 equals: email,
@@ -31,7 +31,7 @@ export const authOptions: NextAuthOptions = {
                 },
               },
             },
-          });
+          })) as any;
 
           if (!user || !user.password) {
             console.warn(`[Auth] User not found: ${email}`);
@@ -53,12 +53,12 @@ export const authOptions: NextAuthOptions = {
             email: user.email,
             role: user.role?.name || "User",
             role_id: user.role_id,
-            permissions: user.role?.permissions?.map((p) => ({
+            permissions: (user.role?.permissions || []).map((p: any) => ({
               module: p.module,
               can_read: p.can_read,
               can_write: p.can_write,
               can_delete: p.can_delete,
-            })) || [],
+            })),
           };
         } catch (error) {
           console.error("[Auth Exception in authorize]:", error);
