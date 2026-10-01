@@ -13,7 +13,6 @@ import {
   LogOut,
   Menu,
   X,
-  Package,
   ChevronLeft,
   ChevronRight,
   FlaskConical
@@ -41,9 +40,16 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
     }
   }, []);
 
+  // Auto-close mobile drawer and reset desktop hover state upon route navigation
+  useEffect(() => {
+    setIsMobileOpen(false);
+    setIsHovered(false);
+  }, [pathname]);
+
   // Save collapse state changes
   const toggleCollapse = () => {
-    setIsCollapsed(prev => {
+    setIsHovered(false);
+    setIsCollapsed((prev) => {
       const next = !prev;
       localStorage.setItem("skinlab_sidebar_collapsed", String(next));
       return next;
@@ -76,8 +82,7 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
     return link.roles.includes(userRole);
   });
 
-
-  // Desktop sidebar is effectively expanded if pinned open OR temporarily hovered while collapsed
+  // Desktop sidebar is effectively expanded if pinned open OR temporarily hovered while in collapsed mode
   const isDesktopExpanded = !isCollapsed || isHovered;
 
   const userInitial = (userEmail ? userEmail.charAt(0) : "U").toUpperCase();
@@ -124,7 +129,7 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
         className={`
           fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-indigo-950 text-white flex flex-col 
           border-r border-indigo-900/60 shadow-2xl transform transition-transform duration-300 ease-in-out md:hidden
-           {isMobileOpen ? "translate-x-0" : "-translate-x-full"}
+          ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
         `}
       >
         {/* Mobile Drawer Header */}
@@ -159,13 +164,13 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
                 onClick={closeMobileSidebar}
                 className={`
                   flex items-center px-3.5 py-3 rounded-xl font-medium text-sm transition-all duration-150
-                   {isActive 
+                  ${isActive 
                     ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30 font-semibold" 
                     : "text-indigo-200 hover:bg-indigo-900/70 hover:text-white"
                   }
                 `}
               >
-                <Icon className={`h-5 w-5 mr-3 shrink-0  {isActive ? "text-white" : "text-indigo-300"}`} />
+                <Icon className={`h-5 w-5 mr-3 shrink-0 ${isActive ? "text-white" : "text-indigo-300"}`} />
                 <span className="truncate">{link.label}</span>
               </Link>
             );
@@ -201,12 +206,20 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
       {/* DESKTOP SIDEBAR (>= md screens) - Auto Layout Adjust + Collapsible + Hover */}
       {/* ========================================================================= */}
       <aside
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseEnter={() => {
+          if (isCollapsed) {
+            setIsHovered(true);
+          }
+        }}
+        onMouseLeave={() => {
+          if (isCollapsed) {
+            setIsHovered(false);
+          }
+        }}
         className={`
           hidden md:flex flex-col h-screen shrink-0 bg-indigo-950 text-white 
-          border-r border-indigo-900/60 z-30 transition-[width] duration-300 ease-in-out
-           {isDesktopExpanded ? "w-64 shadow-2xl" : "w-20 shadow-md"}
+          border-r border-indigo-900/60 z-30 transition-all duration-300 ease-in-out
+          ${isDesktopExpanded ? "w-64 shadow-2xl" : "w-20 shadow-md"}
         `}
       >
         {/* Desktop Sidebar Header */}
@@ -215,7 +228,7 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-md shadow-indigo-600/30 shrink-0">
               <FlaskConical className="w-5 h-5 text-white" />
             </div>
-            <div className={`transition-all duration-300 whitespace-nowrap overflow-hidden  {
+            <div className={`transition-all duration-300 whitespace-nowrap overflow-hidden ${
               isDesktopExpanded ? "opacity-100 max-w-[130px]" : "opacity-0 max-w-0 pointer-events-none"
             }`}>
               <div className="text-base font-bold text-white tracking-tight leading-tight">Skin-Lab</div>
@@ -227,7 +240,7 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
           {isDesktopExpanded && (
             <button
               onClick={toggleCollapse}
-              title={isCollapsed ? "Pin Sidebar Open" : "Auto-collapse on mouse leave"}
+              title={isCollapsed ? "Pin Sidebar Open (Keep Expanded)" : "Collapse Sidebar (Compact Icon Mode)"}
               className="p-1.5 rounded-lg text-indigo-300 hover:text-white hover:bg-indigo-800/60 transition-colors focus:outline-none shrink-0"
             >
               {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -245,22 +258,27 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
               <div key={link.href} className="relative group">
                 <Link
                   href={link.href}
+                  onClick={() => {
+                    if (isCollapsed) {
+                      setIsHovered(false);
+                    }
+                  }}
                   className={`
                     flex items-center h-11 rounded-xl transition-all duration-200 relative overflow-hidden
-                     {isDesktopExpanded ? "px-3.5" : "justify-center px-0"}
-                     {isActive 
+                    ${isDesktopExpanded ? "px-3.5" : "justify-center px-0"}
+                    ${isActive 
                       ? "bg-indigo-600 text-white font-semibold shadow-md shadow-indigo-600/30" 
                       : "text-indigo-200 hover:bg-indigo-900/60 hover:text-white font-medium"
                     }
                   `}
                 >
-                  <Icon className={`h-5 w-5 shrink-0  {isActive ? "text-white" : "text-indigo-300 group-hover:text-white"}`} />
+                  <Icon className={`h-5 w-5 shrink-0 ${isActive ? "text-white" : "text-indigo-300 group-hover:text-white"}`} />
 
                   {/* Link Label Text for Expanded Mode */}
                   <span
                     className={`
                       ml-3 truncate text-sm transition-all duration-300 whitespace-nowrap
-                       {isDesktopExpanded ? "opacity-100 max-w-[150px]" : "opacity-0 max-w-0 overflow-hidden pointer-events-none"}
+                      ${isDesktopExpanded ? "opacity-100 max-w-[150px]" : "opacity-0 max-w-0 overflow-hidden pointer-events-none"}
                     `}
                   >
                     {link.label}
@@ -306,7 +324,7 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
 
         {/* Desktop User Profile & Logout Footer */}
         <div className="p-3 border-t border-indigo-900/60 bg-indigo-950/70 mt-auto shrink-0 overflow-hidden">
-          <div className={`flex items-center mb-3  {isDesktopExpanded ? "px-1" : "justify-center"}`}>
+          <div className={`flex items-center mb-3 ${isDesktopExpanded ? "px-1" : "justify-center"}`}>
             <div
               className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-violet-500 flex items-center justify-center text-white font-bold shadow-md shrink-0"
               title={userEmail}
@@ -314,7 +332,7 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
               {userInitial}
             </div>
 
-            <div className={`ml-3 overflow-hidden flex-1 transition-all duration-300  {
+            <div className={`ml-3 overflow-hidden flex-1 transition-all duration-300 ${
               isDesktopExpanded ? "opacity-100 max-w-[140px]" : "opacity-0 max-w-0 pointer-events-none"
             }`}>
               <div className="text-sm font-semibold text-white truncate" title={userEmail}>
@@ -333,11 +351,11 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
               className={`
                 flex items-center justify-center h-10 rounded-xl bg-indigo-900/60 hover:bg-red-600/90 
                 text-indigo-200 hover:text-white transition-all duration-200 text-sm font-medium shadow-sm overflow-hidden
-                 {isDesktopExpanded ? "w-full px-3" : "w-full"}
+                ${isDesktopExpanded ? "w-full px-3" : "w-full"}
               `}
             >
-              <LogOut className={`h-4 w-4 shrink-0  {isDesktopExpanded ? "mr-2" : ""}`} />
-              <span className={`transition-all duration-300 whitespace-nowrap  {
+              <LogOut className={`h-4 w-4 shrink-0 ${isDesktopExpanded ? "mr-2" : ""}`} />
+              <span className={`transition-all duration-300 whitespace-nowrap ${
                 isDesktopExpanded ? "opacity-100 max-w-[100px]" : "opacity-0 max-w-0 overflow-hidden pointer-events-none"
               }`}>
                 Sign out
