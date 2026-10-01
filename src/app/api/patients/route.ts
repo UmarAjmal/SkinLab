@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth";
-
-const prisma = new PrismaClient();
 
 export async function GET(request: Request) {
   const session = await getServerSession();
@@ -35,18 +33,22 @@ export async function POST(request: Request) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const role = (session.user as any)?.role;
-  if (!["Admin", "Manager", "Cashier"].includes(role)) {
+  if (!["Admin", "Manager", "Cashier", "Doctor"].includes(role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   try {
     const data = await request.json();
 
+    if (!data.name || typeof data.name !== "string" || data.name.trim() === "") {
+      return NextResponse.json({ error: "Patient name is required" }, { status: 400 });
+    }
+
     // Generate medical_id format 0001-MM-YYYY
     const now = new Date();
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const year = now.getFullYear();
-    const suffix = ` {month}- {year}`;
+    const suffix = `${month}-${year}`;
 
     // Find the latest patient for this month/year
     const latestPatient = await prisma.customer.findFirst({
@@ -64,25 +66,28 @@ export async function POST(request: Request) {
     if (latestPatient) {
       const parts = latestPatient.medical_id.split('-');
       if (parts.length === 3) {
-        nextSequence = parseInt(parts[0], 10) + 1;
+        const parsed = parseInt(parts[0], 10);
+        if (!isNaN(parsed)) {
+          nextSequence = parsed + 1;
+        }
       }
     }
 
-    const medical_id = ` {String(nextSequence).padStart(4, '0')}- {suffix}`;
+    const medical_id = `${String(nextSequence).padStart(4, '0')}-${suffix}`;
 
     const newPatient = await prisma.customer.create({
       data: {
         medical_id,
-        name: data.name,
-        phone: data.phone || null,
-        email: data.email || null,
-        address: data.address || null,
+        name: data.name.trim(),
+        phone: data.phone?.trim() || null,
+        email: data.email?.trim() || null,
+        address: data.address?.trim() || null,
       }
     });
 
     return NextResponse.json(newPatient, { status: 201 });
   } catch (error: any) {
     console.error("POST /api/patients error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
   }
 }

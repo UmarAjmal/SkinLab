@@ -1,7 +1,25 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Search, Plus, Trash2, CheckCircle2, FileText, UserPlus, Users, ShoppingCart, User, CreditCard } from "lucide-react";
+import {
+  Search,
+  Plus,
+  Trash2,
+  CheckCircle2,
+  FileText,
+  UserPlus,
+  Users,
+  ShoppingCart,
+  User,
+  CreditCard,
+  X,
+  Phone,
+  Mail,
+  MapPin,
+  IdCard,
+  Sparkles,
+  Loader2
+} from "lucide-react";
 
 export default function POSPage() {
   // Data States
@@ -33,9 +51,17 @@ export default function POSPage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [successData, setSuccessData] = useState<any>(null);
 
-  // New Patient Modal
+  // Quick Add Patient Modal State
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
-  const [newPatient, setNewPatient] = useState({ name: "", phone: "", email: "" });
+  const [newPatient, setNewPatient] = useState({
+    name: "",
+    phone: "",
+    cnic: "",
+    email: "",
+    address: ""
+  });
+  const [patientSaving, setPatientSaving] = useState(false);
+  const [patientError, setPatientError] = useState("");
 
   // Fetch initial data
   useEffect(() => {
@@ -49,14 +75,14 @@ export default function POSPage() {
           fetch("/api/sales/next-invoice")
         ]);
 
-        setPatients(await patRes.json() || []);
-        setEmployees(await empRes.json() || []);
-        setProducts(await prodRes.json() || []);
-        setDeals(await dealRes.json() || []);
+        setPatients((await patRes.json()) || []);
+        setEmployees((await empRes.json()) || []);
+        setProducts((await prodRes.json()) || []);
+        setDeals((await dealRes.json()) || []);
 
         const tokenData = await tokenRes.json();
-        setNextToken(tokenData.token);
-        setNextInvoice(tokenData.invoiceNumber);
+        setNextToken(tokenData?.token || "");
+        setNextInvoice(tokenData?.invoiceNumber || "");
       } catch (error) {
         console.error("Error fetching POS data:", error);
       }
@@ -65,33 +91,40 @@ export default function POSPage() {
   }, []);
 
   const selectedPatient = useMemo(() => {
-    return patients.find(p => p.id === selectedPatientId);
+    return patients.find((p) => p.id === selectedPatientId);
   }, [patients, selectedPatientId]);
 
   const filteredPatients = useMemo(() => {
     if (!patientSearch) return patients.slice(0, 10);
     const lower = patientSearch.toLowerCase();
-    return patients.filter(p =>
-      p.name.toLowerCase().includes(lower) ||
-      (p.phone && p.phone.includes(lower)) ||
-      p.medical_id.toLowerCase().includes(lower)
-    ).slice(0, 10);
+    return patients
+      .filter(
+        (p) =>
+          p.name.toLowerCase().includes(lower) ||
+          (p.phone && p.phone.includes(lower)) ||
+          p.medical_id.toLowerCase().includes(lower)
+      )
+      .slice(0, 10);
   }, [patients, patientSearch]);
 
   const filteredServices = useMemo(() => {
     if (!serviceSearch) return [];
     const lower = serviceSearch.toLowerCase();
-    const matchedProducts = products.filter(p => p.name.toLowerCase().includes(lower) || (p.sku && p.sku.toLowerCase().includes(lower))).map(p => ({ ...p, type: 'product' }));
-    const matchedDeals = deals.filter(d => d.name.toLowerCase().includes(lower)).map(d => ({ ...d, type: 'deal' }));
+    const matchedProducts = products
+      .filter((p) => p.name.toLowerCase().includes(lower) || (p.sku && p.sku.toLowerCase().includes(lower)))
+      .map((p) => ({ ...p, type: "product" }));
+    const matchedDeals = deals
+      .filter((d) => d.name.toLowerCase().includes(lower))
+      .map((d) => ({ ...d, type: "deal" }));
     return [...matchedProducts, ...matchedDeals];
   }, [products, deals, serviceSearch]);
 
   // Cart Calculations
-  const subtotal = cart.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
+  const subtotal = cart.reduce((sum, item) => sum + item.unit_price * item.quantity, 0);
   const grandTotal = Math.max(0, subtotal - discountAmount);
   const remainingDue = Math.max(0, grandTotal - paidAmount);
 
-  // Auto-update paid amount to grand total if nothing typed yet (convenience)
+  // Auto-update paid amount to grand total if not manually edited
   useEffect(() => {
     if (paidAmount === 0 && grandTotal > 0 && cart.length > 0) {
       setPaidAmount(grandTotal);
@@ -101,58 +134,84 @@ export default function POSPage() {
   // Handlers
   const handleAddPatient = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!newPatient.name.trim()) {
+      setPatientError("Patient name is required");
+      return;
+    }
+
+    setPatientSaving(true);
+    setPatientError("");
+
     try {
+      // If CNIC is provided, append it to address/details if no direct column exists
+      let finalAddress = newPatient.address?.trim() || "";
+      if (newPatient.cnic?.trim()) {
+        finalAddress = finalAddress
+          ? `CNIC: ${newPatient.cnic.trim()} | ${finalAddress}`
+          : `CNIC: ${newPatient.cnic.trim()}`;
+      }
+
       const res = await fetch("/api/patients", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newPatient)
+        body: JSON.stringify({
+          name: newPatient.name.trim(),
+          phone: newPatient.phone.trim() || null,
+          email: newPatient.email.trim() || null,
+          address: finalAddress || null,
+        }),
       });
+
       if (res.ok) {
-        const p = await res.json();
-        setPatients([...patients, p]);
-        setSelectedPatientId(p.id);
+        const createdPatient = await res.json();
+        setPatients((prev) => [createdPatient, ...prev]);
+        setSelectedPatientId(createdPatient.id);
         setIsPatientModalOpen(false);
-        setNewPatient({ name: "", phone: "", email: "" });
+        setNewPatient({ name: "", phone: "", cnic: "", email: "", address: "" });
         setPatientSearch("");
+      } else {
+        const err = await res.json();
+        setPatientError(err.error || "Failed to create patient");
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      setPatientError(e.message || "Failed to create patient");
+    } finally {
+      setPatientSaving(false);
     }
   };
 
   const addToCart = (item: any) => {
-    if (item.type === 'deal') {
+    if (item.type === "deal") {
       // Expand deal into component products
       const dealItems = item.items.map((di: any) => {
-        // Find product
-        const product = products.find(p => p.id === di.product_id);
-        // Distribute price (simplified: prorate based on product selling price or just set to 0 for components and keep total price? 
-        // Actually, requirements say: "expand it into its component services in the cart with sessions_allowed carried over from the deal definition."
-        // We need the items to have a price. For Deals, the total price is on the Deal. We can divide equally or just put it on the first item, or assign unit price based on prorated normal prices.
-        // Let's divide equally for simplicity, or 0 for items and a master deal item.
+        const product = products.find((p) => p.id === di.product_id);
         return {
-          id: ` {item.id}- {di.product_id}- {Date.now()}`,
+          id: `${item.id}-${di.product_id}-${Date.now()}-${Math.random()}`,
           product_id: di.product_id,
-          name: ` {item.name} -  {product?.name || 'Service'}`,
-          unit_price: item.total_price / item.items.length,
+          name: `${item.name} - ${product?.name || "Service"}`,
+          unit_price: item.total_price / (item.items.length || 1),
           quantity: 1,
           sessions_allowed: di.sessions_allowed || 1,
           sessions_consumed: 1,
-          item_group_name: item.name
+          item_group_name: item.name,
         };
       });
       setCart([...cart, ...dealItems]);
     } else {
-      setCart([...cart, {
-        id: ` {item.id}- {Date.now()}`,
-        product_id: item.id,
-        name: item.name,
-        unit_price: item.selling_price,
-        quantity: 1,
-        sessions_allowed: 1,
-        sessions_consumed: 1,
-        item_group_name: null
-      }]);
+      setCart([
+        ...cart,
+        {
+          id: `${item.id}-${Date.now()}-${Math.random()}`,
+          product_id: item.id,
+          name: item.name,
+          unit_price: item.selling_price || 0,
+          quantity: 1,
+          sessions_allowed: 1,
+          sessions_consumed: 1,
+          item_group_name: null,
+        },
+      ]);
     }
     setServiceSearch("");
   };
@@ -183,21 +242,21 @@ export default function POSPage() {
         paid_amount: paidAmount,
         payment_method: paymentMethod,
         session_remarks: sessionRemarks,
-        items: cart.map(c => ({
+        items: cart.map((c) => ({
           product_id: c.product_id,
           quantity: c.quantity,
           unit_price: c.unit_price,
           sessions_allowed: c.sessions_allowed,
           sessions_consumed: c.sessions_consumed,
           total_price: c.unit_price * c.quantity,
-          item_group_name: c.item_group_name
-        }))
+          item_group_name: c.item_group_name,
+        })),
       };
 
       const res = await fetch("/api/sales", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
@@ -206,7 +265,7 @@ export default function POSPage() {
         setIsSuccess(true);
       } else {
         const err = await res.json();
-        alert(`Error:  {err.error}`);
+        alert(`Error: ${err.error}`);
       }
     } catch (e) {
       console.error(e);
@@ -229,39 +288,42 @@ export default function POSPage() {
     // Refresh token and patients to get updated balances
     const [patRes, tokenRes] = await Promise.all([
       fetch("/api/patients"),
-      fetch("/api/sales/next-invoice")
+      fetch("/api/sales/next-invoice"),
     ]);
-    setPatients(await patRes.json() || []);
+    setPatients((await patRes.json()) || []);
     const tokenData = await tokenRes.json();
-    setNextToken(tokenData.token);
-    setNextInvoice(tokenData.invoiceNumber);
+    setNextToken(tokenData?.token || "");
+    setNextInvoice(tokenData?.invoiceNumber || "");
   };
 
   if (isSuccess && successData) {
     return (
-      <div className="max-w-2xl mx-auto mt-12 bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
-        <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+      <div className="max-w-2xl mx-auto mt-12 bg-white rounded-2xl shadow-md border border-gray-100 p-8 text-center animate-in fade-in zoom-in-95">
+        <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
           <CheckCircle2 className="w-10 h-10" />
         </div>
         <h2 className="text-3xl font-bold text-gray-900 mb-2">Sale Completed!</h2>
-        <p className="text-gray-500 mb-8">Invoice has been successfully generated.</p>
+        <p className="text-gray-500 mb-8">Invoice and queue token generated successfully.</p>
 
-        <div className="bg-gray-50 rounded-xl p-6 mb-8 max-w-sm mx-auto space-y-4">
-          <div className="flex justify-between items-center border-b border-gray-200 pb-4">
-            <span className="text-gray-500">Queue Token</span>
-            <span className="text-3xl font-bold text-indigo-600">{successData.token}</span>
+        <div className="bg-gray-50 rounded-2xl p-6 mb-8 max-w-sm mx-auto space-y-4 border border-gray-100">
+          <div className="flex justify-between items-center border-b border-gray-200/80 pb-4">
+            <span className="text-gray-500 font-medium text-sm">Queue Token</span>
+            <span className="text-3xl font-black text-indigo-600">{successData.token}</span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-gray-500">Invoice Number</span>
-            <span className="font-semibold text-gray-900">{successData.invoice}</span>
+            <span className="text-gray-500 font-medium text-sm">Invoice Number</span>
+            <span className="font-bold text-gray-900">{successData.invoice}</span>
           </div>
         </div>
 
         <div className="flex space-x-4 justify-center">
-          <button className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium flex items-center">
-            <FileText className="w-5 h-5 mr-2" /> Print Invoice
+          <button className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold flex items-center shadow-sm">
+            <FileText className="w-5 h-5 mr-2 text-indigo-600" /> Print Invoice
           </button>
-          <button onClick={resetPOS} className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium">
+          <button
+            onClick={resetPOS}
+            className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-semibold shadow-md shadow-indigo-600/30"
+          >
             New Sale
           </button>
         </div>
@@ -270,182 +332,301 @@ export default function POSPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex flex-col lg:flex-row gap-6 w-full min-w-0 p-4 sm:p-0">
-
+    <div className="min-h-[calc(100vh-4rem)] flex flex-col lg:flex-row gap-6 w-full min-w-0 p-2 sm:p-0">
       {/* LEFT PANEL */}
       <div className="flex-1 flex flex-col gap-6 overflow-hidden w-full min-w-0">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 shrink-0">
-          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center"><User className="w-5 h-5 mr-2" /> Patient Selection</h2>
+        {/* PATIENT SELECTION CARD */}
+        <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 shrink-0">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-gray-900 flex items-center">
+              <User className="w-5 h-5 mr-2 text-indigo-600" /> Patient Selection
+            </h2>
+            <span className="text-xs text-gray-400 font-medium">MRID auto-generated</span>
+          </div>
 
           {!selectedPatient ? (
             <div className="relative">
-              <div className="relative">
-                <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                  placeholder="Search by name, phone, or medical ID..."
-                  value={patientSearch}
-                  onChange={e => setPatientSearch(e.target.value)}
-                />
+              {/* Search bar with Instant "+" Add Patient Button */}
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Search className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-slate-900 bg-white font-medium shadow-2xs placeholder:text-gray-400"
+                    placeholder="Search by name, phone, or MRID..."
+                    value={patientSearch}
+                    onChange={(e) => setPatientSearch(e.target.value)}
+                  />
+                  {patientSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setPatientSearch("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Prominent Instant + Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNewPatient({ name: "", phone: "", cnic: "", email: "", address: "" });
+                    setPatientError("");
+                    setIsPatientModalOpen(true);
+                  }}
+                  className="h-12 px-3.5 sm:px-4.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-semibold rounded-xl shadow-md shadow-indigo-600/20 flex items-center gap-1.5 shrink-0 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  title="Add New Patient (Instant MRID)"
+                >
+                  <Plus className="w-5 h-5" />
+                  <span className="hidden sm:inline text-sm">New Patient</span>
+                </button>
               </div>
 
+              {/* Patient Search Results Dropdown */}
               {patientSearch && (
-                <div className="absolute z-10 w-full mt-2 bg-white border border-gray-100 shadow-xl rounded-lg overflow-hidden max-h-60 overflow-y-auto">
-                  {filteredPatients.map(p => (
+                <div className="absolute z-20 w-full mt-2 bg-white border border-gray-100 shadow-xl rounded-2xl overflow-hidden max-h-64 overflow-y-auto divide-y divide-gray-50">
+                  {filteredPatients.map((p) => (
                     <div
                       key={p.id}
-                      onClick={() => { setSelectedPatientId(p.id); setPatientSearch(""); }}
-                      className="p-3 border-b border-gray-50 hover:bg-indigo-50 cursor-pointer flex justify-between items-center"
+                      onClick={() => {
+                        setSelectedPatientId(p.id);
+                        setPatientSearch("");
+                      }}
+                      className="p-3.5 hover:bg-indigo-50/70 cursor-pointer flex justify-between items-center transition-colors"
                     >
                       <div>
-                        <div className="font-medium text-gray-900">{p.name}</div>
-                        <div className="text-xs text-gray-500">{p.medical_id} • {p.phone}</div>
+                        <div className="font-semibold text-gray-900">{p.name}</div>
+                        <div className="text-xs text-gray-500 mt-0.5 flex items-center gap-2">
+                          <span className="font-medium text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">
+                            {p.medical_id}
+                          </span>
+                          {p.phone && <span>• {p.phone}</span>}
+                        </div>
+                      </div>
+                      <div className="text-right text-xs">
+                        {p.current_balance > 0 && (
+                          <div className="font-medium text-red-600">Due: Rs. {p.current_balance.toFixed(2)}</div>
+                        )}
+                        {p.advance_balance > 0 && (
+                          <div className="font-medium text-emerald-600">Credit: Rs. {p.advance_balance.toFixed(2)}</div>
+                        )}
                       </div>
                     </div>
                   ))}
                   {filteredPatients.length === 0 && (
-                    <div className="p-4 text-center text-gray-500">No patients found.</div>
+                    <div className="p-4 text-center text-gray-500 text-sm">
+                      No matching patients found.
+                    </div>
                   )}
                   <div
-                    onClick={() => { setIsPatientModalOpen(true); setPatientSearch(""); }}
-                    className="p-3 bg-gray-50 hover:bg-gray-100 cursor-pointer flex items-center justify-center text-indigo-600 font-medium"
+                    onClick={() => {
+                      setNewPatient({
+                        name: patientSearch,
+                        phone: "",
+                        cnic: "",
+                        email: "",
+                        address: ""
+                      });
+                      setPatientError("");
+                      setIsPatientModalOpen(true);
+                      setPatientSearch("");
+                    }}
+                    className="p-3.5 bg-indigo-50/50 hover:bg-indigo-100/70 cursor-pointer flex items-center justify-center text-indigo-700 font-semibold text-sm transition-colors"
                   >
-                    <Plus className="w-4 h-4 mr-2" /> Add New Patient
+                    <Plus className="w-4 h-4 mr-2 text-indigo-600" /> Add &quot;{patientSearch}&quot; as New Patient
                   </div>
                 </div>
               )}
             </div>
           ) : (
-            <div className="flex items-center justify-between p-4 border border-indigo-100 bg-indigo-50/30 rounded-lg">
+            <div className="flex items-center justify-between p-4 border border-indigo-100 bg-gradient-to-r from-indigo-50/50 via-white to-indigo-50/30 rounded-xl shadow-2xs">
               <div>
-                <div className="font-bold text-gray-900 flex items-center gap-2">
-                  {selectedPatient.name}
-                  <span className="text-xs font-normal bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">{selectedPatient.medical_id}</span>
-                </div>
-                <div className="flex gap-4 mt-2 text-sm">
-                  <span className={`font-medium  {selectedPatient.current_balance > 0 ? 'text-red-600' : 'text-gray-600'}`}>
-                    Due:  {selectedPatient.current_balance.toFixed(2)}
+                <div className="font-bold text-gray-900 flex items-center gap-2.5">
+                  <span className="text-base">{selectedPatient.name}</span>
+                  <span className="text-xs font-semibold bg-indigo-100 text-indigo-700 px-2.5 py-0.5 rounded-full">
+                    MRID: {selectedPatient.medical_id}
                   </span>
-                  <span className={`font-medium  {selectedPatient.advance_balance > 0 ? 'text-green-600' : 'text-gray-600'}`}>
-                    Credit:  {selectedPatient.advance_balance.toFixed(2)}
+                </div>
+                <div className="flex flex-wrap gap-4 mt-2 text-xs sm:text-sm">
+                  {selectedPatient.phone && (
+                    <span className="text-gray-500 flex items-center gap-1">
+                      <Phone className="w-3.5 h-3.5 text-gray-400" /> {selectedPatient.phone}
+                    </span>
+                  )}
+                  <span
+                    className={`font-semibold ${
+                      selectedPatient.current_balance > 0 ? "text-red-600" : "text-gray-600"
+                    }`}
+                  >
+                    Due: Rs. {selectedPatient.current_balance.toFixed(2)}
+                  </span>
+                  <span
+                    className={`font-semibold ${
+                      selectedPatient.advance_balance > 0 ? "text-emerald-600" : "text-gray-600"
+                    }`}
+                  >
+                    Advance: Rs. {selectedPatient.advance_balance.toFixed(2)}
                   </span>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setSelectedPatientId("")}
-                className="text-sm text-gray-500 hover:text-gray-700 underline"
+                className="text-xs sm:text-sm text-indigo-600 hover:text-indigo-800 font-semibold underline underline-offset-2 ml-3"
               >
                 Change Patient
               </button>
             </div>
           )}
 
-          <div className="mt-4 grid grid-cols-2 gap-4">
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Assign Doctor/Staff</label>
+              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1.5">
+                Assign Doctor / Staff
+              </label>
               <select
-                className="w-full border-gray-200 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 text-slate-900 bg-white"
                 value={selectedDoctorId}
-                onChange={e => setSelectedDoctorId(e.target.value)}
+                onChange={(e) => setSelectedDoctorId(e.target.value)}
               >
-                <option value="">-- None --</option>
-                {employees.map(e => (
-                  <option key={e.id} value={e.id}>{e.name} {e.is_doctor ? '(Doctor)' : ''}</option>
+                <option value="">-- None (General Clinic) --</option>
+                {employees.map((e) => (
+                  <option key={e.id} value={e.id}>
+                    {e.name} {e.is_doctor ? "(Doctor)" : ""}
+                  </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Session Remarks</label>
+              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1.5">
+                Session Remarks / Notes
+              </label>
               <input
                 type="text"
-                className="w-full border-gray-200 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                placeholder="Notes for this visit..."
+                className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 text-slate-900 bg-white"
+                placeholder="Visit notes or procedure details..."
                 value={sessionRemarks}
-                onChange={e => setSessionRemarks(e.target.value)}
+                onChange={(e) => setSessionRemarks(e.target.value)}
               />
             </div>
           </div>
         </div>
 
-        <div className="bg-white flex-1 p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col min-h-0">
-          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center"><ShoppingCart className="w-5 h-5 mr-2" /> Services & Cart</h2>
+        {/* SERVICES & CART CARD */}
+        <div className="bg-white flex-1 p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col min-h-0">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-gray-900 flex items-center">
+              <ShoppingCart className="w-5 h-5 mr-2 text-indigo-600" /> Services & Procedures
+            </h2>
+            <span className="text-xs text-gray-400 font-medium">
+              {cart.length} {cart.length === 1 ? "item" : "items"} in cart
+            </span>
+          </div>
 
-          <div className="relative mb-6">
-            <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <div className="relative mb-5">
+            <Search className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-              placeholder="Search services or deals to add..."
+              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-slate-900 bg-white font-medium placeholder:text-gray-400"
+              placeholder="Search services, procedures, or package deals to add..."
               value={serviceSearch}
-              onChange={e => setServiceSearch(e.target.value)}
+              onChange={(e) => setServiceSearch(e.target.value)}
             />
 
             {serviceSearch && (
-              <div className="absolute z-10 w-full mt-2 bg-white border border-gray-100 shadow-xl rounded-lg overflow-hidden max-h-60 overflow-y-auto">
+              <div className="absolute z-10 w-full mt-2 bg-white border border-gray-100 shadow-xl rounded-2xl overflow-hidden max-h-60 overflow-y-auto divide-y divide-gray-50">
                 {filteredServices.map((s: any) => (
                   <div
                     key={s.id + s.type}
                     onClick={() => addToCart(s)}
-                    className="p-3 border-b border-gray-50 hover:bg-indigo-50 cursor-pointer flex justify-between items-center"
+                    className="p-3.5 hover:bg-indigo-50/70 cursor-pointer flex justify-between items-center transition-colors"
                   >
                     <div>
-                      <div className="font-medium text-gray-900 flex items-center gap-2">
+                      <div className="font-semibold text-gray-900 flex items-center gap-2">
                         {s.name}
-                        {s.type === 'deal' && <span className="bg-purple-100 text-purple-700 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase">Deal</span>}
+                        {s.type === "deal" && (
+                          <span className="bg-purple-100 text-purple-700 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                            Deal
+                          </span>
+                        )}
                       </div>
-                      <div className="text-xs text-gray-500"> {(s.selling_price || s.total_price || 0).toFixed(2)}</div>
+                      <div className="text-xs text-gray-500 mt-0.5">
+                        Rs. {(s.selling_price || s.total_price || 0).toFixed(2)}
+                      </div>
                     </div>
-                    <Plus className="w-4 h-4 text-indigo-600" />
+                    <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-colors">
+                      <Plus className="w-4 h-4" />
+                    </div>
                   </div>
                 ))}
+                {filteredServices.length === 0 && (
+                  <div className="p-4 text-center text-gray-500 text-sm">
+                    No services found.
+                  </div>
+                )}
               </div>
             )}
           </div>
 
-          <div className="flex-1 overflow-x-auto pr-2 border border-gray-100 rounded-lg bg-gray-50/50 w-full min-w-0">
+          <div className="flex-1 overflow-x-auto border border-gray-100 rounded-xl bg-gray-50/40 w-full min-w-0">
             {cart.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-gray-400 p-8">
-                <ShoppingCart className="w-12 h-12 mb-3 opacity-20" />
-                <p>No items in cart.</p>
+              <div className="h-full min-h-[160px] flex flex-col items-center justify-center text-gray-400 p-8">
+                <ShoppingCart className="w-12 h-12 mb-3 text-gray-300" />
+                <p className="font-medium text-sm">No items in cart.</p>
+                <p className="text-xs text-gray-400 mt-1">Search services above to add to cart.</p>
               </div>
             ) : (
-              <table className="w-full text-left border-collapse min-w-[600px]">
-                <thead className="bg-white sticky top-0 shadow-sm border-b border-gray-200">
+              <table className="w-full text-left border-collapse min-w-[550px]">
+                <thead className="bg-white sticky top-0 shadow-2xs border-b border-gray-200">
                   <tr>
-                    <th className="p-3 font-semibold text-sm text-gray-600">Item</th>
-                    <th className="p-3 font-semibold text-sm text-gray-600 w-24">Sessions Now</th>
-                    <th className="p-3 font-semibold text-sm text-gray-600 text-right w-24">Price</th>
-                    <th className="p-3 font-semibold text-sm text-gray-600 text-right w-24">Total</th>
-                    <th className="p-3 w-10"></th>
+                    <th className="p-3 font-semibold text-xs text-gray-600 uppercase tracking-wider">Item / Service</th>
+                    <th className="p-3 font-semibold text-xs text-gray-600 uppercase tracking-wider w-28 text-center">
+                      Sessions Now
+                    </th>
+                    <th className="p-3 font-semibold text-xs text-gray-600 uppercase tracking-wider text-right w-28">
+                      Price
+                    </th>
+                    <th className="p-3 font-semibold text-xs text-gray-600 uppercase tracking-wider text-right w-28">
+                      Total
+                    </th>
+                    <th className="p-3 w-12 text-center"></th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-gray-100 bg-white">
                   {cart.map((item, idx) => (
-                    <tr key={item.id} className="border-b border-gray-100 hover:bg-white transition-colors">
+                    <tr key={item.id} className="hover:bg-indigo-50/30 transition-colors">
                       <td className="p-3">
-                        <div className="font-medium text-gray-900">{item.name}</div>
-                        {item.item_group_name && <div className="text-xs text-gray-500">from {item.item_group_name}</div>}
+                        <div className="font-semibold text-gray-900 text-sm">{item.name}</div>
+                        {item.item_group_name && (
+                          <div className="text-xs text-indigo-600 font-medium">Bundle: {item.item_group_name}</div>
+                        )}
                         <div className="text-xs text-gray-400">Allows up to {item.sessions_allowed} sessions</div>
                       </td>
-                      <td className="p-3">
+                      <td className="p-3 text-center">
                         <input
                           type="number"
                           min="1"
                           max={item.sessions_allowed}
-                          className="w-full border-gray-200 rounded text-center py-1 px-2 text-sm"
+                          className="w-20 border border-gray-200 rounded-lg text-center py-1 px-2 text-sm text-slate-900 bg-white font-semibold focus:ring-2 focus:ring-indigo-500"
                           value={item.sessions_consumed}
-                          onChange={e => updateCartItem(idx, 'sessions_consumed', parseInt(e.target.value) || 1)}
+                          onChange={(e) => updateCartItem(idx, "sessions_consumed", parseInt(e.target.value) || 1)}
                         />
                       </td>
-                      <td className="p-3 text-right font-medium text-gray-600">
-                        {item.unit_price.toFixed(2)}
+                      <td className="p-3 text-right font-medium text-gray-600 text-sm">
+                        Rs. {item.unit_price.toFixed(2)}
                       </td>
-                      <td className="p-3 text-right font-bold text-gray-900">
-                        {(item.unit_price * item.quantity).toFixed(2)}
+                      <td className="p-3 text-right font-bold text-gray-900 text-sm">
+                        Rs. {(item.unit_price * item.quantity).toFixed(2)}
                       </td>
-                      <td className="p-3 text-right">
-                        <button onClick={() => removeFromCart(idx)} className="text-red-400 hover:text-red-600 p-1">
+                      <td className="p-3 text-center">
+                        <button
+                          type="button"
+                          onClick={() => removeFromCart(idx)}
+                          className="text-gray-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-colors"
+                          title="Remove item"
+                        >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </td>
@@ -459,55 +640,68 @@ export default function POSPage() {
       </div>
 
       {/* RIGHT PANEL - CHECKOUT */}
-      <div className="w-full lg:w-[400px] shrink-0 flex flex-col gap-6">
-        <div className="bg-gray-900 p-6 rounded-xl shadow-lg text-white">
+      <div className="w-full lg:w-[380px] shrink-0 flex flex-col gap-6">
+        {/* TOKEN & INVOICE SUMMARY */}
+        <div className="bg-gradient-to-br from-indigo-950 via-indigo-900 to-slate-900 p-6 rounded-2xl shadow-xl text-white">
           <div className="flex justify-between items-start mb-6">
             <div>
-              <div className="text-gray-400 text-sm font-medium mb-1">Queue Token</div>
-              <div className="text-4xl font-black text-indigo-400 tracking-tight">{nextToken || "---"}</div>
+              <div className="text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-1">Queue Token</div>
+              <div className="text-4xl font-black text-indigo-300 tracking-tight">{nextToken || "---"}</div>
             </div>
             <div className="text-right">
-              <div className="text-gray-400 text-sm font-medium mb-1">Invoice</div>
-              <div className="text-lg font-bold">{nextInvoice || "---"}</div>
+              <div className="text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-1">Next Invoice</div>
+              <div className="text-base font-bold text-white bg-indigo-800/60 px-2.5 py-1 rounded-lg">
+                {nextInvoice || "---"}
+              </div>
             </div>
           </div>
 
-          <div className="space-y-4 border-t border-gray-700 pt-6">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-400">Subtotal</span>
-              <span className="font-medium"> {subtotal.toFixed(2)}</span>
+          <div className="space-y-3.5 border-t border-indigo-800/60 pt-5 text-sm">
+            <div className="flex justify-between items-center text-indigo-100">
+              <span>Subtotal</span>
+              <span className="font-semibold text-white">Rs. {subtotal.toFixed(2)}</span>
             </div>
 
-            <div className="flex justify-between items-center">
-              <span className="text-gray-400">Discount ( )</span>
+            <div className="flex justify-between items-center text-indigo-100">
+              <span>Discount (Rs.)</span>
               <input
                 type="number"
                 min="0"
-                className="w-24 bg-gray-800 border border-gray-700 rounded text-right px-2 py-1 focus:outline-none focus:border-indigo-500 text-white"
+                className="w-24 bg-indigo-950/80 border border-indigo-700/80 rounded-lg text-right px-2.5 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-400 text-white font-bold"
                 value={discountAmount}
-                onChange={e => setDiscountAmount(parseFloat(e.target.value) || 0)}
+                onChange={(e) => setDiscountAmount(parseFloat(e.target.value) || 0)}
               />
             </div>
 
-            <div className="flex justify-between items-center pt-4 border-t border-gray-700">
-              <span className="text-lg font-medium">Grand Total</span>
-              <span className="text-2xl font-bold text-white"> {grandTotal.toFixed(2)}</span>
+            <div className="flex justify-between items-center pt-3 border-t border-indigo-800/60">
+              <span className="text-base font-bold text-white">Grand Total</span>
+              <span className="text-2xl font-black text-white">Rs. {grandTotal.toFixed(2)}</span>
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex-1 flex flex-col">
-          <h3 className="font-bold text-gray-900 mb-4">Payment</h3>
+        {/* PAYMENT COLLECTION */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex-1 flex flex-col">
+          <h3 className="font-bold text-gray-900 mb-4 flex items-center">
+            <CreditCard className="w-5 h-5 mr-2 text-indigo-600" /> Payment Details
+          </h3>
 
           <div className="space-y-4 flex-1">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
+              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">
+                Payment Method
+              </label>
               <div className="grid grid-cols-3 gap-2">
-                {["Cash", "Card", "Credit"].map(method => (
+                {["Cash", "Card", "Credit"].map((method) => (
                   <button
                     key={method}
+                    type="button"
                     onClick={() => setPaymentMethod(method)}
-                    className={`py-2 px-3 text-sm font-medium rounded-lg border  {paymentMethod === method ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                    className={`py-2.5 px-3 text-sm font-semibold rounded-xl border transition-all ${
+                      paymentMethod === method
+                        ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                        : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+                    }`}
                   >
                     {method}
                   </button>
@@ -516,56 +710,199 @@ export default function POSPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Amount Paid Now ( )</label>
+              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1.5">
+                Amount Paid Now (Rs.)
+              </label>
               <input
                 type="number"
                 min="0"
-                className="w-full border-gray-200 rounded-lg text-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-bold"
+                className="w-full border border-gray-200 rounded-xl text-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-bold text-slate-900 bg-white"
                 value={paidAmount}
-                onChange={e => setPaidAmount(parseFloat(e.target.value) || 0)}
+                onChange={(e) => setPaidAmount(parseFloat(e.target.value) || 0)}
               />
             </div>
 
-            <div className={`p-4 rounded-lg mt-4 flex justify-between items-center  {remainingDue > 0 ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
-              <span className="font-medium">{remainingDue > 0 ? 'Remaining Due' : 'Change / Advance'}</span>
-              <span className="text-xl font-bold"> {Math.abs(paidAmount - grandTotal).toFixed(2)}</span>
+            <div
+              className={`p-4 rounded-xl mt-4 flex justify-between items-center ${
+                remainingDue > 0
+                  ? "bg-red-50 text-red-700 border border-red-100"
+                  : "bg-emerald-50 text-emerald-700 border border-emerald-100"
+              }`}
+            >
+              <span className="font-semibold text-sm">
+                {remainingDue > 0 ? "Remaining Due" : "Change / Advance"}
+              </span>
+              <span className="text-xl font-black">
+                Rs. {Math.abs(paidAmount - grandTotal).toFixed(2)}
+              </span>
             </div>
           </div>
 
           <button
+            type="button"
             onClick={completeSale}
             disabled={!selectedPatientId || cart.length === 0}
-            className="w-full py-4 mt-6 bg-indigo-600 text-white rounded-xl font-bold text-lg hover:bg-indigo-700 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full py-4 mt-6 bg-indigo-600 text-white rounded-xl font-bold text-base hover:bg-indigo-700 active:scale-98 shadow-md shadow-indigo-600/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
-            Complete Sale
+            Complete Sale &amp; Print
           </button>
         </div>
       </div>
 
-      {/* NEW PATIENT MODAL */}
+      {/* ==================================================== */}
+      {/* QUICK ADD PATIENT MODAL (MRID auto-assigned, CNIC optional) */}
+      {/* ==================================================== */}
       {isPatientModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden mx-auto">
-            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-              <h3 className="font-bold text-gray-900">Quick Add Patient</h3>
-              <button onClick={() => setIsPatientModalOpen(false)} className="text-gray-400 hover:text-gray-600"><Trash2 className="w-5 h-5 hidden" /> &times;</button>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden mx-auto border border-gray-100">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-indigo-50/50 to-violet-50/50">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-600/20">
+                  <UserPlus className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 text-base">Quick Add Patient</h3>
+                  <p className="text-xs text-indigo-600 font-medium">System will auto-assign MRID</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsPatientModalOpen(false)}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
+
+            {/* Modal Form */}
             <form onSubmit={handleAddPatient} className="p-6 space-y-4">
+              {patientError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
+                  {patientError}
+                </div>
+              )}
+
+              {/* Patient Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                <input required type="text" className="w-full border-gray-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" value={newPatient.name} onChange={e => setNewPatient({ ...newPatient, name: e.target.value })} />
+                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Patient Full Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  required
+                  type="text"
+                  autoFocus
+                  placeholder="e.g. Fatima Ali"
+                  className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 bg-white"
+                  value={newPatient.name}
+                  onChange={(e) => setNewPatient({ ...newPatient, name: e.target.value })}
+                />
               </div>
+
+              {/* Phone Number */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                <input required type="tel" className="w-full border-gray-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" value={newPatient.phone} onChange={e => setNewPatient({ ...newPatient, phone: e.target.value })} />
+                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Phone Number <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <Phone className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    required
+                    type="tel"
+                    placeholder="e.g. 0300-1234567"
+                    className="w-full pl-10 pr-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 bg-white"
+                    value={newPatient.phone}
+                    onChange={(e) => setNewPatient({ ...newPatient, phone: e.target.value })}
+                  />
+                </div>
               </div>
+
+              {/* CNIC (Optional) */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email (Optional)</label>
-                <input type="email" className="w-full border-gray-200 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" value={newPatient.email} onChange={e => setNewPatient({ ...newPatient, email: e.target.value })} />
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    CNIC / ID Card
+                  </label>
+                  <span className="text-[11px] text-gray-400 font-medium">(Optional)</span>
+                </div>
+                <div className="relative">
+                  <IdCard className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="e.g. 35201-1234567-1 (Optional)"
+                    className="w-full pl-10 pr-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 bg-white"
+                    value={newPatient.cnic}
+                    onChange={(e) => setNewPatient({ ...newPatient, cnic: e.target.value })}
+                  />
+                </div>
               </div>
-              <div className="pt-4 flex gap-3">
-                <button type="button" onClick={() => setIsPatientModalOpen(false)} className="flex-1 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium">Cancel</button>
-                <button type="submit" className="flex-1 py-2 bg-indigo-600 rounded-lg text-white hover:bg-indigo-700 font-medium">Save Patient</button>
+
+              {/* Email (Optional) */}
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Email Address
+                  </label>
+                  <span className="text-[11px] text-gray-400 font-medium">(Optional)</span>
+                </div>
+                <div className="relative">
+                  <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="email"
+                    placeholder="patient@example.com"
+                    className="w-full pl-10 pr-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 bg-white"
+                    value={newPatient.email}
+                    onChange={(e) => setNewPatient({ ...newPatient, email: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              {/* Address (Optional) */}
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    City / Address
+                  </label>
+                  <span className="text-[11px] text-gray-400 font-medium">(Optional)</span>
+                </div>
+                <div className="relative">
+                  <MapPin className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="e.g. Lahore / DHA Phase 5"
+                    className="w-full pl-10 pr-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 bg-white"
+                    value={newPatient.address}
+                    onChange={(e) => setNewPatient({ ...newPatient, address: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-3 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsPatientModalOpen(false)}
+                  className="flex-1 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 font-semibold text-sm transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={patientSaving}
+                  className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-98 text-white rounded-xl font-semibold text-sm shadow-md shadow-indigo-600/20 disabled:opacity-60 transition-all flex items-center justify-center gap-2"
+                >
+                  {patientSaving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      Save &amp; Select
+                    </>
+                  )}
+                </button>
               </div>
             </form>
           </div>
