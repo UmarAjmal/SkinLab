@@ -59,7 +59,14 @@ export function generateThermalReceiptHtml(data: ThermalReceiptData): string {
       isGroup: boolean;
       name: string;
       total_price: number;
-      sub_items: Array<{ name: string; sessions: number }>;
+      sub_items: Array<{
+        name: string;
+        sessions: number;
+        sessions_allowed?: number;
+        sessions_consumed?: number;
+        unit_price?: number;
+        total_price?: number;
+      }>;
       single_items: Array<any>;
     };
   } = {};
@@ -83,6 +90,10 @@ export function generateThermalReceiptHtml(data: ThermalReceiptData): string {
       groupedItems[groupKey].sub_items.push({
         name: itemName.replace(new RegExp(`^${groupKey}\\s*-\\s*`, "i"), ""),
         sessions: item.sessions_allowed || item.quantity || 1,
+        sessions_allowed: item.sessions_allowed || item.quantity || 1,
+        sessions_consumed: item.sessions_consumed || 1,
+        unit_price: Number(item.unit_price) || 0,
+        total_price: Number(item.total_price) || 0,
       });
     } else {
       standaloneItems.push(item);
@@ -349,20 +360,32 @@ export function generateThermalReceiptHtml(data: ThermalReceiptData): string {
       .map(
         (group) => `
         <tr>
-          <td class="text-left font-bold">${group.name}</td>
-          <td class="text-right font-bold">${group.total_price.toFixed(2)}</td>
+          <td class="text-left font-bold" style="padding-top: 4px;">${group.name}</td>
+          <td class="text-right font-bold" style="padding-top: 4px;">${group.total_price > 0 ? group.total_price.toFixed(2) : "0.00"}</td>
         </tr>
         <tr>
-          <td colspan="2">
-            ${group.sub_items.length > 0
-            ? `<div class="item-sub-bullet" style="font-style: italic;">Used Now: ${group.sub_items
-              .map((s) => `${s.name}: ${s.sessions}`)
-              .join(", ")}</div>`
-            : ""
-          }
+          <td colspan="2" style="padding-bottom: 4px;">
             ${group.sub_items
-            .map((s) => `<div class="item-sub-bullet">- ${s.name}</div>`)
-            .join("")}
+              .map((s) => {
+                const allowed = Number(s.sessions_allowed) || Number(s.sessions) || 1;
+                const consumed = Number(s.sessions_consumed) || 1;
+                const remaining = Math.max(0, allowed - consumed);
+                return `
+                  <div class="item-sub-bullet" style="margin-top: 1px;">
+                    <strong>• ${s.name}</strong>: 
+                    ${allowed > 1 
+                      ? `Session ${consumed} of ${allowed} (${remaining} Remaining)` 
+                      : `1 Session`
+                    }
+                  </div>
+                  ${allowed > 1 ? `
+                    <div class="item-sub-bullet" style="font-size: 8.5px; color: #555; padding-left: 14px;">
+                      Bundled: ${allowed} | Consumed: ${consumed} | Left: ${remaining}
+                    </div>
+                  ` : ""}
+                `;
+              })
+              .join("")}
           </td>
         </tr>
       `
@@ -372,26 +395,41 @@ export function generateThermalReceiptHtml(data: ThermalReceiptData): string {
       <!-- STANDALONE ITEMS -->
       ${standaloneItems
       .map(
-        (item) => `
-        <tr>
-          <td class="text-left font-bold">${item.name || item.product_name || "Service"
-          }</td>
-          <td class="text-right font-bold">${Number(
-            item.total_price || item.unit_price * item.quantity
-          ).toFixed(2)}</td>
-        </tr>
-        ${item.quantity > 1 || item.sessions_allowed > 1
-            ? `<tr>
-                <td colspan="2" class="item-sub-bullet">
-                  Qty: ${item.quantity} × ${Number(item.unit_price).toFixed(2)}${item.sessions_allowed > 1
-              ? ` (Sessions: ${item.sessions_allowed})`
-              : ""
-            }
-                </td>
-              </tr>`
-            : ""
-          }
-      `
+        (item) => {
+          const allowed = Number(item.sessions_allowed) || 1;
+          const consumed = Number(item.sessions_consumed) || 1;
+          const remaining = Math.max(0, allowed - consumed);
+          const isPrepaid = Number(item.total_price || 0) === 0 && allowed > 1;
+
+          return `
+          <tr>
+            <td class="text-left font-bold" style="padding-top: 3px;">
+              ${item.name || item.product_name || "Service"}
+            </td>
+            <td class="text-right font-bold" style="padding-top: 3px;">
+              ${Number(item.total_price || item.unit_price * item.quantity || 0).toFixed(2)}
+            </td>
+          </tr>
+          ${allowed > 1 ? `
+            <tr>
+              <td colspan="2" class="item-sub-bullet" style="font-weight: 600; color: #111;">
+                Session ${consumed} of ${allowed} (${remaining} Remaining)
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2" class="item-sub-bullet" style="font-size: 8.5px; color: #555;">
+                Bundled: ${allowed} | Consumed: ${consumed} | Left: ${remaining}${isPrepaid ? " • [Pre-paid Package]" : ""}
+              </td>
+            </tr>
+          ` : (item.quantity > 1 ? `
+            <tr>
+              <td colspan="2" class="item-sub-bullet">
+                Qty: ${item.quantity} × ${Number(item.unit_price).toFixed(2)}
+              </td>
+            </tr>
+          ` : "")}
+        `;
+        }
       )
       .join("")}
     </tbody>

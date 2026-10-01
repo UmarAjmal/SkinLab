@@ -154,27 +154,81 @@ export async function POST(request: Request) {
       },
     });
 
-    // 5. Update Customer Balance
-    const balanceDelta = grandTotal - paidAmount;
+    // 5. If this is a follow-up visit for an existing package/treatment:
+    if (Array.isArray(data.items)) {
+      for (const it of data.items) {
+        if (it.consumed_from_item_id) {
+          try {
+            await prisma.saleItem.update({
+              where: { id: it.consumed_from_item_id },
+              data: {
+                sessions_consumed: {
+                  increment: 1,
+                },
+              },
+            });
+          } catch (sessionErr) {
+            console.error("Failed to increment sessions_consumed on original item:", it.consumed_from_item_id, sessionErr);
+          }
+        }
+      }
+    }
+
+    if (data.original_sale_id && paidAmount > 0) {
+      try {
+        const origSale = await prisma.sale.findUnique({ where: { id: data.original_sale_id } });
+        if (origSale) {
+          const newOrigPaid = Math.min(origSale.grand_total, origSale.paid_amount + paidAmount);
+          const newOrigStatus = newOrigPaid >= (origSale.grand_total - 0.01) ? "PAID" : "PARTIAL";
+          await prisma.sale.update({
+            where: { id: origSale.id },
+            data: {
+              paid_amount: newOrigPaid,
+              payment_status: newOrigStatus,
+            },
+          });
+        }
+      } catch (origErr) {
+        console.error("Failed to update original package invoice payment:", origErr);
+      }
+    }
+
+    // 6. Update Customer Balance
     let newCurrentBalance = customer.current_balance;
     let newAdvanceBalance = customer.advance_balance;
 
-    if (balanceDelta > 0) {
-      if (newAdvanceBalance >= balanceDelta) {
-        newAdvanceBalance -= balanceDelta;
-      } else {
-        const remainingOwed = balanceDelta - newAdvanceBalance;
-        newAdvanceBalance = 0;
-        newCurrentBalance += remainingOwed;
+    if (data.original_sale_id) {
+      // For follow-up sessions, the invoice due was already booked in customer.current_balance previously.
+      // Any paidAmount collected now reduces that existing debt directly!
+      if (paidAmount > 0) {
+        if (newCurrentBalance >= paidAmount) {
+          newCurrentBalance -= paidAmount;
+        } else {
+          const excess = paidAmount - newCurrentBalance;
+          newCurrentBalance = 0;
+          newAdvanceBalance += excess;
+        }
       }
-    } else if (balanceDelta < 0) {
-      const overpaidAmount = Math.abs(balanceDelta);
-      if (newCurrentBalance >= overpaidAmount) {
-        newCurrentBalance -= overpaidAmount;
-      } else {
-        const remainingAdvance = overpaidAmount - newCurrentBalance;
-        newCurrentBalance = 0;
-        newAdvanceBalance += remainingAdvance;
+    } else {
+      // Standard new sale calculation
+      const balanceDelta = grandTotal - paidAmount;
+      if (balanceDelta > 0) {
+        if (newAdvanceBalance >= balanceDelta) {
+          newAdvanceBalance -= balanceDelta;
+        } else {
+          const remainingOwed = balanceDelta - newAdvanceBalance;
+          newAdvanceBalance = 0;
+          newCurrentBalance += remainingOwed;
+        }
+      } else if (balanceDelta < 0) {
+        const overpaidAmount = Math.abs(balanceDelta);
+        if (newCurrentBalance >= overpaidAmount) {
+          newCurrentBalance -= overpaidAmount;
+        } else {
+          const remainingAdvance = overpaidAmount - newCurrentBalance;
+          newCurrentBalance = 0;
+          newAdvanceBalance += remainingAdvance;
+        }
       }
     }
 

@@ -75,13 +75,6 @@ export default function PatientDetailPage() {
   const [walletProcessing, setWalletProcessing] = useState(false);
   const [walletError, setWalletError] = useState("");
 
-  // Session Consumption Modal State
-  const [selectedSessionItem, setSelectedSessionItem] = useState<any>(null);
-  const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
-  const [sessionNotes, setSessionNotes] = useState("");
-  const [sessionProcessing, setSessionProcessing] = useState(false);
-  const [sessionError, setSessionError] = useState("");
-
   const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<PatientFormValues>({
     resolver: zodResolver(patientSchema),
   });
@@ -202,36 +195,6 @@ export default function PatientDetailPage() {
       setWalletError(e.message);
     } finally {
       setWalletProcessing(false);
-    }
-  };
-
-  // Redeem / Consume 1 Session
-  const processSessionConsume = async () => {
-    if (!selectedSessionItem) return;
-    setSessionError("");
-    setSessionProcessing(true);
-
-    try {
-      const res = await fetch(`/api/patients/${patientId}/consume-session`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sale_item_id: selectedSessionItem.id,
-          notes: sessionNotes,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to log session");
-
-      setIsSessionModalOpen(false);
-      setSelectedSessionItem(null);
-      setSessionNotes("");
-      fetchPatient();
-    } catch (e: any) {
-      setSessionError(e.message);
-    } finally {
-      setSessionProcessing(false);
     }
   };
 
@@ -381,11 +344,11 @@ export default function PatientDetailPage() {
           </button>
 
           <Link
-            href="/dashboard/pos"
+            href={`/dashboard/pos?patientId=${patient.id}`}
             className="inline-flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-all shadow-md shadow-indigo-600/20 active:scale-95"
           >
             <ShoppingBag className="w-4 h-4" />
-            <span>New Sale / Visit</span>
+            <span>New Visit</span>
           </Link>
         </div>
       </header>
@@ -702,16 +665,10 @@ export default function PatientDetailPage() {
                                 All Sessions Completed
                               </span>
                             ) : (
-                              <button
-                                onClick={() => {
-                                  setSelectedSessionItem(sessionItem);
-                                  setIsSessionModalOpen(true);
-                                }}
-                                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-all shadow-md shadow-indigo-600/20 active:scale-95"
-                              >
-                                <Plus className="w-3.5 h-3.5" />
-                                Log Attended Session (+1)
-                              </button>
+                              <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                <Clock className="w-3.5 h-3.5" />
+                                In Progress ({remaining} Left)
+                              </span>
                             )}
                           </div>
                         </div>
@@ -1043,92 +1000,6 @@ export default function PatientDetailPage() {
         </div>
       )}
 
-      {/* SESSION CONSUME MODAL */}
-      {isSessionModalOpen && selectedSessionItem && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[60] flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden border border-gray-100 max-h-[92vh] flex flex-col">
-            <div className="px-5 py-4 border-b border-gray-100 bg-indigo-50/60 flex items-center justify-between shrink-0">
-              <div>
-                <h3 className="font-bold text-gray-900 text-base flex items-center gap-1.5">
-                  <Sparkles className="w-5 h-5 text-indigo-600" />
-                  Log Treatment Session
-                </h3>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  {selectedSessionItem.product?.name || "Treatment Procedure"}
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  setIsSessionModalOpen(false);
-                  setSelectedSessionItem(null);
-                  setSessionError("");
-                }}
-                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-xl hover:bg-gray-100 transition-colors"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="p-5 space-y-4 overflow-y-auto flex-1">
-              <div className="p-3.5 rounded-2xl bg-indigo-50/50 border border-indigo-100 text-xs space-y-1">
-                <div className="flex justify-between font-medium">
-                  <span className="text-gray-600">Current Sessions:</span>
-                  <span className="font-bold text-indigo-700">
-                    {selectedSessionItem.sessions_consumed || 0} / {selectedSessionItem.totalSessions} Used
-                  </span>
-                </div>
-                <div className="flex justify-between font-medium">
-                  <span className="text-gray-600">After this action:</span>
-                  <span className="font-bold text-emerald-700">
-                    {(selectedSessionItem.sessions_consumed || 0) + 1} / {selectedSessionItem.totalSessions} Used
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
-                  Doctor / Treatment Notes (Optional)
-                </label>
-                <textarea
-                  rows={2}
-                  placeholder="e.g. Session #2 completed, 12J laser energy, no side effects reported"
-                  className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-xs text-slate-900 bg-white font-medium"
-                  value={sessionNotes}
-                  onChange={(e) => setSessionNotes(e.target.value)}
-                ></textarea>
-              </div>
-
-              {sessionError && (
-                <div className="text-rose-600 text-xs bg-rose-50 p-3 rounded-xl border border-rose-200 font-medium">
-                  {sessionError}
-                </div>
-              )}
-
-              <div className="flex justify-end gap-2.5 pt-3 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsSessionModalOpen(false);
-                    setSelectedSessionItem(null);
-                    setSessionError("");
-                  }}
-                  className="px-4 py-2 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={processSessionConsume}
-                  disabled={sessionProcessing}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 text-xs font-semibold shadow-md shadow-indigo-600/20 disabled:opacity-50 transition-all"
-                >
-                  {sessionProcessing ? "Saving..." : "Confirm Session Completed"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

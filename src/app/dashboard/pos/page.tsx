@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Search,
   Plus,
@@ -31,7 +32,10 @@ import {
 } from "lucide-react";
 import { printThermalReceipt, ThermalReceiptData } from "@/lib/thermalPrinter";
 
-export default function POSPage() {
+function POSContent() {
+  const searchParams = useSearchParams();
+  const urlPatientId = searchParams.get("patientId");
+
   // Data States
   const [patients, setPatients] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
@@ -42,6 +46,11 @@ export default function POSPage() {
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
   const [selectedDoctorId, setSelectedDoctorId] = useState<string>("");
   const [sessionRemarks, setSessionRemarks] = useState<string>("");
+
+  // Active Follow-up Package Invoices States
+  const [patientActiveInvoices, setPatientActiveInvoices] = useState<any[]>([]);
+  const [selectedFollowUpInvoiceId, setSelectedFollowUpInvoiceId] = useState<string>("");
+  const [isLoadingPatientInvoices, setIsLoadingPatientInvoices] = useState<boolean>(false);
 
   // Search States
   const [patientSearch, setPatientSearch] = useState("");
@@ -180,13 +189,135 @@ export default function POSPage() {
     return [...matchedProducts, ...matchedDeals];
   }, [products, deals, serviceSearch]);
 
-  // Cart Calculations
-  const subtotal = cart.reduce((sum, item) => {
-    if (item.type === "package") {
-      return sum + (Number(item.package_price) || 0);
+  // Auto-select patient from URL if present
+  useEffect(() => {
+    if (urlPatientId && urlPatientId !== selectedPatientId) {
+      setSelectedPatientId(urlPatientId);
     }
-    return sum + (Number(item.unit_price) || 0) * (Number(item.quantity) || 1);
-  }, 0);
+  }, [urlPatientId, selectedPatientId]);
+
+  // Fetch active treatment package invoices when selected patient changes
+  useEffect(() => {
+    if (!selectedPatientId) {
+      setPatientActiveInvoices([]);
+      setSelectedFollowUpInvoiceId("");
+      return;
+    }
+
+    const fetchPatientInvoices = async () => {
+      setIsLoadingPatientInvoices(true);
+      try {
+        const res = await fetch(`/api/patients/${selectedPatientId}`);
+        if (!res.ok) return;
+        const patientData = await res.json();
+
+        // Find sales that have remaining sessions (sessions_allowed > sessions_consumed)
+        const activeSales = (patientData.sales || []).filter((s: any) =>
+          (s.items || []).some(
+            (it: any) => (Number(it.sessions_allowed) || 1) > (Number(it.sessions_consumed) || 0)
+          )
+        );
+        setPatientActiveInvoices(activeSales);
+      } catch (err) {
+        console.error("Error loading patient active treatment packages:", err);
+      } finally {
+        setIsLoadingPatientInvoices(false);
+      }
+    };
+
+    fetchPatientInvoices();
+  }, [selectedPatientId]);
+
+  const selectedFollowUpInvoice = useMemo(() => {
+    if (!selectedFollowUpInvoiceId) return null;
+    return patientActiveInvoices.find((i) => i.id === selectedFollowUpInvoiceId) || null;
+  }, [selectedFollowUpInvoiceId, patientActiveInvoices]);
+
+  const followUpPendingDue = useMemo(() => {
+    if (!selectedFollowUpInvoice) return 0;
+    return Math.max(
+      0,
+      (Number(selectedFollowUpInvoice.grand_total) || 0) - (Number(selectedFollowUpInvoice.paid_amount) || 0)
+    );
+  }, [selectedFollowUpInvoice]);
+
+  const handleFollowUpInvoiceSelect = (invoiceId: string) => {
+    setSelectedFollowUpInvoiceId(invoiceId);
+
+    if (!invoiceId) {
+      setCart([]);
+      return;
+    }
+
+    const inv = patientActiveInvoices.find((i) => i.id === invoiceId);
+    if (!inv) return;
+
+    // Auto-assign original doctor if available
+    if (inv.doctor_id) {
+      setSelectedDoctorId(inv.doctor_id);
+    }
+
+    // Filter items with remaining sessions
+    const remainingItems = (inv.items || []).filter(
+      (it: any) => (Number(it.sessions_allowed) || 1) > (Number(it.sessions_consumed) || 0)
+    );
+
+    const pendingDue = Math.max(0, (Number(inv.grand_total) || 0) - (Number(inv.paid_amount) || 0));
+
+    const followUpCartItems = remainingItems.map((it: any) => {
+      const allowed = Number(it.sessions_allowed) || 1;
+      const consumed = Number(it.sessions_consumed) || 0;
+      const remaining = Math.max(0, allowed - consumed);
+
+      return {
+        id: `followup-${it.id}`,
+        type: "follow_up_session",
+        product_id: it.product_id,
+        name: it.product?.name || it.name || "Treatment Procedure",
+        item_group_name: it.item_group_name || inv.invoice_number,
+        sessions_allowed: allowed,
+        sessions_consumed: consumed,
+        sessions_remaining: remaining,
+        is_follow_up_session: true,
+        original_sale_item_id: it.id,
+        original_sale_id: inv.id,
+        original_invoice_number: inv.invoice_number,
+        unit_price: 0,
+        quantity: 1,
+        total_price: 0,
+      };
+    });
+
+    setCart(followUpCartItems);
+    setDiscountAmount(0);
+
+    if (pendingDue > 0) {
+      setPaidAmount(paymentMethod === "Credit" ? 0 : pendingDue);
+    } else {
+      setPaidAmount(0);
+    }
+  };
+
+  // Cart Calculations
+  const subtotal = useMemo(() => {
+    if (selectedFollowUpInvoice) {
+      const packageDue = followUpPendingDue;
+      const extraItemsSum = cart.reduce((sum, item) => {
+        if (item.is_follow_up_session) return sum;
+        if (item.type === "package") return sum + (Number(item.package_price) || 0);
+        return sum + (Number(item.unit_price) || 0) * (Number(item.quantity) || 1);
+      }, 0);
+      return packageDue + extraItemsSum;
+    }
+
+    return cart.reduce((sum, item) => {
+      if (item.type === "package") {
+        return sum + (Number(item.package_price) || 0);
+      }
+      return sum + (Number(item.unit_price) || 0) * (Number(item.quantity) || 1);
+    }, 0);
+  }, [cart, selectedFollowUpInvoice, followUpPendingDue]);
+
   const grandTotal = Math.max(0, subtotal - discountAmount);
   const remainingDue = Math.max(0, grandTotal - paidAmount);
 
@@ -391,7 +522,19 @@ export default function POSPage() {
 
       const flattenedItems: any[] = [];
       for (const cartEntry of cart) {
-        if (cartEntry.type === "package") {
+        if (cartEntry.is_follow_up_session) {
+          flattenedItems.push({
+            product_id: cartEntry.product_id,
+            name: `${cartEntry.item_group_name ? `${cartEntry.item_group_name} - ` : ""}${cartEntry.name}`,
+            quantity: 1,
+            unit_price: followUpPendingDue > 0 ? followUpPendingDue : 0,
+            sessions_allowed: cartEntry.sessions_allowed || 1,
+            sessions_consumed: (cartEntry.sessions_consumed || 0) + 1,
+            total_price: followUpPendingDue > 0 ? followUpPendingDue : 0,
+            item_group_name: cartEntry.item_group_name || null,
+            consumed_from_item_id: cartEntry.original_sale_item_id || null,
+          });
+        } else if (cartEntry.type === "package") {
           const totalPkgPrice = Number(cartEntry.package_price) || 0;
           const pkgItems = cartEntry.items || [];
           const count = pkgItems.length || 1;
@@ -439,7 +582,8 @@ export default function POSPage() {
         grand_total: grandTotal,
         paid_amount: finalPaidAmount,
         payment_method: paymentMethod,
-        session_remarks: sessionRemarks,
+        session_remarks: sessionRemarks || (selectedFollowUpInvoice ? `Follow-up visit for ${selectedFollowUpInvoice.invoice_number}` : ""),
+        original_sale_id: selectedFollowUpInvoiceId || null,
         items: flattenedItems,
       };
 
@@ -510,6 +654,8 @@ export default function POSPage() {
     setSelectedPatientId("");
     setSelectedDoctorId("");
     setSessionRemarks("");
+    setSelectedFollowUpInvoiceId("");
+    setPatientActiveInvoices([]);
     setDiscountAmount(0);
     setPaidAmount(0);
     setPaymentMethod("Cash");
@@ -752,7 +898,7 @@ export default function POSPage() {
                 Assign Doctor / Staff
               </label>
               <select
-                className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 text-slate-900 bg-white"
+                className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 text-slate-900 bg-white font-medium"
                 value={selectedDoctorId}
                 onChange={(e) => setSelectedDoctorId(e.target.value)}
               >
@@ -764,18 +910,84 @@ export default function POSPage() {
                 ))}
               </select>
             </div>
+
             <div>
-              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1.5">
-                Session Remarks / Notes
+              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                <span>Active Treatment Package / Invoice</span>
+                {isLoadingPatientInvoices && <Loader2 className="w-3 h-3 animate-spin text-indigo-600" />}
               </label>
-              <input
-                type="text"
-                className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 text-slate-900 bg-white"
-                placeholder="Visit notes or procedure details..."
-                value={sessionRemarks}
-                onChange={(e) => setSessionRemarks(e.target.value)}
-              />
+              <select
+                className={`w-full border rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-all ${
+                  selectedFollowUpInvoiceId
+                    ? "border-purple-300 bg-purple-50/60 text-purple-900 focus:ring-2 focus:ring-purple-500"
+                    : "border-gray-200 bg-white text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
+                }`}
+                value={selectedFollowUpInvoiceId}
+                onChange={(e) => handleFollowUpInvoiceSelect(e.target.value)}
+                disabled={!selectedPatientId}
+              >
+                <option value="">-- Standard Procedure / New Visit --</option>
+                {selectedPatientId && patientActiveInvoices.length === 0 && (
+                  <option disabled value="">No active multi-session packages</option>
+                )}
+                {patientActiveInvoices.map((inv) => {
+                  const pendingDue = Math.max(0, (Number(inv.grand_total) || 0) - (Number(inv.paid_amount) || 0));
+                  const remainingCount = (inv.items || []).reduce((acc: number, it: any) => {
+                    const rem = Math.max(0, (Number(it.sessions_allowed) || 1) - (Number(it.sessions_consumed) || 0));
+                    return acc + rem;
+                  }, 0);
+                  const pkgNames = Array.from(
+                    new Set(
+                      (inv.items || [])
+                        .map((it: any) => it.item_group_name || it.product?.name)
+                        .filter(Boolean)
+                    )
+                  ).join(", ");
+                  const dueLabel = pendingDue > 0 ? `Pending Due: Rs. ${pendingDue.toLocaleString()}` : "Fully Paid (Rs. 0 Due)";
+                  return (
+                    <option key={inv.id} value={inv.id}>
+                      {inv.invoice_number}: {pkgNames || "Package"} ({remainingCount} rem) • {dueLabel}
+                    </option>
+                  );
+                })}
+              </select>
             </div>
+          </div>
+
+          {/* Active Follow-up Banner */}
+          {selectedFollowUpInvoice && (
+            <div className="mt-3 p-3 bg-gradient-to-r from-purple-50 via-indigo-50 to-purple-50 border border-purple-200 rounded-xl text-xs flex flex-wrap items-center justify-between gap-2 shadow-2xs">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-purple-600 shrink-0" />
+                <span className="text-purple-950 font-semibold">
+                  Follow-up Visit for: <strong className="font-mono text-purple-800">{selectedFollowUpInvoice.invoice_number}</strong>
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                {followUpPendingDue > 0 ? (
+                  <span className="font-bold text-amber-900 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full">
+                    Pending Due: Rs. {followUpPendingDue.toLocaleString("en-PK", { minimumFractionDigits: 2 })}
+                  </span>
+                ) : (
+                  <span className="font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-full">
+                    Pre-paid Package • No Session Fee (Rs. 0.00)
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="mt-3">
+            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1.5">
+              Session Remarks / Notes
+            </label>
+            <input
+              type="text"
+              className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 text-slate-900 bg-white font-medium shadow-2xs"
+              placeholder="Visit notes or procedure details..."
+              value={sessionRemarks}
+              onChange={(e) => setSessionRemarks(e.target.value)}
+            />
           </div>
         </div>
 
@@ -894,6 +1106,82 @@ export default function POSPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-100 bg-white">
                   {cart.map((item, idx) => {
+                    if (item.is_follow_up_session) {
+                      return (
+                        <tr key={item.id} className="hover:bg-indigo-50/20 transition-colors bg-indigo-50/10">
+                          {/* Item / Service Name */}
+                          <td className="p-3.5">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-gray-900 text-sm">{item.name}</span>
+                              <span className="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-lg uppercase tracking-wider border border-indigo-200">
+                                Package Follow-up
+                              </span>
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1 flex items-center gap-2">
+                              <span>Package: <strong className="text-gray-700">{item.item_group_name}</strong></span>
+                              <span>•</span>
+                              <span>Invoice: <strong className="font-mono text-indigo-600">{item.original_invoice_number}</strong></span>
+                            </div>
+                            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                              <span className="bg-emerald-50 text-emerald-700 font-bold px-2.5 py-1 rounded-lg border border-emerald-200 flex items-center gap-1">
+                                <Check className="w-3.5 h-3.5" />
+                                Attending Session {(item.sessions_consumed || 0) + 1} of {item.sessions_allowed}
+                              </span>
+                              <span className="text-gray-500 font-medium">
+                                ({Math.max(0, item.sessions_remaining - 1)} remaining after this visit)
+                              </span>
+                            </div>
+                          </td>
+
+                          {/* Sessions Column */}
+                          <td className="p-3.5 text-center align-top pt-4">
+                            <div className="inline-flex flex-col items-center">
+                              <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100">
+                                {(item.sessions_consumed || 0) + 1} / {item.sessions_allowed}
+                              </span>
+                              <span className="text-[10px] text-gray-400 mt-0.5 font-medium">
+                                {item.sessions_remaining} left
+                              </span>
+                            </div>
+                          </td>
+
+                          {/* Price Breakdown */}
+                          <td className="p-3.5 text-right align-top pt-4">
+                            {followUpPendingDue > 0 ? (
+                              <div className="text-right">
+                                <span className="text-xs font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                  Pending Due
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                Pre-paid (Rs. 0.00)
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Total */}
+                          <td className="p-3.5 text-right font-black text-gray-900 text-sm align-top pt-4">
+                            {followUpPendingDue > 0
+                              ? `Rs. ${followUpPendingDue.toLocaleString("en-PK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                              : "Rs. 0.00"}
+                          </td>
+
+                          {/* Remove */}
+                          <td className="p-3.5 text-center align-top pt-4">
+                            <button
+                              type="button"
+                              onClick={() => removeFromCart(idx)}
+                              className="text-gray-400 hover:text-red-600 p-1.5 rounded-xl hover:bg-red-50 transition-colors"
+                              title="Remove service from this visit"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    }
+
                     const isPackage = item.type === "package";
 
                     if (isPackage) {
@@ -1274,7 +1562,13 @@ export default function POSPage() {
             ) : (
               <>
                 <Printer className="w-5 h-5" />
-                <span>Complete Sale &amp; Print (80mm)</span>
+                <span>
+                  {selectedFollowUpInvoice
+                    ? grandTotal > 0
+                      ? `Complete Visit & Collect Rs. ${grandTotal.toLocaleString("en-PK", { minimumFractionDigits: 2 })}`
+                      : "Complete Follow-up Visit (Prepaid)"
+                    : "Complete Sale & Print (80mm)"}
+                </span>
               </>
             )}
           </button>
@@ -1635,5 +1929,20 @@ export default function POSPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function POSPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col h-[80vh] items-center justify-center space-y-4">
+          <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
+          <p className="text-sm font-semibold text-gray-600">Loading POS Terminal...</p>
+        </div>
+      }
+    >
+      <POSContent />
+    </Suspense>
   );
 }
