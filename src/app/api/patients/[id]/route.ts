@@ -1,25 +1,45 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth";
-
-const prisma = new PrismaClient();
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const patient = await prisma.customer.findUnique({
-    where: { id: params.id },
-    include: {
-      sales: {
-        orderBy: { date: "desc" }
-      }
+  try {
+    const rawId = params?.id ? decodeURIComponent(params.id).trim() : "";
+    if (!rawId) {
+      return NextResponse.json({ error: "Invalid patient ID" }, { status: 400 });
     }
-  });
 
-  if (!patient) return NextResponse.json({ error: "Patient not found" }, { status: 404 });
+    const patient = await prisma.customer.findUnique({
+      where: { id: rawId },
+      include: {
+        sales: {
+          orderBy: { date: "desc" },
+          include: {
+            doctor: {
+              select: { id: true, name: true, is_doctor: true }
+            },
+            items: {
+              include: {
+                product: {
+                  select: { id: true, name: true, sku: true, category: { select: { name: true } } }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
 
-  return NextResponse.json(patient);
+    if (!patient) return NextResponse.json({ error: "Patient not found" }, { status: 404 });
+
+    return NextResponse.json(patient);
+  } catch (error: any) {
+    console.error("GET /api/patients/[id] error:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
 }
 
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
@@ -32,10 +52,15 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 
   try {
+    const rawId = params?.id ? decodeURIComponent(params.id).trim() : "";
+    if (!rawId) {
+      return NextResponse.json({ error: "Invalid patient ID" }, { status: 400 });
+    }
+
     const data = await request.json();
     
     const updatedPatient = await prisma.customer.update({
-      where: { id: params.id },
+      where: { id: rawId },
       data: {
         name: data.name,
         phone: data.phone || null,
