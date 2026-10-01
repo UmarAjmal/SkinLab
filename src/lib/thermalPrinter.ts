@@ -103,8 +103,8 @@ export function generateThermalReceiptHtml(data: ThermalReceiptData): string {
     data.remainingDue !== undefined
       ? data.remainingDue
       : data.customer?.current_balance !== undefined
-      ? data.customer.current_balance
-      : balanceDue
+        ? data.customer.current_balance
+        : balanceDue
   );
 
   return `<!DOCTYPE html>
@@ -301,19 +301,17 @@ export function generateThermalReceiptHtml(data: ThermalReceiptData): string {
   </div>
 
   <!-- CLINIC HEADER -->
-  ${
-    clinicLogo
+  ${clinicLogo
       ? `<div class="logo-container"><img src="${clinicLogo}" class="logo-img" alt="Clinic Logo" /></div>`
       : ""
-  }
+    }
   <div class="clinic-title">${clinicName}</div>
   ${clinicAddress ? `<div class="clinic-info">${clinicAddress}</div>` : ""}
   ${clinicPhone ? `<div class="clinic-info">${clinicPhone}</div>` : ""}
-  ${
-    data.clinic?.tax_number
+  ${data.clinic?.tax_number
       ? `<div class="clinic-info">NTN: ${data.clinic.tax_number}</div>`
       : ""
-  }
+    }
 
   <!-- INVOICE & PATIENT META -->
   <div class="meta-section">
@@ -321,9 +319,8 @@ export function generateThermalReceiptHtml(data: ThermalReceiptData): string {
       <span class="font-bold">INV: ${data.invoiceNumber}</span>
       <span class="font-bold">${formattedDate}</span>
     </div>
-    <div><span class="font-bold">Patient:</span> ${data.customer.name || "Walk-in"}${
-    data.customer.phone ? ` | ${data.customer.phone}` : ""
-  }</div>
+    <div><span class="font-bold">Patient:</span> ${data.customer.name || "Walk-in"}${data.customer.phone ? ` | ${data.customer.phone}` : ""
+    }</div>
     <div><span class="font-bold">MR:</span> ${data.customer.medical_id || "N/A"}</div>
     <div><span class="font-bold">Visit No:</span> ${data.visitNo || 1}</div>
     <div><span class="font-bold">Ref By:</span> ${doctorName}</div>
@@ -349,58 +346,54 @@ export function generateThermalReceiptHtml(data: ThermalReceiptData): string {
     <tbody>
       <!-- GROUPED DEALS / PACKAGES -->
       ${Object.values(groupedItems)
-        .map(
-          (group) => `
+      .map(
+        (group) => `
         <tr>
           <td class="text-left font-bold">${group.name}</td>
           <td class="text-right font-bold">${group.total_price.toFixed(2)}</td>
         </tr>
         <tr>
           <td colspan="2">
-            ${
-              group.sub_items.length > 0
-                ? `<div class="item-sub-bullet" style="font-style: italic;">Used Now: ${group.sub_items
-                    .map((s) => `${s.name}: ${s.sessions}`)
-                    .join(", ")}</div>`
-                : ""
-            }
+            ${group.sub_items.length > 0
+            ? `<div class="item-sub-bullet" style="font-style: italic;">Used Now: ${group.sub_items
+              .map((s) => `${s.name}: ${s.sessions}`)
+              .join(", ")}</div>`
+            : ""
+          }
             ${group.sub_items
-              .map((s) => `<div class="item-sub-bullet">- ${s.name}</div>`)
-              .join("")}
+            .map((s) => `<div class="item-sub-bullet">- ${s.name}</div>`)
+            .join("")}
           </td>
         </tr>
       `
-        )
-        .join("")}
+      )
+      .join("")}
 
       <!-- STANDALONE ITEMS -->
       ${standaloneItems
-        .map(
-          (item) => `
+      .map(
+        (item) => `
         <tr>
-          <td class="text-left font-bold">${
-            item.name || item.product_name || "Service"
+          <td class="text-left font-bold">${item.name || item.product_name || "Service"
           }</td>
           <td class="text-right font-bold">${Number(
             item.total_price || item.unit_price * item.quantity
           ).toFixed(2)}</td>
         </tr>
-        ${
-          item.quantity > 1 || item.sessions_allowed > 1
+        ${item.quantity > 1 || item.sessions_allowed > 1
             ? `<tr>
                 <td colspan="2" class="item-sub-bullet">
-                  Qty: ${item.quantity} × ${Number(item.unit_price).toFixed(2)}${
-                item.sessions_allowed > 1
-                  ? ` (Sessions: ${item.sessions_allowed})`
-                  : ""
-              }
+                  Qty: ${item.quantity} × ${Number(item.unit_price).toFixed(2)}${item.sessions_allowed > 1
+              ? ` (Sessions: ${item.sessions_allowed})`
+              : ""
+            }
                 </td>
               </tr>`
             : ""
-        }
+          }
       `
-        )
-        .join("")}
+      )
+      .join("")}
     </tbody>
   </table>
 
@@ -414,13 +407,12 @@ export function generateThermalReceiptHtml(data: ThermalReceiptData): string {
       <span>Discount:</span>
       <span>(${discountAmount.toFixed(2)})</span>
     </div>
-    ${
-      previousOrRemaining > 0
-        ? `<div class="totals-row">
+    ${previousOrRemaining > 0
+      ? `<div class="totals-row">
             <span>Remaining:</span>
             <span>PKR ${previousOrRemaining.toFixed(2)}</span>
           </div>`
-        : ""
+      : ""
     }
 
     <!-- PAYABLE BANNER -->
@@ -444,8 +436,8 @@ export function generateThermalReceiptHtml(data: ThermalReceiptData): string {
 
   <div class="branding-box">
     <div>Software Solution Provided By:</div>
-    <div class="font-bold">NARMER SOLUTIONS</div>
-    <div>Website: www.narmersolution.com</div>
+    <div class="font-bold">FALCON SWIFT PVT. LTD.</div>
+    <div>Website: www.falconswift.online</div>
     <div>Support: +92 326-3392082</div>
   </div>
 
