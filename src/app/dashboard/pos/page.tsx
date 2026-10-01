@@ -181,7 +181,12 @@ export default function POSPage() {
   }, [products, deals, serviceSearch]);
 
   // Cart Calculations
-  const subtotal = cart.reduce((sum, item) => sum + item.unit_price * item.quantity, 0);
+  const subtotal = cart.reduce((sum, item) => {
+    if (item.type === "package") {
+      return sum + (Number(item.package_price) || 0);
+    }
+    return sum + (Number(item.unit_price) || 0) * (Number(item.quantity) || 1);
+  }, 0);
   const grandTotal = Math.max(0, subtotal - discountAmount);
   const remainingDue = Math.max(0, grandTotal - paidAmount);
 
@@ -316,31 +321,38 @@ export default function POSPage() {
 
   const addToCart = (item: any) => {
     if (item.type === "deal" || (item.items && Array.isArray(item.items))) {
-      // Expand deal into component products
-      const dealItems = item.items.map((di: any) => {
-        const product = di.product || products.find((p) => p.id === di.product_id);
-        const totalDealPrice = Number(item.total_price !== undefined ? item.total_price : item.price || 0);
-        const itemCount = item.items.length || 1;
+      // Find package price from total_price or price
+      const packagePrice = Number(item.total_price !== undefined ? item.total_price : item.price || 0);
+
+      const packageServices = (item.items || []).map((di: any) => {
+        const prod = di.product || products.find((p) => p.id === di.product_id);
         return {
-          id: `${item.id}-${di.product_id}-${Date.now()}-${Math.random()}`,
           product_id: di.product_id,
-          name: `${item.name} - ${product?.name || "Service"}`,
-          unit_price: totalDealPrice / itemCount,
-          quantity: 1,
-          sessions_allowed: di.sessions_allowed || di.sessions || 1,
+          name: prod?.name || "Service",
+          sessions_allowed: Number(di.sessions_allowed || di.sessions) || 1,
           sessions_consumed: 1,
-          item_group_name: item.name,
         };
       });
-      setCart((prev) => [...prev, ...dealItems]);
+
+      const packageCartItem = {
+        id: `pkg-${item.id || "deal"}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        type: "package",
+        deal_id: item.id || null,
+        name: item.name,
+        package_price: packagePrice,
+        items: packageServices,
+      };
+
+      setCart((prev) => [...prev, packageCartItem]);
     } else {
       setCart((prev) => [
         ...prev,
         {
-          id: `${item.id}-${Date.now()}-${Math.random()}`,
+          id: `svc-${item.id}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          type: "service",
           product_id: item.id,
           name: item.name,
-          unit_price: item.selling_price || 0,
+          unit_price: Number(item.selling_price) || 0,
           quantity: 1,
           sessions_allowed: 1,
           sessions_consumed: 1,
@@ -357,9 +369,15 @@ export default function POSPage() {
     setCart(newCart);
   };
 
-  const updateCartItem = (index: number, field: string, value: number) => {
+  const updateCartItem = (index: number, field: string, value: any) => {
     const newCart = [...cart];
     newCart[index] = { ...newCart[index], [field]: value };
+    setCart(newCart);
+  };
+
+  const updatePackagePrice = (index: number, newPrice: number) => {
+    const newCart = [...cart];
+    newCart[index] = { ...newCart[index], package_price: Math.max(0, newPrice) };
     setCart(newCart);
   };
 
@@ -371,6 +389,48 @@ export default function POSPage() {
     try {
       const finalPaidAmount = paymentMethod === "Credit" ? 0 : paidAmount;
 
+      const flattenedItems: any[] = [];
+      for (const cartEntry of cart) {
+        if (cartEntry.type === "package") {
+          const totalPkgPrice = Number(cartEntry.package_price) || 0;
+          const pkgItems = cartEntry.items || [];
+          const count = pkgItems.length || 1;
+
+          let allocated = 0;
+          pkgItems.forEach((pItem: any, idx: number) => {
+            let itemPrice = 0;
+            if (idx === count - 1) {
+              itemPrice = Math.max(0, Math.round((totalPkgPrice - allocated) * 100) / 100);
+            } else {
+              itemPrice = Math.round((totalPkgPrice / count) * 100) / 100;
+              allocated += itemPrice;
+            }
+
+            flattenedItems.push({
+              product_id: pItem.product_id,
+              name: `${cartEntry.name} - ${pItem.name}`,
+              quantity: 1,
+              unit_price: itemPrice,
+              sessions_allowed: pItem.sessions_allowed || 1,
+              sessions_consumed: Math.min(1, pItem.sessions_allowed || 1),
+              total_price: itemPrice,
+              item_group_name: cartEntry.name,
+            });
+          });
+        } else {
+          flattenedItems.push({
+            product_id: cartEntry.product_id,
+            name: cartEntry.name,
+            quantity: cartEntry.quantity || 1,
+            unit_price: Number(cartEntry.unit_price) || 0,
+            sessions_allowed: cartEntry.sessions_allowed || 1,
+            sessions_consumed: cartEntry.sessions_consumed || 1,
+            total_price: (Number(cartEntry.unit_price) || 0) * (cartEntry.quantity || 1),
+            item_group_name: null,
+          });
+        }
+      }
+
       const payload = {
         customer_id: selectedPatientId,
         doctor_id: selectedDoctorId || null,
@@ -380,15 +440,7 @@ export default function POSPage() {
         paid_amount: finalPaidAmount,
         payment_method: paymentMethod,
         session_remarks: sessionRemarks,
-        items: cart.map((c) => ({
-          product_id: c.product_id,
-          quantity: c.quantity,
-          unit_price: c.unit_price,
-          sessions_allowed: c.sessions_allowed,
-          sessions_consumed: c.sessions_consumed,
-          total_price: c.unit_price * c.quantity,
-          item_group_name: c.item_group_name,
-        })),
+        items: flattenedItems,
       };
 
       const res = await fetch("/api/sales", {
@@ -416,13 +468,13 @@ export default function POSPage() {
           doctor: activeDoctor,
           visitNo: data.visitCount || 1,
           tokenNumber: data.token || nextToken,
-          items: cart.map((c) => ({
+          items: flattenedItems.map((c) => ({
             name: c.name,
             product_name: c.name,
             item_group_name: c.item_group_name,
             quantity: c.quantity,
             unit_price: c.unit_price,
-            total_price: c.unit_price * c.quantity,
+            total_price: c.total_price,
             sessions_allowed: c.sessions_allowed,
             sessions_consumed: c.sessions_consumed,
           })),
@@ -827,87 +879,180 @@ export default function POSPage() {
               <table className="w-full text-left border-collapse min-w-[580px]">
                 <thead className="bg-white sticky top-0 shadow-2xs border-b border-gray-200">
                   <tr>
-                    <th className="p-3 font-semibold text-xs text-gray-600 uppercase tracking-wider">Item / Service</th>
-                    <th className="p-3 font-semibold text-xs text-gray-600 uppercase tracking-wider w-24 text-center">
+                    <th className="p-3.5 font-semibold text-xs text-gray-600 uppercase tracking-wider">Item / Service / Package</th>
+                    <th className="p-3.5 font-semibold text-xs text-gray-600 uppercase tracking-wider w-28 text-center">
                       Sessions
                     </th>
-                    <th className="p-3 font-semibold text-xs text-gray-600 uppercase tracking-wider text-right w-36">
-                      Unit Price (Editable)
+                    <th className="p-3.5 font-semibold text-xs text-gray-600 uppercase tracking-wider text-right w-40">
+                      Price (Editable)
                     </th>
-                    <th className="p-3 font-semibold text-xs text-gray-600 uppercase tracking-wider text-right w-28">
+                    <th className="p-3.5 font-semibold text-xs text-gray-600 uppercase tracking-wider text-right w-32">
                       Total
                     </th>
-                    <th className="p-3 w-12 text-center"></th>
+                    <th className="p-3.5 w-12 text-center"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 bg-white">
-                  {cart.map((item, idx) => (
-                    <tr key={item.id} className="hover:bg-indigo-50/30 transition-colors">
-                      {/* Item Name */}
-                      <td className="p-3">
-                        <div className="font-semibold text-gray-900 text-sm">{item.name}</div>
-                        {item.item_group_name && (
-                          <div className="text-xs text-purple-700 font-semibold bg-purple-50 inline-block px-1.5 py-0.5 rounded mt-0.5">
-                            Bundle: {item.item_group_name}
-                          </div>
-                        )}
-                        <div className="text-xs text-gray-400 mt-0.5">Allows up to {item.sessions_allowed} sessions</div>
-                      </td>
+                  {cart.map((item, idx) => {
+                    const isPackage = item.type === "package";
 
-                      {/* Sessions Consumed */}
-                      <td className="p-3 text-center">
-                        <input
-                          type="number"
-                          min="1"
-                          max={item.sessions_allowed}
-                          className="w-16 border border-gray-200 rounded-xl text-center py-1.5 px-2 text-sm text-slate-900 bg-white font-semibold focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                          value={item.sessions_consumed}
-                          onChange={(e) => updateCartItem(idx, "sessions_consumed", parseInt(e.target.value) || 1)}
-                        />
-                      </td>
+                    if (isPackage) {
+                      const totalSessions = (item.items || []).reduce(
+                        (acc: number, s: any) => acc + (Number(s.sessions_allowed) || 1),
+                        0
+                      );
 
-                      {/* Editable Price Column */}
-                      <td className="p-3 text-right">
-                        <div className="flex items-center justify-end">
-                          <div className="relative w-32">
-                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-semibold pointer-events-none">
-                              Rs.
+                      return (
+                        <tr key={item.id} className="hover:bg-purple-50/20 transition-colors bg-purple-50/5">
+                          {/* Package Name & Included Services Breakdown */}
+                          <td className="p-3.5">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-gray-900 text-sm">{item.name}</span>
+                              <span className="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-lg uppercase tracking-wider border border-purple-200">
+                                Package Deal
+                              </span>
+                            </div>
+
+                            {/* Clean breakdown of services and sessions */}
+                            <div className="mt-2.5 bg-white border border-purple-100 rounded-xl p-3 shadow-2xs">
+                              <div className="text-[11px] font-bold text-purple-800 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                                <Package className="w-3.5 h-3.5 text-purple-600" />
+                                <span>{(item.items || []).length} Services Included</span>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {(item.items || []).map((svc: any, sIdx: number) => (
+                                  <div
+                                    key={sIdx}
+                                    className="flex items-center justify-between text-xs bg-slate-50 border border-gray-100 px-2.5 py-1.5 rounded-lg"
+                                  >
+                                    <span className="text-gray-800 font-semibold truncate max-w-[140px]" title={svc.name}>
+                                      {svc.name}
+                                    </span>
+                                    <span className="bg-indigo-50 text-indigo-700 font-bold px-2 py-0.5 rounded-md text-[11px] shrink-0 ml-1.5 border border-indigo-100">
+                                      {svc.sessions_allowed} Sessions
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Sessions Column */}
+                          <td className="p-3.5 text-center align-top pt-4">
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                              {totalSessions} Total
                             </span>
-                            <input
-                              type="number"
-                              min="0"
-                              step="any"
-                              title="Click to edit charged unit price"
-                              placeholder="0.00"
-                              className="w-full pl-8 pr-2.5 py-1.5 border border-gray-200 hover:border-indigo-400 rounded-xl text-right text-sm font-bold text-slate-900 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-2xs transition-all"
-                              value={item.unit_price === 0 ? "0" : item.unit_price}
-                              onChange={(e) => {
-                                const val = parseFloat(e.target.value);
-                                updateCartItem(idx, "unit_price", isNaN(val) ? 0 : val);
-                              }}
-                            />
+                          </td>
+
+                          {/* Single Package Price Input */}
+                          <td className="p-3.5 text-right align-top pt-3.5">
+                            <div className="flex items-center justify-end">
+                              <div className="relative w-36">
+                                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-purple-600 font-bold pointer-events-none">
+                                  Rs.
+                                </span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="any"
+                                  title="Edit Complete Package Price"
+                                  placeholder="0.00"
+                                  className="w-full pl-8 pr-2.5 py-2 border-2 border-purple-200 hover:border-purple-400 rounded-xl text-right text-sm font-black text-purple-950 bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 shadow-2xs transition-all"
+                                  value={item.package_price === 0 ? "0" : item.package_price}
+                                  onChange={(e) => {
+                                    const val = parseFloat(e.target.value);
+                                    updatePackagePrice(idx, isNaN(val) ? 0 : val);
+                                  }}
+                                />
+                              </div>
+                            </div>
+                            <div className="text-[10px] text-purple-700 font-semibold mt-1 pr-1">Package Total Price</div>
+                          </td>
+
+                          {/* Total */}
+                          <td className="p-3.5 text-right font-black text-purple-950 text-sm align-top pt-4">
+                            Rs. {Number(item.package_price || 0).toLocaleString("en-PK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </td>
+
+                          {/* Remove */}
+                          <td className="p-3.5 text-center align-top pt-4">
+                            <button
+                              type="button"
+                              onClick={() => removeFromCart(idx)}
+                              className="text-gray-400 hover:text-red-600 p-1.5 rounded-xl hover:bg-red-50 transition-colors"
+                              title="Remove package from cart"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    // Standard Individual Service Row
+                    return (
+                      <tr key={item.id} className="hover:bg-indigo-50/30 transition-colors">
+                        {/* Item Name */}
+                        <td className="p-3.5">
+                          <div className="font-semibold text-gray-900 text-sm">{item.name}</div>
+                          <div className="text-xs text-gray-400 mt-0.5">Allows up to {item.sessions_allowed} sessions</div>
+                        </td>
+
+                        {/* Sessions Consumed */}
+                        <td className="p-3.5 text-center">
+                          <input
+                            type="number"
+                            min="1"
+                            max={item.sessions_allowed}
+                            className="w-16 border border-gray-200 rounded-xl text-center py-1.5 px-2 text-sm text-slate-900 bg-white font-semibold focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-2xs"
+                            value={item.sessions_consumed}
+                            onChange={(e) => updateCartItem(idx, "sessions_consumed", parseInt(e.target.value) || 1)}
+                          />
+                        </td>
+
+                        {/* Editable Price Column */}
+                        <td className="p-3.5 text-right">
+                          <div className="flex items-center justify-end">
+                            <div className="relative w-36">
+                              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-semibold pointer-events-none">
+                                Rs.
+                              </span>
+                              <input
+                                type="number"
+                                min="0"
+                                step="any"
+                                title="Click to edit charged unit price"
+                                placeholder="0.00"
+                                className="w-full pl-8 pr-2.5 py-2 border border-gray-200 hover:border-indigo-400 rounded-xl text-right text-sm font-bold text-slate-900 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-2xs transition-all"
+                                value={item.unit_price === 0 ? "0" : item.unit_price}
+                                onChange={(e) => {
+                                  const val = parseFloat(e.target.value);
+                                  updateCartItem(idx, "unit_price", isNaN(val) ? 0 : val);
+                                }}
+                              />
+                            </div>
                           </div>
-                        </div>
-                      </td>
+                        </td>
 
-                      {/* Total */}
-                      <td className="p-3 text-right font-bold text-gray-900 text-sm">
-                        Rs. {(item.unit_price * item.quantity).toFixed(2)}
-                      </td>
+                        {/* Total */}
+                        <td className="p-3.5 text-right font-bold text-gray-900 text-sm">
+                          Rs. {((item.unit_price || 0) * (item.quantity || 1)).toLocaleString("en-PK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </td>
 
-                      {/* Remove */}
-                      <td className="p-3 text-center">
-                        <button
-                          type="button"
-                          onClick={() => removeFromCart(idx)}
-                          className="text-gray-400 hover:text-red-600 p-1.5 rounded-xl hover:bg-red-50 transition-colors"
-                          title="Remove item"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                        {/* Remove */}
+                        <td className="p-3.5 text-center">
+                          <button
+                            type="button"
+                            onClick={() => removeFromCart(idx)}
+                            className="text-gray-400 hover:text-red-600 p-1.5 rounded-xl hover:bg-red-50 transition-colors"
+                            title="Remove item"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             )}
