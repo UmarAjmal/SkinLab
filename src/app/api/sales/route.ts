@@ -118,92 +118,81 @@ export async function POST(request: Request) {
     let count = totalSales + 1;
     let invoiceNumber = `INV-${count.toString().padStart(4, "0")}`;
 
-    // 3. Fast Atomic Transaction with extended timeout
-    const result = await (prisma as any).$transaction(
-      async (tx: any) => {
-        // Ensure invoiceNumber is strictly unique
-        while (await tx.sale.findUnique({ where: { invoice_number: invoiceNumber } })) {
-          count++;
-          invoiceNumber = `INV-${count.toString().padStart(4, "0")}`;
-        }
+    // 3. Ensure invoiceNumber is strictly unique
+    while (await prisma.sale.findUnique({ where: { invoice_number: invoiceNumber } })) {
+      count++;
+      invoiceNumber = `INV-${count.toString().padStart(4, "0")}`;
+    }
 
-        // Create Sale and SaleItems
-        const sale = await tx.sale.create({
-          data: {
-            invoice_number: invoiceNumber,
-            customer_id: customer.id,
-            user_id: validUserId,
-            doctor_id: validDoctorId,
-            subtotal: subtotal,
-            discount_amount: discountAmount,
-            grand_total: grandTotal,
-            paid_amount: paidAmount,
-            payment_status: paymentStatus,
-            payment_method: data.payment_method || "Cash",
-            session_remarks: data.session_remarks || null,
-            items: {
-              create: sanitizedItems,
-            },
-          },
-          include: {
-            items: {
-              include: {
-                product: true,
-              },
-            },
-            customer: true,
-            doctor: true,
-            user: true,
-          },
-        });
-
-        // Update Customer Balance
-        const balanceDelta = grandTotal - paidAmount;
-        let newCurrentBalance = customer.current_balance;
-        let newAdvanceBalance = customer.advance_balance;
-
-        if (balanceDelta > 0) {
-          if (newAdvanceBalance >= balanceDelta) {
-            newAdvanceBalance -= balanceDelta;
-          } else {
-            const remainingOwed = balanceDelta - newAdvanceBalance;
-            newAdvanceBalance = 0;
-            newCurrentBalance += remainingOwed;
-          }
-        } else if (balanceDelta < 0) {
-          const overpaidAmount = Math.abs(balanceDelta);
-          if (newCurrentBalance >= overpaidAmount) {
-            newCurrentBalance -= overpaidAmount;
-          } else {
-            const remainingAdvance = overpaidAmount - newCurrentBalance;
-            newCurrentBalance = 0;
-            newAdvanceBalance += remainingAdvance;
-          }
-        }
-
-        const updatedCustomer = await tx.customer.update({
-          where: { id: customer.id },
-          data: {
-            current_balance: newCurrentBalance,
-            advance_balance: newAdvanceBalance,
-          },
-        });
-
-        return { sale, updatedCustomer };
+    // 4. Create Sale and SaleItems directly (eliminates PgBouncer P2028 error)
+    const sale = await prisma.sale.create({
+      data: {
+        invoice_number: invoiceNumber,
+        customer_id: customer.id,
+        user_id: validUserId,
+        doctor_id: validDoctorId,
+        subtotal: subtotal,
+        discount_amount: discountAmount,
+        grand_total: grandTotal,
+        paid_amount: paidAmount,
+        payment_status: paymentStatus,
+        payment_method: data.payment_method || "Cash",
+        session_remarks: data.session_remarks || null,
+        items: {
+          create: sanitizedItems,
+        },
       },
-      {
-        maxWait: 10000,
-        timeout: 30000,
+      include: {
+        items: {
+          include: {
+            product: true,
+          },
+        },
+        customer: true,
+        doctor: true,
+        user: true,
+      },
+    });
+
+    // 5. Update Customer Balance
+    const balanceDelta = grandTotal - paidAmount;
+    let newCurrentBalance = customer.current_balance;
+    let newAdvanceBalance = customer.advance_balance;
+
+    if (balanceDelta > 0) {
+      if (newAdvanceBalance >= balanceDelta) {
+        newAdvanceBalance -= balanceDelta;
+      } else {
+        const remainingOwed = balanceDelta - newAdvanceBalance;
+        newAdvanceBalance = 0;
+        newCurrentBalance += remainingOwed;
       }
-    );
+    } else if (balanceDelta < 0) {
+      const overpaidAmount = Math.abs(balanceDelta);
+      if (newCurrentBalance >= overpaidAmount) {
+        newCurrentBalance -= overpaidAmount;
+      } else {
+        const remainingAdvance = overpaidAmount - newCurrentBalance;
+        newCurrentBalance = 0;
+        newAdvanceBalance += remainingAdvance;
+      }
+    }
+
+    const updatedCustomer = await prisma.customer.update({
+      where: { id: customer.id },
+      data: {
+        current_balance: newCurrentBalance,
+        advance_balance: newAdvanceBalance,
+      },
+    });
 
     return NextResponse.json(
       {
-        sale: result.sale,
+        sale,
         token,
         visitCount,
         settings,
-        customer: result.updatedCustomer || customer,
+        customer: updatedCustomer || customer,
       },
       { status: 201 }
     );
