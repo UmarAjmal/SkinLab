@@ -34,17 +34,17 @@ export const authOptions: NextAuthOptions = {
           });
 
           if (!user || !user.password) {
-            console.warn(`[Auth] User not found:  {email}`);
+            console.warn(`[Auth] User not found: ${email}`);
             return null;
           }
           if (!user.is_active) {
-            console.warn(`[Auth] Inactive user login attempt:  {email}`);
+            console.warn(`[Auth] Inactive user login attempt: ${email}`);
             return null;
           }
 
           const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
           if (!isPasswordValid) {
-            console.warn(`[Auth] Invalid password for:  {email}`);
+            console.warn(`[Auth] Invalid password for: ${email}`);
             return null;
           }
 

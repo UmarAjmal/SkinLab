@@ -9,139 +9,204 @@ export async function POST(request: Request) {
   }
 
   const role = (session.user as any)?.role;
-  if (!["Admin", "Manager", "Cashier"].includes(role)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!["Admin", "Manager", "Cashier", "Doctor"].includes(role)) {
+    return NextResponse.json({ error: "Forbidden: insufficient permissions to create sales." }, { status: 403 });
   }
 
   try {
     const data = await request.json();
-    const userId = (session.user as any).id;
+    const sessionUserId = (session.user as any).id;
 
-    // Validate request
-    if (!data.customer_id || !data.items || data.items.length === 0) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    // 1. Basic validation
+    if (!data.customer_id) {
+      return NextResponse.json({ error: "Please select a patient before completing sale." }, { status: 400 });
     }
+    if (!data.items || !Array.isArray(data.items) || data.items.length === 0) {
+      return NextResponse.json({ error: "Cart is empty. Please add at least one service." }, { status: 400 });
+    }
+
+    const subtotal = Number(data.subtotal) || 0;
+    const discountAmount = Number(data.discount_amount) || 0;
+    const grandTotal = Math.max(0, Number(data.grand_total) || (subtotal - discountAmount));
+    const paidAmount = Math.max(0, Number(data.paid_amount) || 0);
 
     // Determine payment status
     let paymentStatus = "DUE";
-    if (data.paid_amount >= data.grand_total) {
+    if (paidAmount >= grandTotal) {
       paymentStatus = "PAID";
-    } else if (data.paid_amount > 0) {
+    } else if (paidAmount > 0) {
       paymentStatus = "PARTIAL";
     }
 
     // Start transaction
     const result = await (prisma as any).$transaction(async (tx: any) => {
-      // 1. Get next invoice number
-      const totalSales = await tx.sale.count();
-      const invoiceNumber = `INV-${(totalSales + 1).toString().padStart(4, '0')}`;
+      // Validate customer exists
+      const customer = await tx.customer.findUnique({ where: { id: data.customer_id } });
+      if (!customer) {
+        throw new Error("Selected patient was not found in database. Please re-select the patient.");
+      }
 
-      // 2. Create Sale and SaleItems
+      // Validate user_id exists (protect against stale JWT after DB reset)
+      let validUserId = sessionUserId;
+      const userExists = await tx.user.findUnique({ where: { id: sessionUserId } });
+      if (!userExists) {
+        const fallbackUser = await tx.user.findFirst({ where: { is_active: true } });
+        if (fallbackUser) {
+          validUserId = fallbackUser.id;
+        } else {
+          throw new Error("Your user account was not found in the database. Please log in again.");
+        }
+      }
+
+      // Validate doctor_id if provided
+      let validDoctorId: string | null = null;
+      if (data.doctor_id && typeof data.doctor_id === "string" && data.doctor_id.trim() !== "") {
+        const doctorExists = await tx.employee.findUnique({ where: { id: data.doctor_id.trim() } });
+        if (doctorExists) {
+          validDoctorId = doctorExists.id;
+        }
+      }
+
+      // Validate each item product_id
+      const sanitizedItems: any[] = [];
+      for (const item of data.items) {
+        if (!item.product_id) {
+          throw new Error(`Cart item "${item.name || "Service"}" is missing a valid product ID.`);
+        }
+        const prod = await tx.product.findUnique({ where: { id: item.product_id } });
+        if (!prod) {
+          throw new Error(`Service "${item.name || "Unknown"}" (ID: ${item.product_id}) not found in database.`);
+        }
+
+        const unitPrice = Number(item.unit_price) !== undefined && !isNaN(Number(item.unit_price))
+          ? Number(item.unit_price)
+          : (prod.selling_price || 0);
+        const quantity = Math.max(1, parseInt(item.quantity) || 1);
+        const totalPrice = Number(item.total_price) !== undefined && !isNaN(Number(item.total_price))
+          ? Number(item.total_price)
+          : unitPrice * quantity;
+
+        sanitizedItems.push({
+          product_id: prod.id,
+          quantity: quantity,
+          unit_price: unitPrice,
+          sessions_allowed: Math.max(1, parseInt(item.sessions_allowed) || 1),
+          sessions_consumed: Math.max(0, parseInt(item.sessions_consumed) || 0),
+          total_price: totalPrice,
+          item_group_name: item.item_group_name || null,
+        });
+      }
+
+      // Generate unique invoice number (with collision prevention loop)
+      const totalSales = await tx.sale.count();
+      let count = totalSales + 1;
+      let invoiceNumber = `INV-${count.toString().padStart(4, "0")}`;
+      while (await tx.sale.findUnique({ where: { invoice_number: invoiceNumber } })) {
+        count++;
+        invoiceNumber = `INV-${count.toString().padStart(4, "0")}`;
+      }
+
+      // Create Sale and SaleItems
       const sale = await tx.sale.create({
         data: {
           invoice_number: invoiceNumber,
-          customer_id: data.customer_id,
-          user_id: userId,
-          doctor_id: data.doctor_id || null,
-          subtotal: data.subtotal,
-          discount_amount: data.discount_amount,
-          grand_total: data.grand_total,
-          paid_amount: data.paid_amount || 0,
+          customer_id: customer.id,
+          user_id: validUserId,
+          doctor_id: validDoctorId,
+          subtotal: subtotal,
+          discount_amount: discountAmount,
+          grand_total: grandTotal,
+          paid_amount: paidAmount,
           payment_status: paymentStatus,
-          payment_method: data.payment_method || null,
+          payment_method: data.payment_method || "Cash",
           session_remarks: data.session_remarks || null,
           items: {
-            create: data.items.map((item: any) => ({
-              product_id: item.product_id,
-              quantity: item.quantity,
-              unit_price: item.unit_price,
-              sessions_allowed: item.sessions_allowed || 1,
-              sessions_consumed: item.sessions_consumed || 0,
-              total_price: item.total_price,
-              item_group_name: item.item_group_name || null,
-            }))
-          }
+            create: sanitizedItems,
+          },
         },
         include: {
           items: {
             include: {
-              product: true
-            }
+              product: true,
+            },
           },
           customer: true,
           doctor: true,
-          user: true
-        }
+          user: true,
+        },
       });
 
-      // 3. Update Customer Balance
-      const customer = await tx.customer.findUnique({ where: { id: data.customer_id } });
-      let updatedCustomer = customer;
-      if (customer) {
-        const balanceDelta = data.grand_total - data.paid_amount;
-        let newCurrentBalance = customer.current_balance;
-        let newAdvanceBalance = customer.advance_balance;
+      // Update Customer Balance
+      const balanceDelta = grandTotal - paidAmount;
+      let newCurrentBalance = customer.current_balance;
+      let newAdvanceBalance = customer.advance_balance;
 
-        if (balanceDelta > 0) {
-          // They underpaid, they owe us. 
-          // First try to deduct from advance balance
-          if (newAdvanceBalance >= balanceDelta) {
-            newAdvanceBalance -= balanceDelta;
-          } else {
-            const remainingOwed = balanceDelta - newAdvanceBalance;
-            newAdvanceBalance = 0;
-            newCurrentBalance += remainingOwed;
-          }
-        } else if (balanceDelta < 0) {
-          // They overpaid
-          const overpaidAmount = Math.abs(balanceDelta);
-          // First try to pay off current balance
-          if (newCurrentBalance >= overpaidAmount) {
-            newCurrentBalance -= overpaidAmount;
-          } else {
-            const remainingAdvance = overpaidAmount - newCurrentBalance;
-            newCurrentBalance = 0;
-            newAdvanceBalance += remainingAdvance;
-          }
+      if (balanceDelta > 0) {
+        // Underpaid, they owe us. First deduct from advance balance
+        if (newAdvanceBalance >= balanceDelta) {
+          newAdvanceBalance -= balanceDelta;
+        } else {
+          const remainingOwed = balanceDelta - newAdvanceBalance;
+          newAdvanceBalance = 0;
+          newCurrentBalance += remainingOwed;
         }
-
-        updatedCustomer = await tx.customer.update({
-          where: { id: data.customer_id },
-          data: {
-            current_balance: newCurrentBalance,
-            advance_balance: newAdvanceBalance
-          }
-        });
+      } else if (balanceDelta < 0) {
+        // Overpaid
+        const overpaidAmount = Math.abs(balanceDelta);
+        if (newCurrentBalance >= overpaidAmount) {
+          newCurrentBalance -= overpaidAmount;
+        } else {
+          const remainingAdvance = overpaidAmount - newCurrentBalance;
+          newCurrentBalance = 0;
+          newAdvanceBalance += remainingAdvance;
+        }
       }
 
-      // 4. Count visits for this customer
-      const visitCount = await tx.sale.count({
-        where: { customer_id: data.customer_id }
+      const updatedCustomer = await tx.customer.update({
+        where: { id: customer.id },
+        data: {
+          current_balance: newCurrentBalance,
+          advance_balance: newAdvanceBalance,
+        },
       });
 
-      // 5. Get clinic settings
+      // Count visits for this customer
+      const visitCount = await tx.sale.count({
+        where: { customer_id: customer.id },
+      });
+
+      // Get clinic settings
       const settings = await tx.companySetting.findFirst();
 
-      // 6. Generate daily token (optional to return here)
+      // Generate daily token
       const startOfDay = new Date();
       startOfDay.setHours(0, 0, 0, 0);
       const endOfDay = new Date();
       endOfDay.setHours(23, 59, 59, 999);
       const salesToday = await tx.sale.count({
         where: {
-          date: { gte: startOfDay, lte: endOfDay }
-        }
+          date: { gte: startOfDay, lte: endOfDay },
+        },
       });
-      const token = `P-${salesToday.toString().padStart(2, '0')}`;
+      const token = `P-${salesToday.toString().padStart(2, "0")}`;
 
-      return { sale, token, visitCount, settings, customer: updatedCustomer || sale.customer };
+      return {
+        sale,
+        token,
+        visitCount,
+        settings,
+        customer: updatedCustomer || sale.customer,
+      };
     });
 
     return NextResponse.json(result, { status: 201 });
   } catch (error: any) {
     console.error("POST /api/sales error:", error);
     console.error("Error details:", error?.message, error?.stack);
-    return NextResponse.json({ error: "Internal Server Error", details: error?.message }, { status: 500 });
+    return NextResponse.json(
+      { error: error?.message || "Failed to process sale", details: error?.message },
+      { status: 500 }
+    );
   }
 }
 

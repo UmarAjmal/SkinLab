@@ -414,7 +414,7 @@ export default function POSPage() {
         printThermalReceipt(receiptData);
       } else {
         const err = await res.json();
-        alert(`Error: ${err.error || "Failed to complete sale"}`);
+        alert(`Error: ${err.details || err.error || "Failed to complete sale"}`);
       }
     } catch (e: any) {
       console.error(e);
