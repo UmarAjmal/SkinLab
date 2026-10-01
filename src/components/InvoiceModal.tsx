@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, X, CheckCircle2, Clock, RotateCcw, AlertCircle } from "lucide-react";
+import { FileText, X, CheckCircle2, Clock, RotateCcw, AlertCircle, Printer } from "lucide-react";
 import dayjs from "dayjs";
+import { printThermalReceipt } from "@/lib/thermalPrinter";
 
 export const StatusBadge = ({ status }: { status: string }) => {
   if (status === "PAID") return <span className="bg-green-100 text-green-700 px-2.5 py-0.5 rounded-full text-xs font-semibold flex items-center w-fit"><CheckCircle2 className="w-3 h-3 mr-1" /> PAID</span>;
@@ -125,8 +126,8 @@ export default function InvoiceModal({
                     <tr key={item.id}>
                       <td className="py-3 text-sm font-medium text-gray-900">{item.product?.name || "Unknown Product"}</td>
                       <td className="py-3 text-sm text-center text-gray-600">{item.quantity}</td>
-                      <td className="py-3 text-sm text-right text-gray-600"> {item.unit_price.toFixed(2)}</td>
-                      <td className="py-3 text-sm text-right font-medium text-gray-900"> {item.total_price.toFixed(2)}</td>
+                      <td className="py-3 text-sm text-right text-gray-600">Rs. {item.unit_price.toFixed(2)}</td>
+                      <td className="py-3 text-sm text-right font-medium text-gray-900">Rs. {item.total_price.toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -135,11 +136,11 @@ export default function InvoiceModal({
               <div className="w-64 ml-auto space-y-2 text-sm">
                 <div className="flex justify-between font-bold text-lg text-gray-900 border-t border-gray-200 pt-2 mt-2">
                   <span>Grand Total</span>
-                  <span> {selectedSale.grand_total.toFixed(2)}</span>
+                  <span>Rs. {selectedSale.grand_total.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-lg text-indigo-700 border-t border-gray-200 pt-2 mt-2">
                   <span>Balance Due</span>
-                  <span> {(selectedSale.grand_total - (selectedSale.paid_amount || 0)).toFixed(2)}</span>
+                  <span>Rs. {(selectedSale.grand_total - (selectedSale.paid_amount || 0)).toFixed(2)}</span>
                 </div>
               </div>
             </>
@@ -214,7 +215,7 @@ export default function InvoiceModal({
               <div className="flex justify-end pt-4 border-t border-gray-200">
                 <div className="text-right">
                   <div className="text-sm text-gray-500">Total Refund Amount</div>
-                  <div className="text-2xl font-bold text-red-600"> {calculateRefundTotal().toFixed(2)}</div>
+                  <div className="text-2xl font-bold text-red-600">Rs. {calculateRefundTotal().toFixed(2)}</div>
                 </div>
               </div>
             </div>
@@ -226,8 +227,51 @@ export default function InvoiceModal({
         <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex justify-end gap-3">
           {!isRefundMode ? (
             <>
+              <button
+                onClick={async () => {
+                  try {
+                    const settingsRes = await fetch("/api/settings");
+                    const clinic = settingsRes.ok ? await settingsRes.json() : null;
+                    printThermalReceipt({
+                      clinic,
+                      invoiceNumber: selectedSale.invoice_number,
+                      date: selectedSale.date,
+                      customer: {
+                        name: selectedSale.customer?.name || "Walk-in Patient",
+                        phone: selectedSale.customer?.phone || null,
+                        medical_id: selectedSale.customer?.medical_id || null,
+                        current_balance: selectedSale.customer?.current_balance,
+                      },
+                      doctor: selectedSale.doctor || null,
+                      tokenNumber: selectedSale.token || "P-01",
+                      items: (selectedSale.items || []).map((it: any) => ({
+                        name: it.product?.name || "Service",
+                        product_name: it.product?.name,
+                        item_group_name: it.item_group_name,
+                        quantity: it.quantity,
+                        unit_price: it.unit_price,
+                        total_price: it.total_price,
+                        sessions_allowed: it.sessions_allowed,
+                      })),
+                      subtotal: selectedSale.subtotal || selectedSale.grand_total,
+                      discount: selectedSale.discount_amount || 0,
+                      grandTotal: selectedSale.grand_total,
+                      paidAmount: selectedSale.paid_amount || 0,
+                      balanceDue: selectedSale.grand_total - (selectedSale.paid_amount || 0),
+                      remainingDue: selectedSale.customer?.current_balance,
+                      paymentMethod: selectedSale.payment_method || "Cash",
+                    });
+                  } catch (e) {
+                    window.print();
+                  }
+                }}
+                className="px-4 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-lg hover:bg-indigo-100 font-semibold text-sm flex items-center gap-1.5 transition-colors"
+              >
+                <Printer className="w-4 h-4 text-indigo-600" /> Print 80mm Slip
+              </button>
+
               <button onClick={() => window.print()} className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-sm flex items-center">
-                <FileText className="w-4 h-4 mr-2" /> Print
+                <FileText className="w-4 h-4 mr-2" /> Full Page Print
               </button>
 
               {(userRole === "Admin" || userRole === "Manager") && onRefundComplete && (

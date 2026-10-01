@@ -63,12 +63,20 @@ export async function POST(request: Request) {
           }
         },
         include: {
-          items: true
+          items: {
+            include: {
+              product: true
+            }
+          },
+          customer: true,
+          doctor: true,
+          user: true
         }
       });
 
       // 3. Update Customer Balance
       const customer = await tx.customer.findUnique({ where: { id: data.customer_id } });
+      let updatedCustomer = customer;
       if (customer) {
         const balanceDelta = data.grand_total - data.paid_amount;
         let newCurrentBalance = customer.current_balance;
@@ -97,7 +105,7 @@ export async function POST(request: Request) {
           }
         }
 
-        await tx.customer.update({
+        updatedCustomer = await tx.customer.update({
           where: { id: data.customer_id },
           data: {
             current_balance: newCurrentBalance,
@@ -106,7 +114,15 @@ export async function POST(request: Request) {
         });
       }
 
-      // 4. Generate daily token (optional to return here)
+      // 4. Count visits for this customer
+      const visitCount = await tx.sale.count({
+        where: { customer_id: data.customer_id }
+      });
+
+      // 5. Get clinic settings
+      const settings = await tx.companySetting.findFirst();
+
+      // 6. Generate daily token (optional to return here)
       const startOfDay = new Date();
       startOfDay.setHours(0, 0, 0, 0);
       const endOfDay = new Date();
@@ -118,7 +134,7 @@ export async function POST(request: Request) {
       });
       const token = `P-${salesToday.toString().padStart(2, '0')}`;
 
-      return { sale, token };
+      return { sale, token, visitCount, settings, customer: updatedCustomer || sale.customer };
     });
 
     return NextResponse.json(result, { status: 201 });

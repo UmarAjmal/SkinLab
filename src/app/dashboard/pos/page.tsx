@@ -26,8 +26,10 @@ import {
   Lock,
   Banknote,
   Clock,
-  Check
+  Check,
+  Printer
 } from "lucide-react";
+import { printThermalReceipt, ThermalReceiptData } from "@/lib/thermalPrinter";
 
 export default function POSPage() {
   // Data States
@@ -58,6 +60,9 @@ export default function POSPage() {
   const [nextInvoice, setNextInvoice] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [successData, setSuccessData] = useState<any>(null);
+  const [clinicSettings, setClinicSettings] = useState<any>(null);
+  const [lastReceiptData, setLastReceiptData] = useState<ThermalReceiptData | null>(null);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   // Quick Add Patient Modal State
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
@@ -89,12 +94,13 @@ export default function POSPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [patRes, empRes, prodRes, dealRes, tokenRes] = await Promise.all([
+        const [patRes, empRes, prodRes, dealRes, tokenRes, settingsRes] = await Promise.all([
           fetch("/api/patients"),
           fetch("/api/employees"),
           fetch("/api/products"),
           fetch("/api/deals"),
-          fetch("/api/sales/next-invoice")
+          fetch("/api/sales/next-invoice"),
+          fetch("/api/settings")
         ]);
 
         setPatients((await patRes.json()) || []);
@@ -105,6 +111,10 @@ export default function POSPage() {
         const tokenData = await tokenRes.json();
         setNextToken(tokenData?.token || "");
         setNextInvoice(tokenData?.invoiceNumber || "");
+
+        if (settingsRes.ok) {
+          setClinicSettings(await settingsRes.json());
+        }
       } catch (error) {
         console.error("Error fetching POS data:", error);
       }
@@ -328,6 +338,7 @@ export default function POSPage() {
     if (!selectedPatientId) return alert("Please select a patient.");
     if (cart.length === 0) return alert("Cart is empty.");
 
+    setIsCheckingOut(true);
     try {
       const finalPaidAmount = paymentMethod === "Credit" ? 0 : paidAmount;
 
@@ -359,15 +370,57 @@ export default function POSPage() {
 
       if (res.ok) {
         const data = await res.json();
-        setSuccessData({ ...data, invoice: nextInvoice, token: data.token || nextToken });
+        const activeDoctor = employees.find((e) => e.id === selectedDoctorId) || data.sale?.doctor || null;
+        const activePatient = patients.find((p) => p.id === selectedPatientId) || data.customer || data.sale?.customer;
+
+        const receiptData: ThermalReceiptData = {
+          clinic: data.settings || clinicSettings,
+          invoiceNumber: data.sale?.invoice_number || nextInvoice,
+          date: data.sale?.date || new Date(),
+          customer: {
+            name: activePatient?.name || "Walk-in Patient",
+            phone: activePatient?.phone || null,
+            medical_id: activePatient?.medical_id || null,
+            current_balance: data.customer?.current_balance ?? activePatient?.current_balance ?? 0,
+            advance_balance: data.customer?.advance_balance ?? activePatient?.advance_balance ?? 0,
+          },
+          doctor: activeDoctor,
+          visitNo: data.visitCount || 1,
+          tokenNumber: data.token || nextToken,
+          items: cart.map((c) => ({
+            name: c.name,
+            product_name: c.name,
+            item_group_name: c.item_group_name,
+            quantity: c.quantity,
+            unit_price: c.unit_price,
+            total_price: c.unit_price * c.quantity,
+            sessions_allowed: c.sessions_allowed,
+            sessions_consumed: c.sessions_consumed,
+          })),
+          subtotal: subtotal,
+          discount: discountAmount,
+          grandTotal: grandTotal,
+          paidAmount: finalPaidAmount,
+          balanceDue: Math.max(0, grandTotal - finalPaidAmount),
+          remainingDue: data.customer?.current_balance ?? (grandTotal - finalPaidAmount),
+          paymentMethod: paymentMethod,
+        };
+
+        setLastReceiptData(receiptData);
+        setSuccessData({ ...data, invoice: receiptData.invoiceNumber, token: receiptData.tokenNumber });
         setIsSuccess(true);
+
+        // Open and print 80mm thermal invoice directly in a new tab/popup
+        printThermalReceipt(receiptData);
       } else {
         const err = await res.json();
-        alert(`Error: ${err.error}`);
+        alert(`Error: ${err.error || "Failed to complete sale"}`);
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
       alert("An error occurred during checkout.");
+    } finally {
+      setIsCheckingOut(false);
     }
   };
 
@@ -383,6 +436,7 @@ export default function POSPage() {
     setServiceSearch("");
     setIsSuccess(false);
     setSuccessData(null);
+    setLastReceiptData(null);
 
     // Refresh token and patients to get updated balances
     const [patRes, tokenRes] = await Promise.all([
@@ -405,33 +459,56 @@ export default function POSPage() {
 
   if (isSuccess && successData) {
     return (
-      <div className="max-w-2xl mx-auto mt-12 bg-white rounded-2xl shadow-md border border-gray-100 p-8 text-center animate-in fade-in zoom-in-95">
-        <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+      <div className="max-w-2xl mx-auto mt-10 bg-white rounded-2xl shadow-xl border border-gray-100 p-8 text-center animate-in fade-in zoom-in-95">
+        <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-5 shadow-inner">
           <CheckCircle2 className="w-10 h-10" />
         </div>
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Sale Completed!</h2>
-        <p className="text-gray-500 mb-8">Invoice and queue token generated successfully.</p>
+        <h2 className="text-3xl font-extrabold text-gray-900 mb-1.5">Sale Completed!</h2>
+        <p className="text-sm text-gray-500 mb-6">
+          80mm Thermal Receipt has been generated &amp; sent to print.
+        </p>
 
-        <div className="bg-gray-50 rounded-2xl p-6 mb-8 max-w-sm mx-auto space-y-4 border border-gray-100">
-          <div className="flex justify-between items-center border-b border-gray-200/80 pb-4">
-            <span className="text-gray-500 font-medium text-sm">Queue Token</span>
-            <span className="text-3xl font-black text-indigo-600">{successData.token}</span>
+        <div className="bg-gradient-to-br from-gray-50 to-indigo-50/30 rounded-2xl p-6 mb-8 max-w-md mx-auto space-y-3.5 border border-indigo-100/60 shadow-sm text-left">
+          <div className="flex justify-between items-center border-b border-gray-200/80 pb-3">
+            <span className="text-gray-500 font-semibold text-xs uppercase tracking-wider">Queue Token</span>
+            <span className="text-3xl font-black text-indigo-600 tracking-wide">{successData.token}</span>
           </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-500 font-medium text-sm">Invoice Number</span>
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-gray-500 font-medium">Invoice Number</span>
             <span className="font-bold text-gray-900">{successData.invoice}</span>
+          </div>
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-gray-500 font-medium">Patient</span>
+            <span className="font-bold text-gray-900">
+              {lastReceiptData?.customer?.name} {lastReceiptData?.customer?.medical_id ? `(${lastReceiptData.customer.medical_id})` : ""}
+            </span>
+          </div>
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-gray-500 font-medium">Total Bill</span>
+            <span className="font-bold text-gray-900">Rs. {lastReceiptData?.grandTotal?.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-gray-500 font-medium">Payment Mode</span>
+            <span className="font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">
+              {lastReceiptData?.paymentMethod}
+            </span>
           </div>
         </div>
 
-        <div className="flex space-x-4 justify-center">
-          <button className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold flex items-center shadow-sm">
-            <FileText className="w-5 h-5 mr-2 text-indigo-600" /> Print Invoice
+        <div className="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
+          <button
+            onClick={() => lastReceiptData && printThermalReceipt(lastReceiptData)}
+            className="flex-1 py-3 px-5 bg-white border border-indigo-200 text-indigo-700 rounded-xl hover:bg-indigo-50 font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-all"
+          >
+            <Printer className="w-4 h-4 text-indigo-600" />
+            <span>Re-Print 80mm Receipt</span>
           </button>
           <button
             onClick={resetPOS}
-            className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-semibold shadow-md shadow-indigo-600/30"
+            className="flex-1 py-3 px-5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-bold text-sm shadow-md shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all"
           >
-            New Sale
+            <Plus className="w-4 h-4" />
+            <span>Next Customer</span>
           </button>
         </div>
       </div>
@@ -1012,11 +1089,20 @@ export default function POSPage() {
           <button
             type="button"
             onClick={completeSale}
-            disabled={!selectedPatientId || cart.length === 0}
+            disabled={!selectedPatientId || cart.length === 0 || isCheckingOut}
             className="w-full py-4 mt-6 bg-indigo-600 text-white rounded-xl font-bold text-base hover:bg-indigo-700 active:scale-98 shadow-md shadow-indigo-600/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
           >
-            <Check className="w-5 h-5" />
-            <span>Complete Sale &amp; Print</span>
+            {isCheckingOut ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Processing &amp; Printing...</span>
+              </>
+            ) : (
+              <>
+                <Printer className="w-5 h-5" />
+                <span>Complete Sale &amp; Print (80mm)</span>
+              </>
+            )}
           </button>
         </div>
       </div>
