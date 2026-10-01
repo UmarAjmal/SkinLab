@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth";
-
-const prisma = new PrismaClient();
 
 export async function GET() {
   try {
     await requireRole(["Admin", "Manager"]);
     const returns = await prisma.returnSale.findMany({
+      take: 100,
       orderBy: { date: "desc" },
       include: {
         sale: {

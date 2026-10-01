@@ -90,8 +90,19 @@ export default function POSPage() {
   const [packageSaving, setPackageSaving] = useState(false);
   const [packageError, setPackageError] = useState("");
 
-  // Fetch initial data
+  // Fetch initial data with instant Stale-While-Revalidate local caching
   useEffect(() => {
+    try {
+      const cachedProd = sessionStorage.getItem("pos_cache_products");
+      const cachedDeals = sessionStorage.getItem("pos_cache_deals");
+      const cachedEmps = sessionStorage.getItem("pos_cache_employees");
+      const cachedSettings = sessionStorage.getItem("pos_cache_settings");
+      if (cachedProd) setProducts(JSON.parse(cachedProd));
+      if (cachedDeals) setDeals(JSON.parse(cachedDeals));
+      if (cachedEmps) setEmployees(JSON.parse(cachedEmps));
+      if (cachedSettings) setClinicSettings(JSON.parse(cachedSettings));
+    } catch (_) {}
+
     const fetchData = async () => {
       try {
         const [patRes, empRes, prodRes, dealRes, tokenRes, settingsRes] = await Promise.all([
@@ -103,17 +114,35 @@ export default function POSPage() {
           fetch("/api/settings")
         ]);
 
-        setPatients((await patRes.json()) || []);
-        setEmployees((await empRes.json()) || []);
-        setProducts((await prodRes.json()) || []);
-        setDeals((await dealRes.json()) || []);
+        const [patData, empData, prodData, dealData, tokenData, setSettings] = await Promise.all([
+          patRes.ok ? patRes.json() : [],
+          empRes.ok ? empRes.json() : [],
+          prodRes.ok ? prodRes.json() : [],
+          dealRes.ok ? dealRes.json() : [],
+          tokenRes.ok ? tokenRes.json() : null,
+          settingsRes.ok ? settingsRes.json() : null,
+        ]);
 
-        const tokenData = await tokenRes.json();
-        setNextToken(tokenData?.token || "");
-        setNextInvoice(tokenData?.invoiceNumber || "");
-
-        if (settingsRes.ok) {
-          setClinicSettings(await settingsRes.json());
+        if (Array.isArray(patData)) setPatients(patData);
+        if (Array.isArray(empData)) {
+          setEmployees(empData);
+          try { sessionStorage.setItem("pos_cache_employees", JSON.stringify(empData)); } catch (_) {}
+        }
+        if (Array.isArray(prodData)) {
+          setProducts(prodData);
+          try { sessionStorage.setItem("pos_cache_products", JSON.stringify(prodData)); } catch (_) {}
+        }
+        if (Array.isArray(dealData)) {
+          setDeals(dealData);
+          try { sessionStorage.setItem("pos_cache_deals", JSON.stringify(dealData)); } catch (_) {}
+        }
+        if (tokenData) {
+          setNextToken(tokenData?.token || "");
+          setNextInvoice(tokenData?.invoiceNumber || "");
+        }
+        if (setSettings) {
+          setClinicSettings(setSettings);
+          try { sessionStorage.setItem("pos_cache_settings", JSON.stringify(setSettings)); } catch (_) {}
         }
       } catch (error) {
         console.error("Error fetching POS data:", error);

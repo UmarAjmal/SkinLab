@@ -216,6 +216,8 @@ export async function GET(request: Request) {
     const status = searchParams.get("status");
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
+    const limitParam = searchParams.get("limit");
+    const take = limitParam ? Math.min(500, Math.max(1, parseInt(limitParam) || 100)) : 100;
 
     let whereClause: any = {};
 
@@ -239,11 +241,12 @@ export async function GET(request: Request) {
 
     const sales = await prisma.sale.findMany({
       where: whereClause,
+      take,
       orderBy: { date: "desc" },
       include: {
         customer: true,
-        doctor: true,
-        user: true,
+        doctor: { select: { id: true, name: true } },
+        user: { select: { id: true, email: true } },
         items: {
           include: {
             product: true

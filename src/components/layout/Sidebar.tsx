@@ -161,6 +161,7 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
               <Link
                 key={link.href}
                 href={link.href}
+                prefetch={true}
                 onClick={closeMobileSidebar}
                 className={`
                   flex items-center px-3.5 py-3 rounded-xl font-medium text-sm transition-all duration-150
@@ -258,6 +259,7 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
               <div key={link.href} className="relative group">
                 <Link
                   href={link.href}
+                  prefetch={true}
                   onClick={() => {
                     if (isCollapsed) {
                       setIsHovered(false);
