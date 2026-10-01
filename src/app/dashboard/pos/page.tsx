@@ -18,7 +18,11 @@ import {
   MapPin,
   IdCard,
   Sparkles,
-  Loader2
+  Loader2,
+  Package,
+  Layers,
+  HelpCircle,
+  Tag
 } from "lucide-react";
 
 export default function POSPage() {
@@ -62,6 +66,20 @@ export default function POSPage() {
   });
   const [patientSaving, setPatientSaving] = useState(false);
   const [patientError, setPatientError] = useState("");
+
+  // Custom Package / Deal Modal State
+  const [isPackageModalOpen, setIsPackageModalOpen] = useState(false);
+  const [packageForm, setPackageForm] = useState<{
+    name: string;
+    price: string;
+    items: Array<{ product_id: string; sessions: number }>;
+  }>({
+    name: "",
+    price: "",
+    items: [{ product_id: "", sessions: 1 }],
+  });
+  const [packageSaving, setPackageSaving] = useState(false);
+  const [packageError, setPackageError] = useState("");
 
   // Fetch initial data
   useEffect(() => {
@@ -143,7 +161,6 @@ export default function POSPage() {
     setPatientError("");
 
     try {
-      // If CNIC is provided, append it to address/details if no direct column exists
       let finalAddress = newPatient.address?.trim() || "";
       if (newPatient.cnic?.trim()) {
         finalAddress = finalAddress
@@ -181,26 +198,81 @@ export default function POSPage() {
     }
   };
 
+  const handleCreatePackage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!packageForm.name.trim()) {
+      setPackageError("Package name is required");
+      return;
+    }
+
+    const validItems = packageForm.items.filter((it) => it.product_id);
+    if (validItems.length === 0) {
+      setPackageError("Please select at least one service for the package");
+      return;
+    }
+
+    setPackageSaving(true);
+    setPackageError("");
+
+    try {
+      const priceNum = packageForm.price !== "" ? parseFloat(packageForm.price) : 0;
+
+      const res = await fetch("/api/deals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: packageForm.name.trim(),
+          price: isNaN(priceNum) ? 0 : priceNum,
+          items: validItems.map((it) => ({
+            product_id: it.product_id,
+            sessions: Number(it.sessions) || 1,
+          })),
+        }),
+      });
+
+      if (res.ok) {
+        const createdDeal = await res.json();
+        // Update deals state
+        setDeals((prev) => [createdDeal, ...prev]);
+        // Automatically add to POS cart
+        addToCart({ ...createdDeal, type: "deal" });
+        // Close modal and reset form
+        setIsPackageModalOpen(false);
+        setPackageForm({ name: "", price: "", items: [{ product_id: "", sessions: 1 }] });
+      } else {
+        const err = await res.json();
+        setPackageError(err.error || "Failed to create custom package");
+      }
+    } catch (e: any) {
+      console.error(e);
+      setPackageError(e.message || "Failed to create custom package");
+    } finally {
+      setPackageSaving(false);
+    }
+  };
+
   const addToCart = (item: any) => {
-    if (item.type === "deal") {
+    if (item.type === "deal" || (item.items && Array.isArray(item.items))) {
       // Expand deal into component products
       const dealItems = item.items.map((di: any) => {
-        const product = products.find((p) => p.id === di.product_id);
+        const product = di.product || products.find((p) => p.id === di.product_id);
+        const totalDealPrice = Number(item.total_price !== undefined ? item.total_price : item.price || 0);
+        const itemCount = item.items.length || 1;
         return {
           id: `${item.id}-${di.product_id}-${Date.now()}-${Math.random()}`,
           product_id: di.product_id,
           name: `${item.name} - ${product?.name || "Service"}`,
-          unit_price: item.total_price / (item.items.length || 1),
+          unit_price: totalDealPrice / itemCount,
           quantity: 1,
-          sessions_allowed: di.sessions_allowed || 1,
+          sessions_allowed: di.sessions_allowed || di.sessions || 1,
           sessions_consumed: 1,
           item_group_name: item.name,
         };
       });
-      setCart([...cart, ...dealItems]);
+      setCart((prev) => [...prev, ...dealItems]);
     } else {
-      setCart([
-        ...cart,
+      setCart((prev) => [
+        ...prev,
         {
           id: `${item.id}-${Date.now()}-${Math.random()}`,
           product_id: item.id,
@@ -295,6 +367,14 @@ export default function POSPage() {
     setNextToken(tokenData?.token || "");
     setNextInvoice(tokenData?.invoiceNumber || "");
   };
+
+  // Estimate total sum of selected services in custom package builder
+  const packageEstimatedSum = useMemo(() => {
+    return packageForm.items.reduce((sum, item) => {
+      const p = products.find((prod) => prod.id === item.product_id);
+      return sum + (p?.selling_price || 0) * (item.sessions || 1);
+    }, 0);
+  }, [packageForm.items, products]);
 
   if (isSuccess && successData) {
     return (
@@ -525,68 +605,101 @@ export default function POSPage() {
             </span>
           </div>
 
-          <div className="relative mb-5">
-            <Search className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-slate-900 bg-white font-medium placeholder:text-gray-400"
-              placeholder="Search services, procedures, or package deals to add..."
-              value={serviceSearch}
-              onChange={(e) => setServiceSearch(e.target.value)}
-            />
+          {/* Search bar with Instant "+" Create Custom Package Button */}
+          <div className="flex items-center gap-2 mb-5">
+            <div className="relative flex-1">
+              <Search className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-slate-900 bg-white font-medium placeholder:text-gray-400 shadow-2xs"
+                placeholder="Search services, procedures, or package deals to add..."
+                value={serviceSearch}
+                onChange={(e) => setServiceSearch(e.target.value)}
+              />
+              {serviceSearch && (
+                <button
+                  type="button"
+                  onClick={() => setServiceSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
 
-            {serviceSearch && (
-              <div className="absolute z-10 w-full mt-2 bg-white border border-gray-100 shadow-xl rounded-2xl overflow-hidden max-h-60 overflow-y-auto divide-y divide-gray-50">
-                {filteredServices.map((s: any) => (
-                  <div
-                    key={s.id + s.type}
-                    onClick={() => addToCart(s)}
-                    className="p-3.5 hover:bg-indigo-50/70 cursor-pointer flex justify-between items-center transition-colors"
-                  >
-                    <div>
-                      <div className="font-semibold text-gray-900 flex items-center gap-2">
-                        {s.name}
-                        {s.type === "deal" && (
-                          <span className="bg-purple-100 text-purple-700 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
-                            Deal
-                          </span>
-                        )}
+              {/* Service Search Dropdown */}
+              {serviceSearch && (
+                <div className="absolute z-20 w-full mt-2 bg-white border border-gray-100 shadow-xl rounded-2xl overflow-hidden max-h-60 overflow-y-auto divide-y divide-gray-50">
+                  {filteredServices.map((s: any) => (
+                    <div
+                      key={s.id + s.type}
+                      onClick={() => addToCart(s)}
+                      className="p-3.5 hover:bg-indigo-50/70 cursor-pointer flex justify-between items-center transition-colors"
+                    >
+                      <div>
+                        <div className="font-semibold text-gray-900 flex items-center gap-2">
+                          {s.name}
+                          {s.type === "deal" && (
+                            <span className="bg-purple-100 text-purple-700 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                              Package / Deal
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          Rs. {(s.selling_price !== undefined ? s.selling_price : s.total_price || 0).toFixed(2)}
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-500 mt-0.5">
-                        Rs. {(s.selling_price || s.total_price || 0).toFixed(2)}
+                      <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-colors">
+                        <Plus className="w-4 h-4" />
                       </div>
                     </div>
-                    <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-colors">
-                      <Plus className="w-4 h-4" />
+                  ))}
+                  {filteredServices.length === 0 && (
+                    <div className="p-4 text-center text-gray-500 text-sm">
+                      No matching services found.
                     </div>
-                  </div>
-                ))}
-                {filteredServices.length === 0 && (
-                  <div className="p-4 text-center text-gray-500 text-sm">
-                    No services found.
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Custom Package Builder Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setPackageForm({
+                  name: "",
+                  price: "",
+                  items: [{ product_id: "", sessions: 1 }]
+                });
+                setPackageError("");
+                setIsPackageModalOpen(true);
+              }}
+              className="h-12 px-3.5 sm:px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 active:scale-95 text-white font-semibold rounded-xl shadow-md shadow-purple-600/20 flex items-center gap-1.5 shrink-0 transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+              title="Create Custom Package / Deal for Customer"
+            >
+              <Package className="w-5 h-5" />
+              <span className="hidden sm:inline text-sm">New Package</span>
+            </button>
           </div>
 
+          {/* Cart Table with Editable Price */}
           <div className="flex-1 overflow-x-auto border border-gray-100 rounded-xl bg-gray-50/40 w-full min-w-0">
             {cart.length === 0 ? (
               <div className="h-full min-h-[160px] flex flex-col items-center justify-center text-gray-400 p-8">
                 <ShoppingCart className="w-12 h-12 mb-3 text-gray-300" />
                 <p className="font-medium text-sm">No items in cart.</p>
-                <p className="text-xs text-gray-400 mt-1">Search services above to add to cart.</p>
+                <p className="text-xs text-gray-400 mt-1">Search services or create a custom package above to add to cart.</p>
               </div>
             ) : (
-              <table className="w-full text-left border-collapse min-w-[550px]">
+              <table className="w-full text-left border-collapse min-w-[580px]">
                 <thead className="bg-white sticky top-0 shadow-2xs border-b border-gray-200">
                   <tr>
                     <th className="p-3 font-semibold text-xs text-gray-600 uppercase tracking-wider">Item / Service</th>
-                    <th className="p-3 font-semibold text-xs text-gray-600 uppercase tracking-wider w-28 text-center">
-                      Sessions Now
+                    <th className="p-3 font-semibold text-xs text-gray-600 uppercase tracking-wider w-24 text-center">
+                      Sessions
                     </th>
-                    <th className="p-3 font-semibold text-xs text-gray-600 uppercase tracking-wider text-right w-28">
-                      Price
+                    <th className="p-3 font-semibold text-xs text-gray-600 uppercase tracking-wider text-right w-36">
+                      Unit Price (Editable)
                     </th>
                     <th className="p-3 font-semibold text-xs text-gray-600 uppercase tracking-wider text-right w-28">
                       Total
@@ -597,29 +710,59 @@ export default function POSPage() {
                 <tbody className="divide-y divide-gray-100 bg-white">
                   {cart.map((item, idx) => (
                     <tr key={item.id} className="hover:bg-indigo-50/30 transition-colors">
+                      {/* Item Name */}
                       <td className="p-3">
                         <div className="font-semibold text-gray-900 text-sm">{item.name}</div>
                         {item.item_group_name && (
-                          <div className="text-xs text-indigo-600 font-medium">Bundle: {item.item_group_name}</div>
+                          <div className="text-xs text-purple-700 font-semibold bg-purple-50 inline-block px-1.5 py-0.5 rounded mt-0.5">
+                            Bundle: {item.item_group_name}
+                          </div>
                         )}
-                        <div className="text-xs text-gray-400">Allows up to {item.sessions_allowed} sessions</div>
+                        <div className="text-xs text-gray-400 mt-0.5">Allows up to {item.sessions_allowed} sessions</div>
                       </td>
+
+                      {/* Sessions Consumed */}
                       <td className="p-3 text-center">
                         <input
                           type="number"
                           min="1"
                           max={item.sessions_allowed}
-                          className="w-20 border border-gray-200 rounded-lg text-center py-1 px-2 text-sm text-slate-900 bg-white font-semibold focus:ring-2 focus:ring-indigo-500"
+                          className="w-16 border border-gray-200 rounded-lg text-center py-1.5 px-2 text-sm text-slate-900 bg-white font-semibold focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                           value={item.sessions_consumed}
                           onChange={(e) => updateCartItem(idx, "sessions_consumed", parseInt(e.target.value) || 1)}
                         />
                       </td>
-                      <td className="p-3 text-right font-medium text-gray-600 text-sm">
-                        Rs. {item.unit_price.toFixed(2)}
+
+                      {/* Editable Price Column */}
+                      <td className="p-3 text-right">
+                        <div className="flex items-center justify-end">
+                          <div className="relative w-32">
+                            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-semibold pointer-events-none">
+                              Rs.
+                            </span>
+                            <input
+                              type="number"
+                              min="0"
+                              step="any"
+                              title="Click to edit charged unit price"
+                              placeholder="0.00"
+                              className="w-full pl-8 pr-2.5 py-1.5 border border-gray-200 hover:border-indigo-400 rounded-lg text-right text-sm font-bold text-slate-900 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-2xs transition-all"
+                              value={item.unit_price === 0 ? "0" : item.unit_price}
+                              onChange={(e) => {
+                                const val = parseFloat(e.target.value);
+                                updateCartItem(idx, "unit_price", isNaN(val) ? 0 : val);
+                              }}
+                            />
+                          </div>
+                        </div>
                       </td>
+
+                      {/* Total */}
                       <td className="p-3 text-right font-bold text-gray-900 text-sm">
                         Rs. {(item.unit_price * item.quantity).toFixed(2)}
                       </td>
+
+                      {/* Remove */}
                       <td className="p-3 text-center">
                         <button
                           type="button"
@@ -793,7 +936,7 @@ export default function POSPage() {
                   type="text"
                   autoFocus
                   placeholder="e.g. Fatima Ali"
-                  className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 bg-white"
+                  className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 bg-white font-medium"
                   value={newPatient.name}
                   onChange={(e) => setNewPatient({ ...newPatient, name: e.target.value })}
                 />
@@ -810,7 +953,7 @@ export default function POSPage() {
                     required
                     type="tel"
                     placeholder="e.g. 0300-1234567"
-                    className="w-full pl-10 pr-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 bg-white"
+                    className="w-full pl-10 pr-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 bg-white font-medium"
                     value={newPatient.phone}
                     onChange={(e) => setNewPatient({ ...newPatient, phone: e.target.value })}
                   />
@@ -830,7 +973,7 @@ export default function POSPage() {
                   <input
                     type="text"
                     placeholder="e.g. 35201-1234567-1 (Optional)"
-                    className="w-full pl-10 pr-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 bg-white"
+                    className="w-full pl-10 pr-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 bg-white font-medium"
                     value={newPatient.cnic}
                     onChange={(e) => setNewPatient({ ...newPatient, cnic: e.target.value })}
                   />
@@ -850,7 +993,7 @@ export default function POSPage() {
                   <input
                     type="email"
                     placeholder="patient@example.com"
-                    className="w-full pl-10 pr-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 bg-white"
+                    className="w-full pl-10 pr-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 bg-white font-medium"
                     value={newPatient.email}
                     onChange={(e) => setNewPatient({ ...newPatient, email: e.target.value })}
                   />
@@ -870,7 +1013,7 @@ export default function POSPage() {
                   <input
                     type="text"
                     placeholder="e.g. Lahore / DHA Phase 5"
-                    className="w-full pl-10 pr-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 bg-white"
+                    className="w-full pl-10 pr-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 bg-white font-medium"
                     value={newPatient.address}
                     onChange={(e) => setNewPatient({ ...newPatient, address: e.target.value })}
                   />
@@ -900,6 +1043,200 @@ export default function POSPage() {
                     <>
                       <Sparkles className="w-4 h-4" />
                       Save &amp; Select
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================== */}
+      {/* CUSTOM PACKAGE / DEAL BUILDER MODAL (INSTANT POS)     */}
+      {/* ==================================================== */}
+      {isPackageModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden mx-auto border border-gray-100 max-h-[90vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-purple-50 via-indigo-50 to-violet-50 shrink-0">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-purple-600/20">
+                  <Package className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 text-base">Create Custom Package / Deal</h3>
+                  <p className="text-xs text-purple-700 font-medium">Build tailored treatment bundle for patient</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsPackageModalOpen(false)}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <form onSubmit={handleCreatePackage} className="p-6 space-y-4 overflow-y-auto flex-1">
+              {packageError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
+                  {packageError}
+                </div>
+              )}
+
+              {/* Package Name */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Package / Deal Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  required
+                  type="text"
+                  autoFocus
+                  placeholder="e.g. Custom Bridal Glow Package (3 Sessions)"
+                  className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-slate-900 bg-white font-medium"
+                  value={packageForm.name}
+                  onChange={(e) => setPackageForm({ ...packageForm, name: e.target.value })}
+                />
+              </div>
+
+              {/* Total Selling Price (Optional) */}
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Total Package Selling Price (Rs.)
+                  </label>
+                  <span className="text-[11px] text-gray-400 font-medium">(Optional)</span>
+                </div>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-semibold pointer-events-none">
+                    Rs.
+                  </span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="any"
+                    placeholder={`e.g. ${packageEstimatedSum > 0 ? packageEstimatedSum : "0.00"} (Optional)`}
+                    className="w-full pl-10 pr-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-slate-900 bg-white font-bold"
+                    value={packageForm.price}
+                    onChange={(e) => setPackageForm({ ...packageForm, price: e.target.value })}
+                  />
+                </div>
+                {packageEstimatedSum > 0 && (
+                  <p className="text-[11px] text-gray-500 mt-1">
+                    Standard service sum: <span className="font-semibold text-gray-700">Rs. {packageEstimatedSum.toFixed(2)}</span>
+                  </p>
+                )}
+              </div>
+
+              {/* Services & Sessions List */}
+              <div className="pt-2">
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                    Included Services &amp; Sessions <span className="text-red-500">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPackageForm({
+                        ...packageForm,
+                        items: [...packageForm.items, { product_id: "", sessions: 1 }],
+                      });
+                    }}
+                    className="text-xs text-purple-700 hover:text-purple-900 font-semibold flex items-center gap-1 hover:underline"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Add Another Service
+                  </button>
+                </div>
+
+                <div className="space-y-2.5 bg-gray-50/80 p-3.5 rounded-xl border border-gray-200/80">
+                  {packageForm.items.map((field, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      {/* Service Dropdown */}
+                      <div className="flex-1 min-w-0">
+                        <select
+                          required
+                          value={field.product_id}
+                          onChange={(e) => {
+                            const newItems = [...packageForm.items];
+                            newItems[index].product_id = e.target.value;
+                            setPackageForm({ ...packageForm, items: newItems });
+                          }}
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white text-slate-900 font-medium"
+                        >
+                          <option value="">Select Service / Treatment...</option>
+                          {products.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.name} (Rs. {(p.selling_price || 0).toFixed(2)})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Sessions Input */}
+                      <div className="w-24 shrink-0">
+                        <div className="relative">
+                          <input
+                            type="number"
+                            min="1"
+                            required
+                            placeholder="Sessions"
+                            title="Number of sessions"
+                            className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-center text-sm font-semibold text-slate-900 bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                            value={field.sessions}
+                            onChange={(e) => {
+                              const newItems = [...packageForm.items];
+                              newItems[index].sessions = parseInt(e.target.value) || 1;
+                              setPackageForm({ ...packageForm, items: newItems });
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Remove Row Button */}
+                      {packageForm.items.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newItems = packageForm.items.filter((_, i) => i !== index);
+                            setPackageForm({ ...packageForm, items: newItems });
+                          }}
+                          className="text-gray-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-colors shrink-0"
+                          title="Remove this service"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-3 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsPackageModalOpen(false)}
+                  className="flex-1 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 font-semibold text-sm transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={packageSaving}
+                  className="flex-1 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 active:scale-98 text-white rounded-xl font-semibold text-sm shadow-md shadow-purple-600/20 disabled:opacity-60 transition-all flex items-center justify-center gap-2"
+                >
+                  {packageSaving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Creating Package...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      Create &amp; Add to Cart
                     </>
                   )}
                 </button>

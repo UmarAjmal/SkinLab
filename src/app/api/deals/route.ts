@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const role = (session.user as any)?.role;
-  if (!["Admin", "Manager"].includes(role)) {
+  if (!["Admin", "Manager", "Cashier", "Doctor"].includes(role)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -56,7 +56,11 @@ export async function POST(request: Request) {
         }
       },
       include: {
-        items: true
+        items: {
+          include: {
+            product: true
+          }
+        }
       }
     });
 
