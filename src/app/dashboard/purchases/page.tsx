@@ -147,18 +147,18 @@ export default function PurchasesPage() {
                 <div key={field.id} className="flex flex-col sm:flex-row gap-3 items-start sm:items-center bg-gray-50 p-3 rounded-lg border border-gray-100">
                   <div className="flex-1 w-full">
                     <label className="block text-xs font-medium text-gray-500 mb-1 sm:hidden">Product</label>
-                    <select {...register(`items. {index}.product_id` as const, { required: true })} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm">
+                    <select {...register(`items.${index}.product_id` as const, { required: true })} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm">
                       <option value="">Select product...</option>
                       {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                     </select>
                   </div>
                   <div className="w-full sm:w-24">
                     <label className="block text-xs font-medium text-gray-500 mb-1 sm:hidden">Qty</label>
-                    <input type="number" step="1" {...register(`items. {index}.quantity` as const, { required: true, min: 1 })} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm" placeholder="Qty" />
+                    <input type="number" step="1" {...register(`items.${index}.quantity` as const, { required: true, min: 1 })} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm" placeholder="Qty" />
                   </div>
                   <div className="w-full sm:w-32">
                     <label className="block text-xs font-medium text-gray-500 mb-1 sm:hidden">Unit Cost ( )</label>
-                    <input type="number" step="0.01" {...register(`items. {index}.unit_cost` as const, { required: true, min: 0 })} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm" placeholder="Cost" />
+                    <input type="number" step="0.01" {...register(`items.${index}.unit_cost` as const, { required: true, min: 0 })} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm" placeholder="Cost" />
                   </div>
                   <div className="w-full sm:w-32 pt-2 sm:pt-0 font-medium text-gray-900 sm:text-center">
                     {(Number(watchItems[index]?.quantity || 0) * Number(watchItems[index]?.unit_cost || 0)).toFixed(2)}

@@ -58,7 +58,7 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
     { href: "/dashboard/patients", icon: Users, label: "Patients (PRM)", module: "patients", roles: ["Admin", "Manager", "Doctor", "Cashier"] },
     { href: "/dashboard/services", icon: Stethoscope, label: "Services", module: "services", roles: ["Admin", "Manager"] },
     { href: "/dashboard/staff", icon: Users, label: "Staff", module: "staff", roles: ["Admin", "Manager"] },
-    { href: "/dashboard/purchases", icon: Package, label: "Purchases", module: "purchases", roles: ["Admin", "Manager"] },
+    // { href: "/dashboard/purchases", icon: Package, label: "Purchases", module: "purchases", roles: ["Admin", "Manager"] },
     { href: "/dashboard/pos", icon: ShoppingCart, label: "POS", module: "pos", roles: ["Admin", "Manager", "Cashier"] },
     { href: "/dashboard/sales", icon: BarChart3, label: "Sales History", module: "sales", roles: ["Admin", "Manager", "Doctor", "Cashier"] },
     { href: "/dashboard/reports", icon: BarChart3, label: "Reports", module: "reports", roles: ["Admin", "Manager"] },

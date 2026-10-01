@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     const { supplier_id, invoice_number, date, subtotal, delivery_charges, tax, grand_total, status, items } = body;
 
     // Use a transaction to ensure both purchase creation and stock updates succeed together
-    const result = await prisma.transaction(async (tx) => {
+    const result = await (prisma as any).$transaction(async (tx: any) => {
       // 1. Create Purchase and PurchaseItems
       const purchase = await tx.purchase.create({
         data: {

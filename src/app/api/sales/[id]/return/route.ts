@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth";
-const prisma = new PrismaClient();
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -17,7 +16,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
     const totalRefundAmount = items.reduce((acc: number, item: any) => acc + Number(item.refund_amount), 0);
 
-    const result = await prisma.transaction(async (tx) => {
+    const result = await (prisma as any).$transaction(async (tx: any) => {
       // 1. Get the original sale
       const sale = await tx.sale.findUnique({
         where: { id: params.id },

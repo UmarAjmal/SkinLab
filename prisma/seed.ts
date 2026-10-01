@@ -8,7 +8,7 @@ export const MODULES = [
     { id: "patients", name: "Patients (PRM)", category: "Clinical" },
     { id: "services", name: "Services & Treatments", category: "Clinical" },
     { id: "staff", name: "Staff & Doctors", category: "Operations" },
-    { id: "purchases", name: "Purchases & Inventory", category: "Operations" },
+    // { id: "purchases", name: "Purchases & Inventory", category: "Operations" },
     { id: "pos", name: "Point of Sale (POS)", category: "Billing" },
     { id: "sales", name: "Sales History & Returns", category: "Billing" },
     { id: "reports", name: "Financial & Business Reports", category: "Analytics" },
@@ -79,7 +79,7 @@ async function main() {
                 },
             });
 
-        console.log(`Configured role:  {role.name}`);
+        console.log(`Configured role: ${role.name}`);
 
         // Replace permissions in batch
         await prisma.rolePermission.deleteMany({ where: { role_id: role.id } });
@@ -104,7 +104,7 @@ main()
         process.exit(1);
     })
     .finally(async () => {
-        await prisma.disconnect();
+        await prisma.$disconnect();
     });
 
 

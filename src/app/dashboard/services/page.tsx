@@ -368,13 +368,13 @@ export default function ServicesPage() {
                     {dealItems.map((field, index) => (
                       <div key={field.id} className="flex items-center space-x-3">
                         <div className="flex-1">
-                          <select {...dealForm.register(`items. {index}.product_id`)} className="w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white">
+                          <select {...dealForm.register(`items.${index}.product_id`)} className="w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white">
                             <option value="">Select Service...</option>
                             {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                           </select>
                         </div>
                         <div className="w-24">
-                          <input type="number" min="1" {...dealForm.register(`items. {index}.sessions`)} className="w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Sessions" />
+                          <input type="number" min="1" {...dealForm.register(`items.${index}.sessions`)} className="w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Sessions" />
                         </div>
                         <button type="button" onClick={() => removeDealItem(index)} className="text-red-500 hover:text-red-700 p-1"><Trash2 className="w-4 h-4" /></button>
                       </div>

@@ -33,10 +33,10 @@ export async function POST(request: Request) {
     }
 
     // Start transaction
-    const result = await prisma.transaction(async (tx) => {
+    const result = await (prisma as any).$transaction(async (tx: any) => {
       // 1. Get next invoice number
       const totalSales = await tx.sale.count();
-      const invoiceNumber = `INV- {(totalSales + 1).toString().padStart(4, '0')}`;
+      const invoiceNumber = `INV-${(totalSales + 1).toString().padStart(4, '0')}`;
 
       // 2. Create Sale and SaleItems
       const sale = await tx.sale.create({

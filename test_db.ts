@@ -21,5 +21,5 @@ async function main() {
   await checkAuth('admin@skinlab.local', 'password123');
 }
 
-main().catch(console.error).finally(() => prisma.disconnect());
+main().catch(console.error).finally(() => prisma.$disconnect());
 

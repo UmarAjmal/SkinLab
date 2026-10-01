@@ -33,12 +33,12 @@ export const SYSTEM_MODULES: SystemModule[] = [
     description: "Employee directory, doctor profiles, and clinic departments",
     category: "Operations",
   },
-  {
-    id: "purchases",
-    name: "Purchases & Stock",
-    description: "Supplier purchase orders, inventory reception, and cost tracking",
-    category: "Operations",
-  },
+  // {
+  //   id: "purchases",
+  //   name: "Purchases & Stock",
+  //   description: "Supplier purchase orders, inventory reception, and cost tracking",
+  //   category: "Operations",
+  // },
   {
     id: "pos",
     name: "Point of Sale (POS)",
