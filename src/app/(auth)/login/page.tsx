@@ -56,14 +56,14 @@ function LoginContent() {
     <div className="min-h-screen bg-[#f4f5fb] flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
       <div className="sm:mx-auto sm:w-full max-w-[380px]">
         {/* Card Container */}
-        <div className="bg-white py-8 px-6 shadow-sm sm:rounded-2xl border border-gray-100">
+        <div className="bg-white py-8 px-6 shadow-sm rounded-3xl border border-gray-100">
           
           {/* Logo & Wordmark */}
           <div className="flex items-center justify-center space-x-2 mb-8">
-            <div className="bg-indigo-600 p-2 rounded-lg text-white">
+            <div className="bg-indigo-600 p-2 rounded-xl text-white shadow-xs">
               <FlaskConical className="w-5 h-5" strokeWidth={2.5} />
             </div>
-            <span className="text-xl font-bold text-gray-900 tracking-tight">Skin-Lab <span className="bg-indigo-100 text-indigo-700 text-[10px] uppercase px-1.5 py-0.5 rounded-md font-bold ml-1 relative -top-1">POS</span></span>
+            <span className="text-xl font-bold text-gray-900 tracking-tight">Skin-Lab <span className="bg-indigo-100 text-indigo-700 text-[10px] uppercase px-2 py-0.5 rounded-lg font-bold ml-1 relative -top-1">POS</span></span>
           </div>
 
           {/* Heading */}
@@ -78,7 +78,7 @@ function LoginContent() {
 
           <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
             {error && (
-              <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm text-center border border-red-100 font-medium">
+              <div className="bg-red-50 text-red-600 p-3.5 rounded-xl text-sm text-center border border-red-100 font-medium">
                 {error}
               </div>
             )}

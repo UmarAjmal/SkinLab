@@ -860,7 +860,7 @@ export default function POSPage() {
                           type="number"
                           min="1"
                           max={item.sessions_allowed}
-                          className="w-16 border border-gray-200 rounded-lg text-center py-1.5 px-2 text-sm text-slate-900 bg-white font-semibold focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          className="w-16 border border-gray-200 rounded-xl text-center py-1.5 px-2 text-sm text-slate-900 bg-white font-semibold focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                           value={item.sessions_consumed}
                           onChange={(e) => updateCartItem(idx, "sessions_consumed", parseInt(e.target.value) || 1)}
                         />
@@ -879,7 +879,7 @@ export default function POSPage() {
                               step="any"
                               title="Click to edit charged unit price"
                               placeholder="0.00"
-                              className="w-full pl-8 pr-2.5 py-1.5 border border-gray-200 hover:border-indigo-400 rounded-lg text-right text-sm font-bold text-slate-900 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-2xs transition-all"
+                              className="w-full pl-8 pr-2.5 py-1.5 border border-gray-200 hover:border-indigo-400 rounded-xl text-right text-sm font-bold text-slate-900 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-2xs transition-all"
                               value={item.unit_price === 0 ? "0" : item.unit_price}
                               onChange={(e) => {
                                 const val = parseFloat(e.target.value);
@@ -900,7 +900,7 @@ export default function POSPage() {
                         <button
                           type="button"
                           onClick={() => removeFromCart(idx)}
-                          className="text-gray-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-colors"
+                          className="text-gray-400 hover:text-red-600 p-1.5 rounded-xl hover:bg-red-50 transition-colors"
                           title="Remove item"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -926,7 +926,7 @@ export default function POSPage() {
             </div>
             <div className="text-right">
               <div className="text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-1">Next Invoice</div>
-              <div className="text-base font-bold text-white bg-indigo-800/60 px-2.5 py-1 rounded-lg">
+              <div className="text-base font-bold text-white bg-indigo-800/60 px-3 py-1 rounded-xl">
                 {nextInvoice || "---"}
               </div>
             </div>
@@ -943,7 +943,7 @@ export default function POSPage() {
               <input
                 type="number"
                 min="0"
-                className="w-24 bg-indigo-950/80 border border-indigo-700/80 rounded-lg text-right px-2.5 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-400 text-white font-bold"
+                className="w-24 bg-indigo-950/80 border border-indigo-700/80 rounded-xl text-right px-2.5 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-400 text-white font-bold"
                 value={discountAmount}
                 onChange={(e) => setDiscountAmount(parseFloat(e.target.value) || 0)}
               />
@@ -1140,10 +1140,10 @@ export default function POSPage() {
       {/* QUICK ADD PATIENT MODAL (MRID auto-assigned, CNIC optional) */}
       {/* ==================================================== */}
       {isPatientModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden mx-auto border border-gray-100">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden mx-auto border border-gray-100 max-h-[92vh] flex flex-col">
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-indigo-50/50 to-violet-50/50">
+            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-indigo-50/50 to-violet-50/50 shrink-0">
               <div className="flex items-center space-x-2.5">
                 <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-600/20">
                   <UserPlus className="w-5 h-5" />
@@ -1156,14 +1156,14 @@ export default function POSPage() {
               <button
                 type="button"
                 onClick={() => setIsPatientModalOpen(false)}
-                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                className="p-1.5 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Modal Form */}
-            <form onSubmit={handleAddPatient} className="p-6 space-y-4">
+            <form onSubmit={handleAddPatient} className="p-6 space-y-4 overflow-y-auto flex-1">
               {patientError && (
                 <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
                   {patientError}
@@ -1300,8 +1300,8 @@ export default function POSPage() {
       {/* CUSTOM PACKAGE / DEAL BUILDER MODAL (INSTANT POS)     */}
       {/* ==================================================== */}
       {isPackageModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden mx-auto border border-gray-100 max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden mx-auto border border-gray-100 max-h-[92vh] flex flex-col">
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-purple-50 via-indigo-50 to-violet-50 shrink-0">
               <div className="flex items-center space-x-2.5">
@@ -1316,7 +1316,7 @@ export default function POSPage() {
               <button
                 type="button"
                 onClick={() => setIsPackageModalOpen(false)}
-                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                className="p-1.5 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1395,7 +1395,7 @@ export default function POSPage() {
                   </button>
                 </div>
 
-                <div className="space-y-2.5 bg-gray-50/80 p-3.5 rounded-xl border border-gray-200/80">
+                <div className="space-y-2.5 bg-gray-50/80 p-3.5 rounded-2xl border border-gray-200/80">
                   {packageForm.items.map((field, index) => (
                     <div key={index} className="flex items-center gap-2">
                       {/* Service Dropdown */}
@@ -1408,7 +1408,7 @@ export default function POSPage() {
                             newItems[index].product_id = e.target.value;
                             setPackageForm({ ...packageForm, items: newItems });
                           }}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white text-slate-900 font-medium"
+                          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white text-slate-900 font-medium"
                         >
                           <option value="">Select Service / Treatment...</option>
                           {products.map((p) => (
@@ -1428,7 +1428,7 @@ export default function POSPage() {
                             required
                             placeholder="Sessions"
                             title="Number of sessions"
-                            className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-center text-sm font-semibold text-slate-900 bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                            className="w-full border border-gray-200 rounded-xl px-2.5 py-2 text-center text-sm font-semibold text-slate-900 bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                             value={field.sessions}
                             onChange={(e) => {
                               const newItems = [...packageForm.items];
@@ -1447,7 +1447,7 @@ export default function POSPage() {
                             const newItems = packageForm.items.filter((_, i) => i !== index);
                             setPackageForm({ ...packageForm, items: newItems });
                           }}
-                          className="text-gray-400 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 transition-colors shrink-0"
+                          className="text-gray-400 hover:text-red-600 p-1.5 rounded-xl hover:bg-red-50 transition-colors shrink-0"
                           title="Remove this service"
                         >
                           <Trash2 className="w-4 h-4" />

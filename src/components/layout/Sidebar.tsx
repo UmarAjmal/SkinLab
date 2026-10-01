@@ -95,7 +95,7 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
       {/* ========================================= */}
       <div className="md:hidden bg-indigo-950 text-white flex items-center justify-between px-4 py-3.5 border-b border-indigo-900/60 shrink-0 z-30">
         <div className="flex items-center space-x-2.5">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-md shadow-indigo-600/30">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-md shadow-indigo-600/30">
             <FlaskConical className="w-5 h-5 text-white" />
           </div>
           <span className="text-lg font-bold tracking-tight bg-gradient-to-r from-white via-indigo-100 to-indigo-200 bg-clip-text text-transparent">
@@ -105,7 +105,7 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
         <button
           onClick={toggleMobileSidebar}
           aria-label="Toggle navigation menu"
-          className="p-2 rounded-lg bg-indigo-900/50 hover:bg-indigo-800 text-indigo-100 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          className="p-2 rounded-xl bg-indigo-900/50 hover:bg-indigo-800 text-indigo-100 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400"
         >
           {isMobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
@@ -146,7 +146,7 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
           <button
             onClick={closeMobileSidebar}
             aria-label="Close menu"
-            className="p-1.5 rounded-lg text-indigo-300 hover:text-white hover:bg-indigo-900/60 transition-colors"
+            className="p-1.5 rounded-xl text-indigo-300 hover:text-white hover:bg-indigo-900/60 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -188,7 +188,7 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
               <div className="text-sm font-semibold text-white truncate" title={userEmail}>
                 {userName}
               </div>
-              <div className="mt-0.5 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-800/80 text-indigo-200 uppercase tracking-wider">
+              <div className="mt-0.5 inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-800/80 text-indigo-200 uppercase tracking-wider">
                 {userRole}
               </div>
             </div>
@@ -242,7 +242,7 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
             <button
               onClick={toggleCollapse}
               title={isCollapsed ? "Pin Sidebar Open (Keep Expanded)" : "Collapse Sidebar (Compact Icon Mode)"}
-              className="p-1.5 rounded-lg text-indigo-300 hover:text-white hover:bg-indigo-800/60 transition-colors focus:outline-none shrink-0"
+              className="p-1.5 rounded-xl text-indigo-300 hover:text-white hover:bg-indigo-800/60 transition-colors focus:outline-none shrink-0"
             >
               {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
             </button>
@@ -297,7 +297,7 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
                   <div
                     className="
                       absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 
-                      bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-xl 
+                      bg-slate-900 text-white text-xs font-semibold rounded-xl shadow-xl 
                       whitespace-nowrap z-50 pointer-events-none opacity-0 
                       group-hover:opacity-100 group-hover:translate-x-0 -translate-x-1
                       transition-all duration-150 border border-indigo-800/50
@@ -340,7 +340,7 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
               <div className="text-sm font-semibold text-white truncate" title={userEmail}>
                 {userName}
               </div>
-              <div className="mt-0.5 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-800/80 text-indigo-200 uppercase tracking-wider">
+              <div className="mt-0.5 inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-800/80 text-indigo-200 uppercase tracking-wider">
                 {userRole}
               </div>
             </div>
@@ -368,7 +368,7 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
               <div
                 className="
                   absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 
-                  bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-xl 
+                  bg-slate-900 text-white text-xs font-semibold rounded-xl shadow-xl 
                   whitespace-nowrap z-50 pointer-events-none opacity-0 
                   group-hover:opacity-100 transition-all duration-150 border border-indigo-800/50
                 "

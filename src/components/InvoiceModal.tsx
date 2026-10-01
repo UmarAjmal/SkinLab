@@ -80,10 +80,10 @@ export default function InvoiceModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden border border-gray-100 my-auto animate-in fade-in zoom-in-95 duration-200">
 
-        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
+        <div className="px-5 sm:px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-slate-50/80 shrink-0">
           <div>
             <h3 className="font-bold text-gray-900 text-lg flex items-center">
               <FileText className="w-5 h-5 mr-2 text-indigo-600" />
@@ -91,8 +91,8 @@ export default function InvoiceModal({
             </h3>
             <p className="text-xs text-gray-500 mt-1">{dayjs(selectedSale.date).format("MMMM D, YYYY h:mm A")}</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-2">
-            <X className="w-6 h-6" />
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100 transition-colors">
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -157,11 +157,11 @@ export default function InvoiceModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Reason for Return</label>
+                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Reason for Return</label>
                 <select
                   value={refundReason}
                   onChange={e => setRefundReason(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-3.5 py-2.5 border border-gray-300 rounded-xl shadow-xs text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 >
                   <option value="Patient relocation">Patient relocation</option>
                   <option value="Adverse reaction">Adverse reaction</option>
@@ -200,7 +200,7 @@ export default function InvoiceModal({
                               if (val > maxReturnable) val = maxReturnable;
                               setRefundQuantities(prev => ({ ...prev, [item.id]: val }));
                             }}
-                            className="w-16 px-2 py-1 text-center border border-gray-300 rounded text-sm mx-auto focus:ring-red-500 focus:border-red-500"
+                            className="w-20 px-3 py-1.5 text-center border border-gray-300 rounded-xl text-sm mx-auto focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
                           />
                         </td>
                         <td className="py-3 text-sm text-right font-medium text-red-600 px-2">
@@ -224,7 +224,7 @@ export default function InvoiceModal({
         </div>
 
         {/* Footer Actions */}
-        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex justify-end gap-3">
+        <div className="px-5 sm:px-6 py-4 border-t border-gray-100 bg-slate-50/80 shrink-0 flex flex-wrap items-center justify-end gap-2 sm:gap-3">
           {!isRefundMode ? (
             <>
               <button
@@ -265,21 +265,21 @@ export default function InvoiceModal({
                     window.print();
                   }
                 }}
-                className="px-4 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-lg hover:bg-indigo-100 font-semibold text-sm flex items-center gap-1.5 transition-colors"
+                className="px-4 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-xl hover:bg-indigo-100 font-semibold text-xs sm:text-sm flex items-center gap-1.5 transition-all shadow-xs active:scale-95"
               >
                 <Printer className="w-4 h-4 text-indigo-600" /> Print 80mm Slip
               </button>
 
-              <button onClick={() => window.print()} className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-sm flex items-center">
-                <FileText className="w-4 h-4 mr-2" /> Full Page Print
+              <button onClick={() => window.print()} className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-medium text-xs sm:text-sm flex items-center shadow-xs transition-all">
+                <FileText className="w-4 h-4 mr-1.5" /> Full Page Print
               </button>
 
               {(userRole === "Admin" || userRole === "Manager") && onRefundComplete && (
                 <button
                   onClick={() => setIsRefundMode(true)}
-                  className="px-4 py-2 bg-white border border-red-200 text-red-600 hover:bg-red-50 rounded-lg font-medium text-sm flex items-center"
+                  className="px-4 py-2 bg-white border border-red-200 text-red-600 hover:bg-red-50 rounded-xl font-medium text-xs sm:text-sm flex items-center shadow-xs transition-all"
                 >
-                  <RotateCcw className="w-4 h-4 mr-2" /> Process Return
+                  <RotateCcw className="w-4 h-4 mr-1.5" /> Process Return
                 </button>
               )}
 
@@ -289,7 +289,7 @@ export default function InvoiceModal({
                     const amount = (selectedSale.grand_total - (selectedSale.paid_amount || 0)).toFixed(2);
                     onOpenPayment(amount.toString());
                   }}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-sm"
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-semibold text-xs sm:text-sm shadow-xs transition-all active:scale-95"
                 >
                   Process Payment
                 </button>
@@ -299,14 +299,14 @@ export default function InvoiceModal({
             <>
               <button
                 onClick={() => { setIsRefundMode(false); setRefundQuantities({}); }}
-                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-sm"
+                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-medium text-xs sm:text-sm transition-all"
               >
                 Cancel Return
               </button>
               <button
                 onClick={processRefund}
                 disabled={refundProcessing || calculateRefundTotal() === 0}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium text-sm disabled:opacity-50"
+                className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 font-semibold text-xs sm:text-sm disabled:opacity-50 transition-all shadow-xs"
               >
                 {refundProcessing ? "Processing..." : "Confirm Refund"}
               </button>

@@ -113,16 +113,16 @@ export default function SalesHistoryPage() {
           <p className="text-gray-500 text-sm mt-1">View past transactions, process payments, or handle refunds.</p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-1 flex">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-1 flex">
           <button
             onClick={() => setActiveTab("sales")}
-            className={`px-4 py-1.5 text-sm font-medium rounded-md  {activeTab === "sales" ? "bg-indigo-50 text-indigo-700" : "text-gray-500 hover:text-gray-700"}`}
+            className={`px-4 py-1.5 text-sm font-semibold rounded-lg transition-colors ${activeTab === "sales" ? "bg-indigo-50 text-indigo-700" : "text-gray-500 hover:text-gray-700"}`}
           >
             Sales History
           </button>
           <button
             onClick={() => setActiveTab("returns")}
-            className={`px-4 py-1.5 text-sm font-medium rounded-md  {activeTab === "returns" ? "bg-indigo-50 text-indigo-700" : "text-gray-500 hover:text-gray-700"}`}
+            className={`px-4 py-1.5 text-sm font-semibold rounded-lg transition-colors ${activeTab === "returns" ? "bg-indigo-50 text-indigo-700" : "text-gray-500 hover:text-gray-700"}`}
           >
             Returns Log
           </button>
@@ -131,13 +131,13 @@ export default function SalesHistoryPage() {
 
       {activeTab === "sales" && (
         <>
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-4 items-center justify-between">
+          <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-4 items-center justify-between">
             <div className="relative w-full sm:w-96">
-              <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search by Invoice # or Customer..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-slate-900 bg-white font-medium"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -145,7 +145,7 @@ export default function SalesHistoryPage() {
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <Filter className="w-4 h-4 text-gray-500" />
               <select
-                className="border-gray-200 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                className="border-gray-200 rounded-xl text-sm focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 bg-white font-medium px-3.5 py-2"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
@@ -157,7 +157,7 @@ export default function SalesHistoryPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden w-full min-w-0">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden w-full min-w-0">
             <div className="overflow-x-auto w-full">
               <table className="w-full text-left border-collapse min-w-[600px]">
                 <thead className="bg-gray-50 border-b border-gray-200">
@@ -262,35 +262,37 @@ export default function SalesHistoryPage() {
 
       {/* PAYMENT MODAL */}
       {isPaymentModalOpen && selectedSale && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 mx-auto">
-            <h3 className="font-bold text-gray-900 text-lg mb-4">Process Payment</h3>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Amount to collect</label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"> </span>
-                <input
-                  type="number"
-                  step="0.01"
-                  max={(selectedSale.grand_total - (selectedSale.paid_amount || 0)).toFixed(2)}
-                  className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                  value={paymentAmount}
-                  onChange={(e) => setPaymentAmount(e.target.value)}
-                />
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[60] flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 mx-auto border border-gray-100 max-h-[92vh] flex flex-col">
+            <h3 className="font-bold text-gray-900 text-lg mb-4 shrink-0">Process Payment</h3>
+            <div className="overflow-y-auto flex-1 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Amount to collect</label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 font-semibold text-xs">Rs.</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    max={(selectedSale.grand_total - (selectedSale.paid_amount || 0)).toFixed(2)}
+                    className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-slate-900 bg-white font-bold"
+                    value={paymentAmount}
+                    onChange={(e) => setPaymentAmount(e.target.value)}
+                  />
+                </div>
               </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Payment Method</label>
+                <select className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm text-slate-900 bg-white font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+                  <option value="Cash">Cash</option>
+                  <option value="Card">Card</option>
+                  <option value="Bank Transfer">Bank Transfer</option>
+                </select>
+              </div>
+              {paymentError && <div className="text-red-600 text-xs font-medium bg-red-50 p-3 rounded-xl border border-red-200">{paymentError}</div>}
             </div>
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
-              <select className="w-full px-4 py-2 border border-gray-200 rounded-lg" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
-                <option value="Cash">Cash</option>
-                <option value="Card">Card</option>
-                <option value="Bank Transfer">Bank Transfer</option>
-              </select>
-            </div>
-            {paymentError && <div className="text-red-600 text-sm mb-4 bg-red-50 p-2 rounded">{paymentError}</div>}
-            <div className="flex justify-end gap-3">
-              <button onClick={() => { setIsPaymentModalOpen(false); setPaymentError(""); }} className="px-4 py-2 text-gray-600 rounded-lg text-sm">Cancel</button>
-              <button onClick={processPayment} disabled={paymentProcessing} className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm">{paymentProcessing ? "..." : "Collect"}</button>
+            <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-4 shrink-0">
+              <button onClick={() => { setIsPaymentModalOpen(false); setPaymentError(""); }} className="px-4 py-2.5 text-gray-600 hover:bg-gray-100 rounded-xl text-sm font-semibold transition-colors">Cancel</button>
+              <button onClick={processPayment} disabled={paymentProcessing} className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-98 text-white rounded-xl text-sm font-semibold shadow-md shadow-indigo-600/20 disabled:opacity-60 transition-all">{paymentProcessing ? "Processing..." : "Collect Payment"}</button>
             </div>
           </div>
         </div>

@@ -73,32 +73,32 @@ export default function DashboardPage() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center">
-          <div className="bg-indigo-50 p-4 rounded-full mr-4">
+          <div className="bg-indigo-50 p-4 rounded-2xl mr-4 border border-indigo-100">
             <DollarSign className="w-6 h-6 text-indigo-600" />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Today's Revenue</p>
-            <h3 className="text-2xl font-bold text-gray-900"> {(todayRevenue || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</h3>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Today's Revenue</p>
+            <h3 className="text-2xl font-bold text-gray-900 mt-1">Rs. {(todayRevenue || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</h3>
           </div>
         </div>
 
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center">
-          <div className="bg-emerald-50 p-4 rounded-full mr-4">
+          <div className="bg-emerald-50 p-4 rounded-2xl mr-4 border border-emerald-100">
             <Users className="w-6 h-6 text-emerald-600" />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Patients Treated Today</p>
-            <h3 className="text-2xl font-bold text-gray-900">{patientsTreatedToday || 0}</h3>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Patients Treated Today</p>
+            <h3 className="text-2xl font-bold text-gray-900 mt-1">{patientsTreatedToday || 0}</h3>
           </div>
         </div>
 
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center">
-          <div className="bg-rose-50 p-4 rounded-full mr-4">
+          <div className="bg-rose-50 p-4 rounded-2xl mr-4 border border-rose-100">
             <CreditCard className="w-6 h-6 text-rose-600" />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Active Pending Dues</p>
-            <h3 className="text-2xl font-bold text-gray-900"> {(activeDues || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</h3>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Active Pending Dues</p>
+            <h3 className="text-2xl font-bold text-rose-600 mt-1">Rs. {(activeDues || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</h3>
           </div>
         </div>
       </div>
@@ -123,10 +123,10 @@ export default function DashboardPage() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                 <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} tickFormatter={(val) => `  {val}`} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} tickFormatter={(val) => `Rs. ${val}`} />
                 <Tooltip
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  formatter={(value: any) => [`  {Number(value).toFixed(2)}`, 'Revenue']}
+                  contentStyle={{ borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                  formatter={(value: any) => [`Rs. ${Number(value).toFixed(2)}`, 'Revenue']}
                 />
                 <Area type="monotone" dataKey="revenue" stroke="#4f46e5" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
               </AreaChart>
@@ -143,7 +143,7 @@ export default function DashboardPage() {
                 {topTreatments.map((treatment: any, index: number) => (
                   <div key={index} className="flex justify-between items-center group">
                     <div className="flex items-center">
-                      <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm mr-3">
+                      <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm mr-3 border border-indigo-100">
                         {index + 1}
                       </div>
                       <div>
@@ -151,8 +151,8 @@ export default function DashboardPage() {
                         <p className="text-xs text-gray-500">{treatment.count} units sold</p>
                       </div>
                     </div>
-                    <div className="font-medium text-gray-900 text-sm">
-                      {treatment.revenue.toLocaleString()}
+                    <div className="font-bold text-gray-900 text-sm">
+                      Rs. {treatment.revenue.toLocaleString()}
                     </div>
                   </div>
                 ))}
@@ -187,19 +187,19 @@ export default function DashboardPage() {
                   <tr
                     key={tx.id}
                     onClick={() => setSelectedSale(tx)}
-                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="hover:bg-indigo-50/30 transition-colors cursor-pointer"
                   >
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {dayjs(tx.date).format("MMM DD, YYYY hh:mm A")}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{tx.customer?.name || "Walk-in"}</div>
+                      <div className="text-sm font-semibold text-gray-900">{tx.customer?.name || "Walk-in"}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {tx.doctor?.name || "None"}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900">
-                      {tx.grand_total.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-bold text-gray-900">
+                      Rs. {tx.grand_total.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <StatusBadge status={tx.payment_status} />

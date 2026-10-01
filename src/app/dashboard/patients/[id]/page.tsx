@@ -345,7 +345,7 @@ export default function PatientDetailPage() {
         <div className="flex items-center gap-4">
           <Link
             href="/dashboard/patients"
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200"
+            className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors border border-gray-200"
             title="Back to Patients List"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -374,7 +374,7 @@ export default function PatientDetailPage() {
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => setIsWalletModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-600 hover:text-white transition-all shadow-xs active:scale-95"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-600 hover:text-white transition-all shadow-xs active:scale-95"
           >
             <Wallet className="w-4 h-4" />
             <span>Deposit Advance</span>
@@ -382,7 +382,7 @@ export default function PatientDetailPage() {
 
           <Link
             href="/dashboard/pos"
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-all shadow-xs active:scale-95"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-all shadow-md shadow-indigo-600/20 active:scale-95"
           >
             <ShoppingBag className="w-4 h-4" />
             <span>New Sale / Visit</span>
@@ -396,7 +396,7 @@ export default function PatientDetailPage() {
         {/* Financial & Clinical Stats Summary */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Due Balance Card */}
-          <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-xs flex items-center justify-between">
+          <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Due Balance</p>
               <h3 className={`text-2xl font-bold mt-1 ${dueBalance > 0 ? "text-rose-600" : "text-gray-900"}`}>
@@ -420,7 +420,7 @@ export default function PatientDetailPage() {
           </div>
 
           {/* Advance Wallet Card */}
-          <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-xs flex items-center justify-between">
+          <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Advance Wallet</p>
               <h3 className="text-2xl font-bold text-emerald-600 mt-1">
@@ -439,7 +439,7 @@ export default function PatientDetailPage() {
           </div>
 
           {/* Lifetime Spend */}
-          <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-xs flex items-center justify-between">
+          <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Lifetime Invoiced</p>
               <h3 className="text-2xl font-bold text-gray-900 mt-1">
@@ -453,7 +453,7 @@ export default function PatientDetailPage() {
           </div>
 
           {/* Active Sessions */}
-          <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-xs flex items-center justify-between">
+          <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Active Packages</p>
               <h3 className="text-2xl font-bold text-indigo-600 mt-1">
@@ -472,7 +472,7 @@ export default function PatientDetailPage() {
 
           {/* LEFT COLUMN: Patient Info & Contact Details */}
           <div className="col-span-1 space-y-6">
-            <div className="bg-white rounded-xl shadow-xs border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-xs border border-gray-200 overflow-hidden">
               <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-slate-50/60">
                 <h2 className="font-bold text-gray-900 text-sm flex items-center gap-2">
                   <User className="w-4 h-4 text-indigo-600" />
@@ -610,7 +610,7 @@ export default function PatientDetailPage() {
             </div>
 
             {/* Quick Financial Summary Card */}
-            <div className="bg-white rounded-xl shadow-xs border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-xs border border-gray-200 overflow-hidden">
               <div className="px-5 py-4 border-b border-gray-100 bg-slate-50/60">
                 <h2 className="font-bold text-gray-900 text-sm flex items-center gap-2">
                   <CreditCard className="w-4 h-4 text-indigo-600" />
@@ -618,7 +618,7 @@ export default function PatientDetailPage() {
                 </h2>
               </div>
               <div className="p-5 space-y-3">
-                <div className="flex justify-between items-center p-3 rounded-lg bg-rose-50/50 border border-rose-100">
+                <div className="flex justify-between items-center p-3.5 rounded-xl bg-rose-50/50 border border-rose-100">
                   <div>
                     <span className="text-xs font-semibold text-rose-800 block">Due Balance</span>
                     <span className="text-xs text-rose-600 font-mono">Unpaid invoices</span>
@@ -628,7 +628,7 @@ export default function PatientDetailPage() {
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center p-3 rounded-lg bg-emerald-50/50 border border-emerald-100">
+                <div className="flex justify-between items-center p-3.5 rounded-xl bg-emerald-50/50 border border-emerald-100">
                   <div>
                     <span className="text-xs font-semibold text-emerald-800 block">Advance Balance</span>
                     <span className="text-xs text-emerald-600 font-mono">Patient wallet credit</span>
@@ -645,13 +645,13 @@ export default function PatientDetailPage() {
           <div className="col-span-1 lg:col-span-2 space-y-6">
 
             {/* Active Treatment Packages / Sessions Card */}
-            <div className="bg-white rounded-xl shadow-xs border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-xs border border-gray-200 overflow-hidden">
               <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-slate-50/60">
                 <h2 className="font-bold text-gray-900 text-sm flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-indigo-600" />
                   Active Treatment Packages & Multi-Sessions
                 </h2>
-                <span className="text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full">
+                <span className="text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-0.5 rounded-full">
                   {treatmentSessions.length} Registered
                 </span>
               </div>
@@ -676,7 +676,7 @@ export default function PatientDetailPage() {
                     return (
                       <div
                         key={sessionItem.id || idx}
-                        className="p-4 rounded-xl border border-gray-200 bg-white hover:border-indigo-200 transition-all shadow-xs"
+                        className="p-4 rounded-2xl border border-gray-200 bg-white hover:border-indigo-200 transition-all shadow-xs"
                       >
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                           <div>
@@ -707,7 +707,7 @@ export default function PatientDetailPage() {
                                   setSelectedSessionItem(sessionItem);
                                   setIsSessionModalOpen(true);
                                 }}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-all shadow-xs active:scale-95"
+                                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-all shadow-md shadow-indigo-600/20 active:scale-95"
                               >
                                 <Plus className="w-3.5 h-3.5" />
                                 Log Attended Session (+1)
@@ -743,7 +743,7 @@ export default function PatientDetailPage() {
             </div>
 
             {/* Visit & Invoices History Table */}
-            <div className="bg-white rounded-xl shadow-xs border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-xs border border-gray-200 overflow-hidden">
               <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-slate-50/60">
                 <h2 className="font-bold text-gray-900 text-sm flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-indigo-600" />
@@ -787,7 +787,7 @@ export default function PatientDetailPage() {
                             <td className="py-3.5 px-5">
                               <button
                                 onClick={() => setSelectedInvoice(sale)}
-                                className="font-mono text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded hover:bg-indigo-100 transition-colors"
+                                className="font-mono text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-0.5 rounded-lg hover:bg-indigo-100 transition-colors"
                               >
                                 {sale.invoice_number}
                               </button>
@@ -810,7 +810,7 @@ export default function PatientDetailPage() {
                                 <button
                                   onClick={() => handlePrintReceipt(sale)}
                                   title="Print 80mm Thermal Invoice"
-                                  className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-gray-200"
+                                  className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors border border-gray-200"
                                 >
                                   <Printer className="w-3.5 h-3.5" />
                                 </button>
@@ -818,7 +818,7 @@ export default function PatientDetailPage() {
                                 {/* View Invoice Details */}
                                 <button
                                   onClick={() => setSelectedInvoice(sale)}
-                                  className="px-2.5 py-1 text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200/80 rounded-lg hover:bg-indigo-600 hover:text-white transition-all shadow-xs"
+                                  className="px-2.5 py-1 text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200/80 rounded-xl hover:bg-indigo-600 hover:text-white transition-all shadow-xs"
                                 >
                                   Details
                                 </button>
@@ -832,7 +832,7 @@ export default function PatientDetailPage() {
                                       setPaymentMethod("Cash");
                                       setIsPaymentModalOpen(true);
                                     }}
-                                    className="px-2.5 py-1 text-xs font-semibold text-white bg-rose-600 rounded-lg hover:bg-rose-700 transition-all shadow-xs"
+                                    className="px-2.5 py-1 text-xs font-semibold text-white bg-rose-600 rounded-xl hover:bg-rose-700 transition-all shadow-xs"
                                   >
                                     Collect
                                   </button>
@@ -873,9 +873,9 @@ export default function PatientDetailPage() {
 
       {/* COLLECT PAYMENT MODAL */}
       {isPaymentModalOpen && selectedSale && (
-        <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-xs z-[60] flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-gray-100">
-            <div className="px-5 py-4 border-b border-gray-100 bg-slate-50/60 flex items-center justify-between">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[60] flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden border border-gray-100 max-h-[92vh] flex flex-col">
+            <div className="px-5 py-4 border-b border-gray-100 bg-slate-50/60 flex items-center justify-between shrink-0">
               <div>
                 <h3 className="font-bold text-gray-900 text-base">Collect Due Payment</h3>
                 <p className="text-xs text-gray-500 font-mono mt-0.5">Invoice: {selectedSale.invoice_number}</p>
@@ -886,13 +886,13 @@ export default function PatientDetailPage() {
                   setPaymentError("");
                   setSelectedSale(null);
                 }}
-                className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
+                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-xl hover:bg-gray-100 transition-colors"
               >
                 ✕
               </button>
             </div>
 
-            <div className="p-5 space-y-4">
+            <div className="p-5 space-y-4 overflow-y-auto flex-1">
               <div>
                 <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
                   Amount to Collect (Rs.)
@@ -901,11 +901,11 @@ export default function PatientDetailPage() {
                   type="number"
                   step="0.01"
                   max={(selectedSale.grand_total - (selectedSale.paid_amount || 0)).toFixed(2)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-xs"
+                  className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm font-bold text-slate-900 bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-xs"
                   value={paymentAmount}
                   onChange={(e) => setPaymentAmount(e.target.value)}
                 />
-                <div className="flex justify-between items-center text-xs mt-1 text-gray-500">
+                <div className="flex justify-between items-center text-xs mt-1 text-gray-500 font-medium">
                   <span>Total Remaining:</span>
                   <span className="font-bold text-rose-600">
                     Rs. {(selectedSale.grand_total - (selectedSale.paid_amount || 0)).toFixed(2)}
@@ -918,7 +918,7 @@ export default function PatientDetailPage() {
                   Payment Method
                 </label>
                 <select
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-xs bg-white"
+                  className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-xs bg-white text-slate-900 font-medium"
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value)}
                 >
@@ -929,12 +929,12 @@ export default function PatientDetailPage() {
               </div>
 
               {paymentError && (
-                <div className="text-rose-600 text-xs bg-rose-50 p-2.5 rounded-lg border border-rose-200">
+                <div className="text-rose-600 text-xs bg-rose-50 p-3 rounded-xl border border-rose-200 font-medium">
                   {paymentError}
                 </div>
               )}
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-gray-100">
                 <button
                   type="button"
                   onClick={() => {
@@ -942,7 +942,7 @@ export default function PatientDetailPage() {
                     setPaymentError("");
                     setSelectedSale(null);
                   }}
-                  className="px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
@@ -950,7 +950,7 @@ export default function PatientDetailPage() {
                   type="button"
                   onClick={processPayment}
                   disabled={paymentProcessing || !paymentAmount}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-xs font-semibold shadow-xs disabled:opacity-50 transition-all"
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 text-xs font-semibold shadow-md shadow-indigo-600/20 disabled:opacity-50 transition-all"
                 >
                   {paymentProcessing ? "Processing..." : "Confirm Collection"}
                 </button>
@@ -962,9 +962,9 @@ export default function PatientDetailPage() {
 
       {/* WALLET ADVANCE TOP-UP MODAL */}
       {isWalletModalOpen && (
-        <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-xs z-[60] flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-gray-100">
-            <div className="px-5 py-4 border-b border-gray-100 bg-emerald-50/60 flex items-center justify-between">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[60] flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden border border-gray-100 max-h-[92vh] flex flex-col">
+            <div className="px-5 py-4 border-b border-gray-100 bg-emerald-50/60 flex items-center justify-between shrink-0">
               <div>
                 <h3 className="font-bold text-gray-900 text-base flex items-center gap-1.5">
                   <Wallet className="w-5 h-5 text-emerald-600" />
@@ -977,13 +977,13 @@ export default function PatientDetailPage() {
                   setIsWalletModalOpen(false);
                   setWalletError("");
                 }}
-                className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
+                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-xl hover:bg-gray-100 transition-colors"
               >
                 ✕
               </button>
             </div>
 
-            <div className="p-5 space-y-4">
+            <div className="p-5 space-y-4 overflow-y-auto flex-1">
               <div>
                 <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
                   Deposit Amount (Rs.) <span className="text-red-500">*</span>
@@ -992,7 +992,7 @@ export default function PatientDetailPage() {
                   type="number"
                   step="100"
                   placeholder="e.g. 5000"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base font-bold text-gray-900 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-xs"
+                  className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-base font-bold text-gray-900 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-xs"
                   value={walletAmount}
                   onChange={(e) => setWalletAmount(e.target.value)}
                 />
@@ -1005,7 +1005,7 @@ export default function PatientDetailPage() {
                     key={amt}
                     type="button"
                     onClick={() => setWalletAmount(amt.toString())}
-                    className="flex-1 py-1 text-xs font-semibold bg-gray-50 border border-gray-200 rounded-md text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 transition-colors"
+                    className="flex-1 py-1.5 text-xs font-semibold bg-gray-50 border border-gray-200 rounded-xl text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 transition-colors"
                   >
                     +{amt.toLocaleString()}
                   </button>
@@ -1013,19 +1013,19 @@ export default function PatientDetailPage() {
               </div>
 
               {walletError && (
-                <div className="text-rose-600 text-xs bg-rose-50 p-2.5 rounded-lg border border-rose-200">
+                <div className="text-rose-600 text-xs bg-rose-50 p-3 rounded-xl border border-rose-200 font-medium">
                   {walletError}
                 </div>
               )}
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-gray-100">
                 <button
                   type="button"
                   onClick={() => {
                     setIsWalletModalOpen(false);
                     setWalletError("");
                   }}
-                  className="px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
@@ -1033,7 +1033,7 @@ export default function PatientDetailPage() {
                   type="button"
                   onClick={processWalletDeposit}
                   disabled={walletProcessing || !walletAmount}
-                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-xs font-semibold shadow-xs disabled:opacity-50 transition-all"
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 text-xs font-semibold shadow-md shadow-emerald-600/20 disabled:opacity-50 transition-all"
                 >
                   {walletProcessing ? "Depositing..." : "Deposit Funds"}
                 </button>
@@ -1045,9 +1045,9 @@ export default function PatientDetailPage() {
 
       {/* SESSION CONSUME MODAL */}
       {isSessionModalOpen && selectedSessionItem && (
-        <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-xs z-[60] flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-gray-100">
-            <div className="px-5 py-4 border-b border-gray-100 bg-indigo-50/60 flex items-center justify-between">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[60] flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden border border-gray-100 max-h-[92vh] flex flex-col">
+            <div className="px-5 py-4 border-b border-gray-100 bg-indigo-50/60 flex items-center justify-between shrink-0">
               <div>
                 <h3 className="font-bold text-gray-900 text-base flex items-center gap-1.5">
                   <Sparkles className="w-5 h-5 text-indigo-600" />
@@ -1063,14 +1063,14 @@ export default function PatientDetailPage() {
                   setSelectedSessionItem(null);
                   setSessionError("");
                 }}
-                className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
+                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-xl hover:bg-gray-100 transition-colors"
               >
                 ✕
               </button>
             </div>
 
-            <div className="p-5 space-y-4">
-              <div className="p-3 rounded-lg bg-indigo-50/50 border border-indigo-100 text-xs space-y-1">
+            <div className="p-5 space-y-4 overflow-y-auto flex-1">
+              <div className="p-3.5 rounded-2xl bg-indigo-50/50 border border-indigo-100 text-xs space-y-1">
                 <div className="flex justify-between font-medium">
                   <span className="text-gray-600">Current Sessions:</span>
                   <span className="font-bold text-indigo-700">
@@ -1092,19 +1092,19 @@ export default function PatientDetailPage() {
                 <textarea
                   rows={2}
                   placeholder="e.g. Session #2 completed, 12J laser energy, no side effects reported"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-xs"
+                  className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-xs text-slate-900 bg-white font-medium"
                   value={sessionNotes}
                   onChange={(e) => setSessionNotes(e.target.value)}
                 ></textarea>
               </div>
 
               {sessionError && (
-                <div className="text-rose-600 text-xs bg-rose-50 p-2.5 rounded-lg border border-rose-200">
+                <div className="text-rose-600 text-xs bg-rose-50 p-3 rounded-xl border border-rose-200 font-medium">
                   {sessionError}
                 </div>
               )}
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+              <div className="flex justify-end gap-2.5 pt-3 border-t border-gray-100">
                 <button
                   type="button"
                   onClick={() => {
@@ -1112,7 +1112,7 @@ export default function PatientDetailPage() {
                     setSelectedSessionItem(null);
                     setSessionError("");
                   }}
-                  className="px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
@@ -1120,7 +1120,7 @@ export default function PatientDetailPage() {
                   type="button"
                   onClick={processSessionConsume}
                   disabled={sessionProcessing}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-xs font-semibold shadow-xs disabled:opacity-50 transition-all"
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 text-xs font-semibold shadow-md shadow-indigo-600/20 disabled:opacity-50 transition-all"
                 >
                   {sessionProcessing ? "Saving..." : "Confirm Session Completed"}
                 </button>

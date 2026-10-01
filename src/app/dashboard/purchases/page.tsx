@@ -100,33 +100,33 @@ export default function PurchasesPage() {
     return (
       <div className="p-4 sm:p-6 w-full min-w-0">
         <div className="flex items-center mb-6">
-          <button onClick={() => setIsCreating(false)} className="mr-4 p-2 bg-gray-100 rounded-full hover:bg-gray-200">
+          <button onClick={() => setIsCreating(false)} className="mr-4 p-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
             <ArrowLeft className="w-5 h-5 text-gray-700" />
           </button>
           <h2 className="text-xl font-bold text-gray-900">New Purchase Order</h2>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Supplier *</label>
-                <select {...register("supplier_id", { required: true })} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Supplier *</label>
+                <select {...register("supplier_id", { required: true })} className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl shadow-2xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm text-slate-900 bg-white font-medium">
                   <option value="">Select a supplier...</option>
                   {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Invoice Number *</label>
-                <input {...register("invoice_number", { required: true })} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm" placeholder="INV-12345" />
+                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Invoice Number *</label>
+                <input {...register("invoice_number", { required: true })} className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl shadow-2xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm text-slate-900 bg-white font-medium" placeholder="INV-12345" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                <input type="date" {...register("date")} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm" />
+                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Date</label>
+                <input type="date" {...register("date")} className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl shadow-2xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm text-slate-900 bg-white font-medium" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select {...register("status")} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Status</label>
+                <select {...register("status")} className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl shadow-2xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm text-slate-900 bg-white font-medium">
                   <option value="RECEIVED">Received</option>
                   <option value="PENDING">Pending</option>
                 </select>
@@ -134,36 +134,36 @@ export default function PurchasesPage() {
             </div>
           </div>
 
-          <div className="bg-white p-4 sm:p-6 rounded-xl border border-gray-200 shadow-sm w-full min-w-0">
+          <div className="bg-white p-4 sm:p-6 rounded-2xl border border-gray-100 shadow-sm w-full min-w-0">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Line Items</h3>
-              <button type="button" onClick={() => append({ product_id: "", quantity: 1, unit_cost: 0, total_cost: 0 })} className="text-sm font-medium text-indigo-600 hover:text-indigo-800 flex items-center">
+              <h3 className="text-base font-bold text-gray-900">Line Items</h3>
+              <button type="button" onClick={() => append({ product_id: "", quantity: 1, unit_cost: 0, total_cost: 0 })} className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 flex items-center">
                 <Plus className="w-4 h-4 mr-1" /> Add Row
               </button>
             </div>
 
             <div className="space-y-3 w-full min-w-0">
               {fields.map((field, index) => (
-                <div key={field.id} className="flex flex-col sm:flex-row gap-3 items-start sm:items-center bg-gray-50 p-3 rounded-lg border border-gray-100">
+                <div key={field.id} className="flex flex-col sm:flex-row gap-3 items-start sm:items-center bg-gray-50/80 p-3.5 rounded-xl border border-gray-200/70">
                   <div className="flex-1 w-full">
                     <label className="block text-xs font-medium text-gray-500 mb-1 sm:hidden">Product</label>
-                    <select {...register(`items.${index}.product_id` as const, { required: true })} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm">
+                    <select {...register(`items.${index}.product_id` as const, { required: true })} className="w-full px-3 py-2 border border-gray-200 rounded-xl shadow-2xs text-sm text-slate-900 bg-white font-medium focus:ring-2 focus:ring-indigo-500">
                       <option value="">Select product...</option>
                       {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                     </select>
                   </div>
                   <div className="w-full sm:w-24">
                     <label className="block text-xs font-medium text-gray-500 mb-1 sm:hidden">Qty</label>
-                    <input type="number" step="1" {...register(`items.${index}.quantity` as const, { required: true, min: 1 })} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm" placeholder="Qty" />
+                    <input type="number" step="1" {...register(`items.${index}.quantity` as const, { required: true, min: 1 })} className="w-full px-3 py-2 border border-gray-200 rounded-xl shadow-2xs text-sm text-slate-900 bg-white font-medium text-center focus:ring-2 focus:ring-indigo-500" placeholder="Qty" />
                   </div>
-                  <div className="w-full sm:w-32">
-                    <label className="block text-xs font-medium text-gray-500 mb-1 sm:hidden">Unit Cost ( )</label>
-                    <input type="number" step="0.01" {...register(`items.${index}.unit_cost` as const, { required: true, min: 0 })} className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm" placeholder="Cost" />
+                  <div className="w-full sm:w-36">
+                    <label className="block text-xs font-medium text-gray-500 mb-1 sm:hidden">Unit Cost (Rs.)</label>
+                    <input type="number" step="0.01" {...register(`items.${index}.unit_cost` as const, { required: true, min: 0 })} className="w-full px-3 py-2 border border-gray-200 rounded-xl shadow-2xs text-sm text-slate-900 bg-white font-medium focus:ring-2 focus:ring-indigo-500" placeholder="Cost" />
                   </div>
-                  <div className="w-full sm:w-32 pt-2 sm:pt-0 font-medium text-gray-900 sm:text-center">
-                    {(Number(watchItems[index]?.quantity || 0) * Number(watchItems[index]?.unit_cost || 0)).toFixed(2)}
+                  <div className="w-full sm:w-36 pt-2 sm:pt-0 font-bold text-gray-900 sm:text-right">
+                    Rs. {(Number(watchItems[index]?.quantity || 0) * Number(watchItems[index]?.unit_cost || 0)).toFixed(2)}
                   </div>
-                  <button type="button" onClick={() => remove(index)} className="text-red-500 hover:text-red-700 p-2 ml-auto sm:ml-0 mt-[-2rem] sm:mt-0">
+                  <button type="button" onClick={() => remove(index)} className="text-gray-400 hover:text-rose-600 p-1.5 rounded-xl hover:bg-rose-50 transition-colors ml-auto sm:ml-0 mt-[-2rem] sm:mt-0">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
@@ -171,29 +171,29 @@ export default function PurchasesPage() {
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col items-end">
+          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col items-end">
             <div className="w-full max-w-sm space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Subtotal:</span>
-                <span className="font-medium text-gray-900"> {subtotal.toFixed(2)}</span>
+                <span className="text-gray-500 font-medium">Subtotal:</span>
+                <span className="font-bold text-gray-900">Rs. {subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm items-center">
-                <span className="text-gray-500">Delivery/Shipping:</span>
-                <input type="number" step="0.01" {...register("delivery_charges")} className="w-24 px-2 py-1 border border-gray-300 rounded-md shadow-sm text-sm text-right" />
+                <span className="text-gray-500 font-medium">Delivery / Shipping:</span>
+                <input type="number" step="0.01" {...register("delivery_charges")} className="w-28 px-3 py-1.5 border border-gray-200 rounded-xl text-sm font-semibold text-right text-slate-900 bg-white focus:ring-2 focus:ring-indigo-500" />
               </div>
-              <div className="flex justify-between text-sm items-center border-b border-gray-200 pb-3">
-                <span className="text-gray-500">Tax ( ):</span>
-                <input type="number" step="0.01" {...register("tax")} className="w-24 px-2 py-1 border border-gray-300 rounded-md shadow-sm text-sm text-right" />
+              <div className="flex justify-between text-sm items-center border-b border-gray-100 pb-3">
+                <span className="text-gray-500 font-medium">Tax (Rs.):</span>
+                <input type="number" step="0.01" {...register("tax")} className="w-28 px-3 py-1.5 border border-gray-200 rounded-xl text-sm font-semibold text-right text-slate-900 bg-white focus:ring-2 focus:ring-indigo-500" />
               </div>
               <div className="flex justify-between text-lg font-bold text-gray-900 pt-2">
                 <span>Grand Total:</span>
-                <span> {grandTotal.toFixed(2)}</span>
+                <span className="text-indigo-600">Rs. {grandTotal.toFixed(2)}</span>
               </div>
             </div>
 
-            <div className="mt-8 flex space-x-4">
-              <button type="button" onClick={() => setIsCreating(false)} className="px-6 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-              <button type="submit" disabled={isSubmitting || fields.length === 0} className="px-6 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50">
+            <div className="mt-8 flex space-x-3">
+              <button type="button" onClick={() => setIsCreating(false)} className="px-5 py-2.5 border border-gray-300 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
+              <button type="submit" disabled={isSubmitting || fields.length === 0} className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 shadow-md shadow-indigo-600/20 disabled:opacity-50 transition-all">
                 {isSubmitting ? "Saving..." : "Save Purchase"}
               </button>
             </div>
@@ -206,10 +206,13 @@ export default function PurchasesPage() {
   return (
     <div className="p-4 sm:p-6 w-full min-w-0">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-gray-900">Purchase Orders</h2>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Purchase Orders</h2>
+          <p className="text-gray-500 text-sm mt-1">Manage vendor purchases, inventory receipts, and supplier bills.</p>
+        </div>
         <button
           onClick={() => setIsCreating(true)}
-          className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+          className="flex items-center px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all text-sm font-semibold shadow-md shadow-indigo-600/20 active:scale-95"
         >
           <Plus className="w-4 h-4 mr-2" />
           New Purchase
@@ -217,31 +220,33 @@ export default function PurchasesPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center p-8 text-gray-500">Loading...</div>
+        <div className="flex justify-center p-8 text-gray-500 font-medium">Loading purchases...</div>
       ) : (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden w-full min-w-0">
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden w-full min-w-0 shadow-xs">
           <div className="overflow-x-auto w-full">
-            <table className="min-w-full divide-y divide-gray-200 min-w-[600px]">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-gray-100 min-w-[600px]">
+              <thead className="bg-gray-50/80">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice #</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Supplier</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Invoice #</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Supplier</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Total</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200 text-sm">
+              <tbody className="bg-white divide-y divide-gray-100 text-sm">
                 {purchases.map((p) => (
-                  <tr key={p.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-500">{new Date(p.date).toLocaleDateString()}</td>
-                    <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{p.invoice_number}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-500">{p.supplier?.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-900 font-medium"> {p.grand_total?.toFixed(2)}</td>
+                  <tr key={p.id} className="hover:bg-indigo-50/30 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-600 text-sm">{new Date(p.date).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap font-semibold text-indigo-600">
+                      <span className="bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-lg text-xs font-mono">{p.invoice_number}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{p.supplier?.name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-900 font-bold">Rs. {p.grand_total?.toFixed(2)}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full  {
-                      p.status === 'RECEIVED' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                    }`}>
+                      <span className={`px-2.5 py-1 inline-flex text-xs font-bold rounded-lg ${
+                        p.status === 'RECEIVED' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                      }`}>
                         {p.status}
                       </span>
                     </td>
@@ -249,7 +254,7 @@ export default function PurchasesPage() {
                 ))}
                 {purchases.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">No purchases found.</td>
+                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500 font-medium">No purchases found.</td>
                   </tr>
                 )}
               </tbody>

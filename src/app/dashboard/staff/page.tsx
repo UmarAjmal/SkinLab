@@ -12,7 +12,7 @@ import {
   getSortedRowModel,
   SortingState,
 } from "@tanstack/react-table";
-import { Pencil, Trash2, Plus, X } from "lucide-react";
+import { Pencil, Trash2, Plus, X, Users } from "lucide-react";
 
 // Schemas
 const employeeSchema = z.object({
@@ -186,38 +186,41 @@ export default function StaffPage() {
   if (loading) return <div className="p-8 text-center text-gray-500">Loading...</div>;
 
   return (
-    <div className="max-w-6xl mx-auto w-full min-w-0 p-4 sm:p-0">
-      <div className="flex justify-between items-center mb-6">
+    <div className="max-w-6xl mx-auto w-full min-w-0 p-4 sm:p-0 space-y-6">
+      <div className="flex flex-wrap justify-between items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Staff Directory</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage doctors and employees</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+            <Users className="w-6 h-6 text-indigo-600" />
+            Staff Directory
+          </h1>
+          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">Manage doctors, clinical specialists, and staff accounts</p>
         </div>
         <button
           onClick={openNewModal}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center shadow-sm"
+          className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold hover:bg-indigo-700 transition-all flex items-center shadow-xs active:scale-95"
         >
-          <Plus className="w-4 h-4 mr-2" /> Add Employee
+          <Plus className="w-4 h-4 mr-1.5" /> Add Employee
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden w-full min-w-0">
+      <div className="bg-white rounded-2xl shadow-xs border border-gray-200 overflow-hidden w-full min-w-0">
         <div className="overflow-x-auto w-full">
           <table className="min-w-full divide-y divide-gray-200 min-w-[600px]">
-            <thead className="bg-gray-50">
+            <thead className="bg-slate-50/80">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
-                    <th key={header.id} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th key={header.id} className="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                     </th>
                   ))}
                 </tr>
               ))}
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white divide-y divide-gray-100">
               {table.getRowModel().rows.length > 0 ? (
                 table.getRowModel().rows.map((row) => (
-                  <tr key={row.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={row.id} className="hover:bg-indigo-50/40 transition-colors">
                     {row.getVisibleCells().map((cell) => (
                       <td key={cell.id} className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -227,8 +230,8 @@ export default function StaffPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={columns.length} className="px-6 py-8 text-center text-gray-500">
-                    No staff found. Click "Add Employee" to create one.
+                  <td colSpan={columns.length} className="px-6 py-16 text-center text-gray-500 font-medium">
+                    No staff found. Click &quot;Add Employee&quot; to create one.
                   </td>
                 </tr>
               )}
@@ -239,44 +242,44 @@ export default function StaffPage() {
 
       {/* Employee Modal */}
       {isEmployeeModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh] mx-auto">
-            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <h2 className="text-lg font-semibold text-gray-900">{editingEmployee ? "Edit Employee" : "Add Employee"}</h2>
-              <button onClick={() => setIsEmployeeModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[92vh] mx-auto border border-gray-100 my-auto animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-5 sm:px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-slate-50/80 shrink-0">
+              <h2 className="text-base font-bold text-gray-900">{editingEmployee ? "Edit Employee" : "Add Employee"}</h2>
+              <button onClick={() => setIsEmployeeModalOpen(false)} className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="p-6 overflow-y-auto">
+            <div className="p-5 sm:p-6 overflow-y-auto flex-1">
               <form id="emp-form" onSubmit={employeeForm.handleSubmit(onSubmitEmployee)} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Full Name <span className="text-red-500">*</span></label>
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Full Name <span className="text-red-500">*</span></label>
                   <input
                     {...employeeForm.register("name")}
                     type="text"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                    className="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-xs"
                     placeholder="e.g. Dr. Sarah Khan"
                   />
-                  {employeeForm.formState.errors.name && <p className="mt-1 text-xs text-red-500">{employeeForm.formState.errors.name.message as string}</p>}
+                  {employeeForm.formState.errors.name && <p className="mt-1 text-xs text-red-500 font-medium">{employeeForm.formState.errors.name.message as string}</p>}
                 </div>
 
                 <div>
-                  <label className="flex items-center space-x-2">
+                  <label className="flex items-center space-x-2.5 p-3 rounded-xl bg-slate-50 border border-gray-200 cursor-pointer">
                     <input
                       {...employeeForm.register("is_doctor")}
                       type="checkbox"
-                      className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                      className="rounded-md border-gray-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4"
                     />
-                    <span className="text-sm font-medium text-gray-700">Is a Doctor? (Can be assigned to appointments/sales)</span>
+                    <span className="text-xs sm:text-sm font-semibold text-gray-800">Is a Doctor? (Can be assigned to appointments & sales)</span>
                   </label>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Department</label>
                   <div className="flex gap-2 mb-2">
                     <select
                       {...employeeForm.register("department_id")}
-                      className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                      className="flex-1 border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white shadow-xs"
                     >
                       <option value="">No Department</option>
                       {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
@@ -290,7 +293,7 @@ export default function StaffPage() {
                       value={newDepartmentName}
                       onChange={(e) => setNewDepartmentName(e.target.value)}
                       placeholder="New Department"
-                      className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                      className="flex-1 border border-gray-300 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-xs"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
@@ -302,7 +305,7 @@ export default function StaffPage() {
                       type="button"
                       onClick={createDepartment}
                       disabled={isCreatingDepartment || !newDepartmentName.trim()}
-                      className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 disabled:opacity-50 transition-colors"
+                      className="px-3.5 py-2 bg-gray-100 text-gray-700 rounded-xl text-xs sm:text-sm font-semibold hover:bg-gray-200 disabled:opacity-50 transition-colors"
                     >
                       Add
                     </button>
@@ -310,11 +313,11 @@ export default function StaffPage() {
                 </div>
               </form>
             </div>
-            <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 bg-gray-50/50 mt-auto">
+            <div className="px-5 sm:px-6 py-4 border-t border-gray-100 flex justify-end gap-2 sm:gap-3 bg-slate-50/80 shrink-0">
               <button
                 type="button"
                 onClick={() => setIsEmployeeModalOpen(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                className="px-4 py-2 text-xs sm:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors shadow-xs"
               >
                 Cancel
               </button>
@@ -322,7 +325,7 @@ export default function StaffPage() {
                 type="submit"
                 form="emp-form"
                 disabled={employeeForm.formState.isSubmitting}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs sm:text-sm font-semibold hover:bg-indigo-700 transition-all disabled:opacity-50 shadow-xs active:scale-95"
               >
                 {employeeForm.formState.isSubmitting ? "Saving..." : "Save Employee"}
               </button>

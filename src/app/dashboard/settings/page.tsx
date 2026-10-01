@@ -987,24 +987,24 @@ export default function SettingsPage() {
       {/* MODAL: ADD USER                                       */}
       {/* ══════════════════════════════════════════════════════ */}
       {isAddUserOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden mx-auto border border-gray-100">
-            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/80 flex justify-between items-center">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden mx-auto border border-gray-100 max-h-[92vh] flex flex-col">
+            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/80 flex justify-between items-center shrink-0">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center">
                   <Users className="w-4 h-4" />
                 </div>
                 <h3 className="font-bold text-gray-900 text-base">Add New System User</h3>
               </div>
               <button
                 onClick={() => { setIsAddUserOpen(false); setAddUserError(""); }}
-                className="text-gray-400 hover:text-gray-600 text-xl font-bold p-1 rounded-lg hover:bg-gray-200/50"
+                className="text-gray-400 hover:text-gray-600 text-xl font-bold p-1 rounded-xl hover:bg-gray-200/50"
               >
                 &times;
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Email Address</label>
                 <input
@@ -1090,24 +1090,24 @@ export default function SettingsPage() {
       {/* MODAL: EDIT USER                                      */}
       {/* ══════════════════════════════════════════════════════ */}
       {editingUser && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden mx-auto border border-gray-100">
-            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/80 flex justify-between items-center">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden mx-auto border border-gray-100 max-h-[92vh] flex flex-col">
+            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/80 flex justify-between items-center shrink-0">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center">
                   <Edit3 className="w-4 h-4" />
                 </div>
                 <h3 className="font-bold text-gray-900 text-base">Edit User & Role</h3>
               </div>
               <button
                 onClick={() => setEditingUser(null)}
-                className="text-gray-400 hover:text-gray-600 text-xl font-bold p-1 rounded-lg hover:bg-gray-200/50"
+                className="text-gray-400 hover:text-gray-600 text-xl font-bold p-1 rounded-xl hover:bg-gray-200/50"
               >
                 &times;
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
               <div>
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">User Account</label>
                 <div className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-800">
@@ -1188,8 +1188,8 @@ export default function SettingsPage() {
       {/* MODAL: DELETE USER CONFIRMATION                        */}
       {/* ══════════════════════════════════════════════════════ */}
       {deleteUserModal.isOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden mx-auto p-6 text-center">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden mx-auto p-6 text-center border border-gray-100 max-h-[92vh] flex flex-col justify-center">
             <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-4">
               <Trash2 className="w-6 h-6" />
             </div>
@@ -1227,8 +1227,8 @@ export default function SettingsPage() {
       {/* MODAL: CREATE / EDIT ROLE & PERMISSIONS MATRIX         */}
       {/* ══════════════════════════════════════════════════════ */}
       {isRoleModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden mx-auto border border-gray-100 my-auto">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden mx-auto border border-gray-100 my-auto">
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/80 flex justify-between items-center shrink-0">
               <div className="flex items-center gap-3">
@@ -1237,14 +1237,14 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-gray-900 text-lg">
-                    {roleModalMode === "create" ? "Create New System Role" : `Edit Role:  {roleForm.name}`}
+                    {roleModalMode === "create" ? "Create New System Role" : `Edit Role: ${roleForm.name}`}
                   </h3>
                   <p className="text-xs text-gray-500">Configure role metadata and granular Read/Write/Delete module matrix.</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsRoleModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 text-2xl font-bold p-1 rounded-lg hover:bg-gray-200/50"
+                className="text-gray-400 hover:text-gray-600 text-2xl font-bold p-1 rounded-xl hover:bg-gray-200/50"
               >
                 &times;
               </button>
@@ -1468,8 +1468,8 @@ export default function SettingsPage() {
       {/* MODAL: DELETE ROLE CONFIRMATION                        */}
       {/* ══════════════════════════════════════════════════════ */}
       {deleteRoleModal.isOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden mx-auto p-6 text-center">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden mx-auto p-6 text-center border border-gray-100 max-h-[92vh] flex flex-col justify-center">
             <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-4">
               <Trash2 className="w-6 h-6" />
             </div>
