@@ -22,7 +22,11 @@ import {
   Package,
   Layers,
   HelpCircle,
-  Tag
+  Tag,
+  Lock,
+  Banknote,
+  Clock,
+  Check
 } from "lucide-react";
 
 export default function POSPage() {
@@ -142,12 +146,32 @@ export default function POSPage() {
   const grandTotal = Math.max(0, subtotal - discountAmount);
   const remainingDue = Math.max(0, grandTotal - paidAmount);
 
-  // Auto-update paid amount to grand total if not manually edited
-  useEffect(() => {
-    if (paidAmount === 0 && grandTotal > 0 && cart.length > 0) {
+  // Handle Payment Method Switch
+  const handlePaymentMethodChange = (method: string) => {
+    setPaymentMethod(method);
+    if (method === "Credit") {
+      setPaidAmount(0);
+    } else if (method === "Card") {
       setPaidAmount(grandTotal);
+    } else if (method === "Cash") {
+      if (paidAmount === 0 && grandTotal > 0) {
+        setPaidAmount(grandTotal);
+      }
     }
-  }, [grandTotal, cart.length, paidAmount]);
+  };
+
+  // Auto-sync paid amount when grand total changes
+  useEffect(() => {
+    if (paymentMethod === "Credit") {
+      setPaidAmount(0);
+    } else if (paymentMethod === "Card") {
+      setPaidAmount(grandTotal);
+    } else if (paymentMethod === "Cash") {
+      if (paidAmount === 0 && grandTotal > 0 && cart.length > 0) {
+        setPaidAmount(grandTotal);
+      }
+    }
+  }, [grandTotal, paymentMethod, cart.length]);
 
   // Handlers
   const handleAddPatient = async (e: React.FormEvent) => {
@@ -305,13 +329,15 @@ export default function POSPage() {
     if (cart.length === 0) return alert("Cart is empty.");
 
     try {
+      const finalPaidAmount = paymentMethod === "Credit" ? 0 : paidAmount;
+
       const payload = {
         customer_id: selectedPatientId,
         doctor_id: selectedDoctorId || null,
         subtotal: subtotal,
         discount_amount: discountAmount,
         grand_total: grandTotal,
-        paid_amount: paidAmount,
+        paid_amount: finalPaidAmount,
         payment_method: paymentMethod,
         session_remarks: sessionRemarks,
         items: cart.map((c) => ({
@@ -352,6 +378,7 @@ export default function POSPage() {
     setSessionRemarks("");
     setDiscountAmount(0);
     setPaidAmount(0);
+    setPaymentMethod("Cash");
     setPatientSearch("");
     setServiceSearch("");
     setIsSuccess(false);
@@ -825,58 +852,159 @@ export default function POSPage() {
 
         {/* PAYMENT COLLECTION */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex-1 flex flex-col">
-          <h3 className="font-bold text-gray-900 mb-4 flex items-center">
-            <CreditCard className="w-5 h-5 mr-2 text-indigo-600" /> Payment Details
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-gray-900 flex items-center">
+              <CreditCard className="w-5 h-5 mr-2 text-indigo-600" /> Payment Details
+            </h3>
+            <span
+              className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
+                paymentMethod === "Credit"
+                  ? "bg-amber-100 text-amber-800"
+                  : paymentMethod === "Card"
+                  ? "bg-purple-100 text-purple-800"
+                  : "bg-emerald-100 text-emerald-800"
+              }`}
+            >
+              {paymentMethod === "Credit" ? "On Account" : paymentMethod === "Card" ? "Online" : "Cash Desk"}
+            </span>
+          </div>
 
           <div className="space-y-4 flex-1">
+            {/* Payment Method Selector */}
             <div>
               <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">
                 Payment Method
               </label>
               <div className="grid grid-cols-3 gap-2">
-                {["Cash", "Card", "Credit"].map((method) => (
+                {[
+                  { id: "Cash", label: "Cash", icon: Banknote },
+                  { id: "Card", label: "Card", icon: CreditCard },
+                  { id: "Credit", label: "Credit", icon: Clock },
+                ].map(({ id, label, icon: Icon }) => (
                   <button
-                    key={method}
+                    key={id}
                     type="button"
-                    onClick={() => setPaymentMethod(method)}
-                    className={`py-2.5 px-3 text-sm font-semibold rounded-xl border transition-all ${
-                      paymentMethod === method
-                        ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                    onClick={() => handlePaymentMethodChange(id)}
+                    className={`py-2.5 px-2 text-xs sm:text-sm font-semibold rounded-xl border transition-all flex flex-col sm:flex-row items-center justify-center gap-1.5 ${
+                      paymentMethod === id
+                        ? id === "Credit"
+                          ? "bg-amber-600 border-amber-600 text-white shadow-md shadow-amber-600/30"
+                          : "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-600/30"
                         : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
                     }`}
                   >
-                    {method}
+                    <Icon className="w-4 h-4 shrink-0" />
+                    <span>{label}</span>
                   </button>
                 ))}
               </div>
             </div>
 
+            {/* Amount Paid Now Input */}
             <div>
-              <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1.5">
-                Amount Paid Now (Rs.)
-              </label>
-              <input
-                type="number"
-                min="0"
-                className="w-full border border-gray-200 rounded-xl text-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-bold text-slate-900 bg-white"
-                value={paidAmount}
-                onChange={(e) => setPaidAmount(parseFloat(e.target.value) || 0)}
-              />
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  Amount Paid Now (Rs.)
+                </label>
+                {paymentMethod === "Credit" && (
+                  <span className="text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md flex items-center gap-1">
+                    <Lock className="w-3 h-3" /> Locked (0 Paid)
+                  </span>
+                )}
+                {paymentMethod === "Cash" && grandTotal > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setPaidAmount(grandTotal)}
+                    className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold underline underline-offset-2"
+                  >
+                    Set Full (Rs. {grandTotal.toFixed(2)})
+                  </button>
+                )}
+              </div>
+
+              <div className="relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-400 pointer-events-none">
+                  Rs.
+                </span>
+                <input
+                  type="number"
+                  min="0"
+                  step="any"
+                  disabled={paymentMethod === "Credit"}
+                  className={`w-full pl-11 pr-4 py-3 border rounded-xl text-xl font-bold transition-all ${
+                    paymentMethod === "Credit"
+                      ? "bg-gray-100/90 border-gray-200 text-gray-400 cursor-not-allowed select-none"
+                      : "border-gray-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-900 bg-white"
+                  }`}
+                  value={paymentMethod === "Credit" ? "0.00" : paidAmount === 0 ? "0" : paidAmount}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    setPaidAmount(isNaN(val) ? 0 : val);
+                  }}
+                  placeholder="0.00"
+                />
+              </div>
+
+              {/* Informative Guidance Box under Input */}
+              {paymentMethod === "Credit" && (
+                <p className="text-xs text-amber-800 bg-amber-50/90 p-2.5 rounded-xl mt-2 border border-amber-200 font-medium flex items-start gap-1.5">
+                  <Lock className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-600" />
+                  <span>
+                    Full bill amount of <strong>Rs. {grandTotal.toFixed(2)}</strong> will be recorded under patient&apos;s outstanding dues.
+                  </span>
+                </p>
+              )}
+              {paymentMethod === "Card" && (
+                <p className="text-xs text-indigo-800 bg-indigo-50/90 p-2.5 rounded-xl mt-2 border border-indigo-200 font-medium">
+                  Full bill of <strong>Rs. {grandTotal.toFixed(2)}</strong> will be charged via Card / Online transaction.
+                </p>
+              )}
+              {paymentMethod === "Cash" && (
+                <p className="text-[11px] text-gray-500 mt-1.5 font-medium">
+                  {paidAmount >= grandTotal
+                    ? "Full cash payment received (Invoice marked PAID)."
+                    : paidAmount > 0
+                    ? `Partial cash received. Remaining Rs. ${(grandTotal - paidAmount).toFixed(2)} will be saved to patient's due balance.`
+                    : "No cash received. Full bill will be saved to patient's due balance."}
+                </p>
+              )}
             </div>
 
+            {/* Remaining Due / Change Box */}
             <div
-              className={`p-4 rounded-xl mt-4 flex justify-between items-center ${
-                remainingDue > 0
-                  ? "bg-red-50 text-red-700 border border-red-100"
-                  : "bg-emerald-50 text-emerald-700 border border-emerald-100"
+              className={`p-4 rounded-xl mt-4 flex justify-between items-center border transition-all ${
+                paymentMethod === "Credit" || remainingDue > 0
+                  ? "bg-red-50 text-red-700 border-red-200/80"
+                  : "bg-emerald-50 text-emerald-700 border-emerald-200/80"
               }`}
             >
-              <span className="font-semibold text-sm">
-                {remainingDue > 0 ? "Remaining Due" : "Change / Advance"}
-              </span>
+              <div>
+                <span className="font-semibold text-xs uppercase tracking-wider block">
+                  {paymentMethod === "Credit"
+                    ? "Total Added to Patient Due"
+                    : remainingDue > 0
+                    ? "Remaining Due (Credit Balance)"
+                    : paidAmount > grandTotal
+                    ? "Change to Return"
+                    : "Payment Status"}
+                </span>
+                <span className="text-[11px] opacity-80">
+                  {paymentMethod === "Credit"
+                    ? "100% On Credit"
+                    : remainingDue > 0
+                    ? "Will be added to ledger"
+                    : paidAmount > grandTotal
+                    ? "Return to customer"
+                    : "Fully Settled"}
+                </span>
+              </div>
               <span className="text-xl font-black">
-                Rs. {Math.abs(paidAmount - grandTotal).toFixed(2)}
+                Rs.{" "}
+                {paymentMethod === "Credit"
+                  ? grandTotal.toFixed(2)
+                  : remainingDue > 0
+                  ? remainingDue.toFixed(2)
+                  : Math.abs(paidAmount - grandTotal).toFixed(2)}
               </span>
             </div>
           </div>
@@ -885,9 +1013,10 @@ export default function POSPage() {
             type="button"
             onClick={completeSale}
             disabled={!selectedPatientId || cart.length === 0}
-            className="w-full py-4 mt-6 bg-indigo-600 text-white rounded-xl font-bold text-base hover:bg-indigo-700 active:scale-98 shadow-md shadow-indigo-600/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="w-full py-4 mt-6 bg-indigo-600 text-white rounded-xl font-bold text-base hover:bg-indigo-700 active:scale-98 shadow-md shadow-indigo-600/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
           >
-            Complete Sale &amp; Print
+            <Check className="w-5 h-5" />
+            <span>Complete Sale &amp; Print</span>
           </button>
         </div>
       </div>
