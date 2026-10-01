@@ -187,169 +187,167 @@ export default function Sidebar({ userEmail, userRole }: SidebarProps) {
       </aside>
 
       {/* ========================================================================= */}
-      {/* DESKTOP SIDEBAR (>= md screens) - Collapsible + Hover Expand + No-Scrollbar */}
+      {/* DESKTOP SIDEBAR (>= md screens) - Auto Layout Adjust + Collapsible + Hover */}
       {/* ========================================================================= */}
-      <div 
-        className={`hidden md:block shrink-0 transition-[width] duration-300 ease-in-out ${
-          isCollapsed ? "w-20" : "w-64"
-        }`}
+      <aside 
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className={`
+          hidden md:flex flex-col h-screen shrink-0 bg-indigo-950 text-white 
+          border-r border-indigo-900/60 z-30 transition-[width] duration-300 ease-in-out
+          ${isDesktopExpanded ? "w-64 shadow-2xl" : "w-20 shadow-md"}
+        `}
       >
-        <aside 
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-          className={`
-            fixed top-0 left-0 h-screen z-40 bg-indigo-950 text-white flex flex-col 
-            border-r border-indigo-900/60 shadow-xl transition-all duration-300 ease-in-out
-            ${isDesktopExpanded ? "w-64 shadow-2xl" : "w-20"}
-          `}
-        >
-          {/* Desktop Sidebar Header */}
-          <div className="h-16 px-4 border-b border-indigo-900/60 flex items-center justify-between shrink-0 relative">
-            <div className="flex items-center space-x-3 overflow-hidden">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-md shadow-indigo-600/30 shrink-0">
-                <FlaskConical className="w-5 h-5 text-white" />
-              </div>
-              <div className={`transition-opacity duration-200 whitespace-nowrap overflow-hidden ${
-                isDesktopExpanded ? "opacity-100" : "opacity-0 w-0 pointer-events-none"
-              }`}>
-                <div className="text-base font-bold text-white tracking-tight leading-tight">Skin-Lab</div>
-                <div className="text-[10px] text-indigo-300 font-semibold tracking-wider uppercase">POS SYSTEM</div>
-              </div>
+        {/* Desktop Sidebar Header */}
+        <div className="h-16 px-3.5 border-b border-indigo-900/60 flex items-center justify-between shrink-0 relative overflow-hidden">
+          <div className="flex items-center space-x-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-md shadow-indigo-600/30 shrink-0">
+              <FlaskConical className="w-5 h-5 text-white" />
             </div>
-
-            {/* Collapse / Expand Pin Toggle Button */}
-            {isDesktopExpanded && (
-              <button
-                onClick={toggleCollapse}
-                title={isCollapsed ? "Pin Sidebar Open" : "Collapse Sidebar to Icons"}
-                className="p-1.5 rounded-lg text-indigo-300 hover:text-white hover:bg-indigo-800/60 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              >
-                {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-              </button>
-            )}
+            <div className={`transition-all duration-300 whitespace-nowrap overflow-hidden ${
+              isDesktopExpanded ? "opacity-100 max-w-[130px]" : "opacity-0 max-w-0 pointer-events-none"
+            }`}>
+              <div className="text-base font-bold text-white tracking-tight leading-tight">Skin-Lab</div>
+              <div className="text-[10px] text-indigo-300 font-semibold tracking-wider uppercase">POS SYSTEM</div>
+            </div>
           </div>
 
-          {/* Desktop Navigation Links */}
-          <nav className="flex-1 py-4 px-3 space-y-1.5 overflow-y-auto no-scrollbar">
-            {navLinks.map((link) => {
-              const Icon = link.icon;
-              const isActive = pathname === link.href;
+          {/* Collapse / Expand Pin Toggle Button */}
+          {isDesktopExpanded && (
+            <button
+              onClick={toggleCollapse}
+              title={isCollapsed ? "Pin Sidebar Open" : "Auto-collapse on mouse leave"}
+              className="p-1.5 rounded-lg text-indigo-300 hover:text-white hover:bg-indigo-800/60 transition-colors focus:outline-none shrink-0"
+            >
+              {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            </button>
+          )}
+        </div>
 
-              return (
-                <div key={link.href} className="relative group">
-                  <Link
-                    href={link.href}
+        {/* Desktop Navigation Links */}
+        <nav className="flex-1 py-4 px-2.5 space-y-1.5 overflow-y-auto no-scrollbar">
+          {navLinks.map((link) => {
+            const Icon = link.icon;
+            const isActive = pathname === link.href;
+
+            return (
+              <div key={link.href} className="relative group">
+                <Link
+                  href={link.href}
+                  className={`
+                    flex items-center h-11 rounded-xl transition-all duration-200 relative overflow-hidden
+                    ${isDesktopExpanded ? "px-3.5" : "justify-center px-0"}
+                    ${isActive 
+                      ? "bg-indigo-600 text-white font-semibold shadow-md shadow-indigo-600/30" 
+                      : "text-indigo-200 hover:bg-indigo-900/60 hover:text-white font-medium"
+                    }
+                  `}
+                >
+                  <Icon className={`h-5 w-5 shrink-0 ${isActive ? "text-white" : "text-indigo-300 group-hover:text-white"}`} />
+                  
+                  {/* Link Label Text for Expanded Mode */}
+                  <span 
                     className={`
-                      flex items-center h-11 rounded-xl transition-all duration-200 relative
-                      ${isDesktopExpanded ? "px-3.5" : "justify-center px-0"}
-                      ${isActive 
-                        ? "bg-indigo-600 text-white font-semibold shadow-md shadow-indigo-600/30" 
-                        : "text-indigo-200 hover:bg-indigo-900/60 hover:text-white font-medium"
-                      }
+                      ml-3 truncate text-sm transition-all duration-300 whitespace-nowrap
+                      ${isDesktopExpanded ? "opacity-100 max-w-[150px]" : "opacity-0 max-w-0 overflow-hidden pointer-events-none"}
                     `}
                   >
-                    <Icon className={`h-5 w-5 shrink-0 ${isActive ? "text-white" : "text-indigo-300 group-hover:text-white"}`} />
-                    
-                    {/* Link Label Text for Expanded Mode */}
-                    <span 
-                      className={`
-                        ml-3 truncate text-sm transition-all duration-200 whitespace-nowrap
-                        ${isDesktopExpanded ? "opacity-100" : "opacity-0 w-0 overflow-hidden pointer-events-none"}
-                      `}
-                    >
-                      {link.label}
-                    </span>
+                    {link.label}
+                  </span>
 
-                    {/* Active Accent Indicator */}
-                    {isActive && (
-                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-6 bg-indigo-300 rounded-r-full" />
-                    )}
-                  </Link>
-
-                  {/* Tooltip on Hover when Collapsed */}
-                  {!isDesktopExpanded && (
-                    <div 
-                      className="
-                        absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 
-                        bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-xl 
-                        whitespace-nowrap z-50 pointer-events-none opacity-0 
-                        group-hover:opacity-100 group-hover:translate-x-0 -translate-x-1
-                        transition-all duration-150 border border-indigo-800/50
-                      "
-                    >
-                      {link.label}
-                    </div>
+                  {/* Active Accent Indicator */}
+                  {isActive && (
+                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-6 bg-indigo-300 rounded-r-full" />
                   )}
-                </div>
-              );
-            })}
-          </nav>
+                </Link>
 
-          {/* Desktop Collapse Toggle for Collapsed Icon Mode */}
-          {!isDesktopExpanded && (
-            <div className="px-3 py-2 flex justify-center border-t border-indigo-900/40">
-              <button
-                onClick={toggleCollapse}
-                title="Expand & Pin Sidebar"
-                className="p-2 rounded-xl text-indigo-300 hover:text-white hover:bg-indigo-800/60 transition-colors focus:outline-none"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-
-          {/* Desktop User Profile & Logout Footer */}
-          <div className="p-3 border-t border-indigo-900/60 bg-indigo-950/70 mt-auto shrink-0">
-            <div className={`flex items-center mb-3 ${isDesktopExpanded ? "px-1" : "justify-center"}`}>
-              <div 
-                className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-violet-500 flex items-center justify-center text-white font-bold shadow-md shrink-0"
-                title={userEmail}
-              >
-                {userInitial}
+                {/* Floating Tooltip when Collapsed and not Hover-expanded */}
+                {!isDesktopExpanded && (
+                  <div 
+                    className="
+                      absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 
+                      bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-xl 
+                      whitespace-nowrap z-50 pointer-events-none opacity-0 
+                      group-hover:opacity-100 group-hover:translate-x-0 -translate-x-1
+                      transition-all duration-150 border border-indigo-800/50
+                    "
+                  >
+                    {link.label}
+                  </div>
+                )}
               </div>
+            );
+          })}
+        </nav>
 
-              {isDesktopExpanded && (
-                <div className="ml-3 overflow-hidden flex-1 transition-opacity duration-200">
-                  <div className="text-sm font-semibold text-white truncate" title={userEmail}>
-                    {userName}
-                  </div>
-                  <div className="mt-0.5 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-800/80 text-indigo-200 uppercase tracking-wider">
-                    {userRole}
-                  </div>
-                </div>
-              )}
+        {/* Desktop Collapse Toggle for Collapsed Icon Mode */}
+        {!isDesktopExpanded && (
+          <div className="px-2 py-2 flex justify-center border-t border-indigo-900/40 shrink-0">
+            <button
+              onClick={toggleCollapse}
+              title="Expand & Pin Sidebar"
+              className="p-2 rounded-xl text-indigo-300 hover:text-white hover:bg-indigo-800/60 transition-colors focus:outline-none"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        {/* Desktop User Profile & Logout Footer */}
+        <div className="p-3 border-t border-indigo-900/60 bg-indigo-950/70 mt-auto shrink-0 overflow-hidden">
+          <div className={`flex items-center mb-3 ${isDesktopExpanded ? "px-1" : "justify-center"}`}>
+            <div 
+              className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-violet-500 flex items-center justify-center text-white font-bold shadow-md shrink-0"
+              title={userEmail}
+            >
+              {userInitial}
             </div>
 
-            <div className="relative group">
-              <a 
-                href="/api/auth/signout" 
-                title={!isDesktopExpanded ? "Sign out" : undefined}
-                className={`
-                  flex items-center justify-center h-10 rounded-xl bg-indigo-900/60 hover:bg-red-600/90 
-                  text-indigo-200 hover:text-white transition-all duration-200 text-sm font-medium shadow-sm
-                  ${isDesktopExpanded ? "w-full px-3" : "w-full"}
-                `}
-              >
-                <LogOut className={`h-4 w-4 shrink-0 ${isDesktopExpanded ? "mr-2" : ""}`} />
-                {isDesktopExpanded && <span>Sign out</span>}
-              </a>
-
-              {!isDesktopExpanded && (
-                <div 
-                  className="
-                    absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 
-                    bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-xl 
-                    whitespace-nowrap z-50 pointer-events-none opacity-0 
-                    group-hover:opacity-100 transition-all duration-150 border border-indigo-800/50
-                  "
-                >
-                  Sign out
-                </div>
-              )}
+            <div className={`ml-3 overflow-hidden flex-1 transition-all duration-300 ${
+              isDesktopExpanded ? "opacity-100 max-w-[140px]" : "opacity-0 max-w-0 pointer-events-none"
+            }`}>
+              <div className="text-sm font-semibold text-white truncate" title={userEmail}>
+                {userName}
+              </div>
+              <div className="mt-0.5 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-800/80 text-indigo-200 uppercase tracking-wider">
+                {userRole}
+              </div>
             </div>
           </div>
-        </aside>
-      </div>
+
+          <div className="relative group">
+            <a 
+              href="/api/auth/signout" 
+              title={!isDesktopExpanded ? "Sign out" : undefined}
+              className={`
+                flex items-center justify-center h-10 rounded-xl bg-indigo-900/60 hover:bg-red-600/90 
+                text-indigo-200 hover:text-white transition-all duration-200 text-sm font-medium shadow-sm overflow-hidden
+                ${isDesktopExpanded ? "w-full px-3" : "w-full"}
+              `}
+            >
+              <LogOut className={`h-4 w-4 shrink-0 ${isDesktopExpanded ? "mr-2" : ""}`} />
+              <span className={`transition-all duration-300 whitespace-nowrap ${
+                isDesktopExpanded ? "opacity-100 max-w-[100px]" : "opacity-0 max-w-0 overflow-hidden pointer-events-none"
+              }`}>
+                Sign out
+              </span>
+            </a>
+
+            {!isDesktopExpanded && (
+              <div 
+                className="
+                  absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 
+                  bg-slate-900 text-white text-xs font-semibold rounded-lg shadow-xl 
+                  whitespace-nowrap z-50 pointer-events-none opacity-0 
+                  group-hover:opacity-100 transition-all duration-150 border border-indigo-800/50
+                "
+              >
+                Sign out
+              </div>
+            )}
+          </div>
+        </div>
+      </aside>
     </>
   );
 }
