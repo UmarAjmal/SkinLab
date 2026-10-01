@@ -7,15 +7,8 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   swcMinify: true,
-  reactStrictMode: false,
   experimental: {
-    optimizePackageImports: [
-      "lucide-react",
-      "@tanstack/react-table",
-      "recharts",
-      "date-fns",
-      "dayjs",
-    ],
+    optimizePackageImports: ["lucide-react"],
   },
 };
 
