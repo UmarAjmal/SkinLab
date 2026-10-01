@@ -38,168 +38,175 @@ export async function POST(request: Request) {
       paymentStatus = "PARTIAL";
     }
 
-    // Start transaction
-    const result = await (prisma as any).$transaction(async (tx: any) => {
-      // Validate customer exists
-      const customer = await tx.customer.findUnique({ where: { id: data.customer_id } });
-      if (!customer) {
-        throw new Error("Selected patient was not found in database. Please re-select the patient.");
+    // 2. Pre-fetch and validate entities outside transaction for maximum speed
+    const customer = await prisma.customer.findUnique({ where: { id: data.customer_id } });
+    if (!customer) {
+      return NextResponse.json({ error: "Selected patient was not found in database. Please re-select the patient." }, { status: 400 });
+    }
+
+    // Validate user_id
+    let validUserId = sessionUserId;
+    const userExists = await prisma.user.findUnique({ where: { id: sessionUserId } });
+    if (!userExists) {
+      const fallbackUser = await prisma.user.findFirst({ where: { is_active: true } });
+      if (fallbackUser) {
+        validUserId = fallbackUser.id;
+      }
+    }
+
+    // Validate doctor_id if provided
+    let validDoctorId: string | null = null;
+    if (data.doctor_id && typeof data.doctor_id === "string" && data.doctor_id.trim() !== "") {
+      const doctorExists = await prisma.employee.findUnique({ where: { id: data.doctor_id.trim() } });
+      if (doctorExists) {
+        validDoctorId = doctorExists.id;
+      }
+    }
+
+    // Batch validate all product IDs
+    const productIds = data.items.map((it: any) => it.product_id).filter(Boolean);
+    const dbProducts = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+    });
+    const productMap = new Map(dbProducts.map((p) => [p.id, p]));
+
+    const sanitizedItems: any[] = [];
+    for (const item of data.items) {
+      if (!item.product_id) {
+        return NextResponse.json({ error: `Cart item "${item.name || "Service"}" is missing a valid product ID.` }, { status: 400 });
+      }
+      const prod = productMap.get(item.product_id);
+      if (!prod) {
+        return NextResponse.json({ error: `Service "${item.name || "Unknown"}" (ID: ${item.product_id}) not found in database.` }, { status: 400 });
       }
 
-      // Validate user_id exists (protect against stale JWT after DB reset)
-      let validUserId = sessionUserId;
-      const userExists = await tx.user.findUnique({ where: { id: sessionUserId } });
-      if (!userExists) {
-        const fallbackUser = await tx.user.findFirst({ where: { is_active: true } });
-        if (fallbackUser) {
-          validUserId = fallbackUser.id;
-        } else {
-          throw new Error("Your user account was not found in the database. Please log in again.");
+      const unitPrice = Number(item.unit_price) !== undefined && !isNaN(Number(item.unit_price))
+        ? Number(item.unit_price)
+        : (prod.selling_price || 0);
+      const quantity = Math.max(1, parseInt(item.quantity) || 1);
+      const totalPrice = Number(item.total_price) !== undefined && !isNaN(Number(item.total_price))
+        ? Number(item.total_price)
+        : unitPrice * quantity;
+
+      sanitizedItems.push({
+        product_id: prod.id,
+        quantity: quantity,
+        unit_price: unitPrice,
+        sessions_allowed: Math.max(1, parseInt(item.sessions_allowed) || 1),
+        sessions_consumed: Math.max(0, parseInt(item.sessions_consumed) || 0),
+        total_price: totalPrice,
+        item_group_name: item.item_group_name || null,
+      });
+    }
+
+    // Parallel pre-fetching of counts and settings
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const [totalSales, customerVisits, salesToday, settings] = await Promise.all([
+      prisma.sale.count(),
+      prisma.sale.count({ where: { customer_id: customer.id } }),
+      prisma.sale.count({ where: { date: { gte: startOfDay, lte: endOfDay } } }),
+      prisma.companySetting.findFirst(),
+    ]);
+
+    const token = `P-${(salesToday + 1).toString().padStart(2, "0")}`;
+    const visitCount = customerVisits + 1;
+
+    let count = totalSales + 1;
+    let invoiceNumber = `INV-${count.toString().padStart(4, "0")}`;
+
+    // 3. Fast Atomic Transaction with extended timeout
+    const result = await (prisma as any).$transaction(
+      async (tx: any) => {
+        // Ensure invoiceNumber is strictly unique
+        while (await tx.sale.findUnique({ where: { invoice_number: invoiceNumber } })) {
+          count++;
+          invoiceNumber = `INV-${count.toString().padStart(4, "0")}`;
         }
-      }
 
-      // Validate doctor_id if provided
-      let validDoctorId: string | null = null;
-      if (data.doctor_id && typeof data.doctor_id === "string" && data.doctor_id.trim() !== "") {
-        const doctorExists = await tx.employee.findUnique({ where: { id: data.doctor_id.trim() } });
-        if (doctorExists) {
-          validDoctorId = doctorExists.id;
-        }
-      }
-
-      // Validate each item product_id
-      const sanitizedItems: any[] = [];
-      for (const item of data.items) {
-        if (!item.product_id) {
-          throw new Error(`Cart item "${item.name || "Service"}" is missing a valid product ID.`);
-        }
-        const prod = await tx.product.findUnique({ where: { id: item.product_id } });
-        if (!prod) {
-          throw new Error(`Service "${item.name || "Unknown"}" (ID: ${item.product_id}) not found in database.`);
-        }
-
-        const unitPrice = Number(item.unit_price) !== undefined && !isNaN(Number(item.unit_price))
-          ? Number(item.unit_price)
-          : (prod.selling_price || 0);
-        const quantity = Math.max(1, parseInt(item.quantity) || 1);
-        const totalPrice = Number(item.total_price) !== undefined && !isNaN(Number(item.total_price))
-          ? Number(item.total_price)
-          : unitPrice * quantity;
-
-        sanitizedItems.push({
-          product_id: prod.id,
-          quantity: quantity,
-          unit_price: unitPrice,
-          sessions_allowed: Math.max(1, parseInt(item.sessions_allowed) || 1),
-          sessions_consumed: Math.max(0, parseInt(item.sessions_consumed) || 0),
-          total_price: totalPrice,
-          item_group_name: item.item_group_name || null,
-        });
-      }
-
-      // Generate unique invoice number (with collision prevention loop)
-      const totalSales = await tx.sale.count();
-      let count = totalSales + 1;
-      let invoiceNumber = `INV-${count.toString().padStart(4, "0")}`;
-      while (await tx.sale.findUnique({ where: { invoice_number: invoiceNumber } })) {
-        count++;
-        invoiceNumber = `INV-${count.toString().padStart(4, "0")}`;
-      }
-
-      // Create Sale and SaleItems
-      const sale = await tx.sale.create({
-        data: {
-          invoice_number: invoiceNumber,
-          customer_id: customer.id,
-          user_id: validUserId,
-          doctor_id: validDoctorId,
-          subtotal: subtotal,
-          discount_amount: discountAmount,
-          grand_total: grandTotal,
-          paid_amount: paidAmount,
-          payment_status: paymentStatus,
-          payment_method: data.payment_method || "Cash",
-          session_remarks: data.session_remarks || null,
-          items: {
-            create: sanitizedItems,
-          },
-        },
-        include: {
-          items: {
-            include: {
-              product: true,
+        // Create Sale and SaleItems
+        const sale = await tx.sale.create({
+          data: {
+            invoice_number: invoiceNumber,
+            customer_id: customer.id,
+            user_id: validUserId,
+            doctor_id: validDoctorId,
+            subtotal: subtotal,
+            discount_amount: discountAmount,
+            grand_total: grandTotal,
+            paid_amount: paidAmount,
+            payment_status: paymentStatus,
+            payment_method: data.payment_method || "Cash",
+            session_remarks: data.session_remarks || null,
+            items: {
+              create: sanitizedItems,
             },
           },
-          customer: true,
-          doctor: true,
-          user: true,
-        },
-      });
+          include: {
+            items: {
+              include: {
+                product: true,
+              },
+            },
+            customer: true,
+            doctor: true,
+            user: true,
+          },
+        });
 
-      // Update Customer Balance
-      const balanceDelta = grandTotal - paidAmount;
-      let newCurrentBalance = customer.current_balance;
-      let newAdvanceBalance = customer.advance_balance;
+        // Update Customer Balance
+        const balanceDelta = grandTotal - paidAmount;
+        let newCurrentBalance = customer.current_balance;
+        let newAdvanceBalance = customer.advance_balance;
 
-      if (balanceDelta > 0) {
-        // Underpaid, they owe us. First deduct from advance balance
-        if (newAdvanceBalance >= balanceDelta) {
-          newAdvanceBalance -= balanceDelta;
-        } else {
-          const remainingOwed = balanceDelta - newAdvanceBalance;
-          newAdvanceBalance = 0;
-          newCurrentBalance += remainingOwed;
+        if (balanceDelta > 0) {
+          if (newAdvanceBalance >= balanceDelta) {
+            newAdvanceBalance -= balanceDelta;
+          } else {
+            const remainingOwed = balanceDelta - newAdvanceBalance;
+            newAdvanceBalance = 0;
+            newCurrentBalance += remainingOwed;
+          }
+        } else if (balanceDelta < 0) {
+          const overpaidAmount = Math.abs(balanceDelta);
+          if (newCurrentBalance >= overpaidAmount) {
+            newCurrentBalance -= overpaidAmount;
+          } else {
+            const remainingAdvance = overpaidAmount - newCurrentBalance;
+            newCurrentBalance = 0;
+            newAdvanceBalance += remainingAdvance;
+          }
         }
-      } else if (balanceDelta < 0) {
-        // Overpaid
-        const overpaidAmount = Math.abs(balanceDelta);
-        if (newCurrentBalance >= overpaidAmount) {
-          newCurrentBalance -= overpaidAmount;
-        } else {
-          const remainingAdvance = overpaidAmount - newCurrentBalance;
-          newCurrentBalance = 0;
-          newAdvanceBalance += remainingAdvance;
-        }
+
+        const updatedCustomer = await tx.customer.update({
+          where: { id: customer.id },
+          data: {
+            current_balance: newCurrentBalance,
+            advance_balance: newAdvanceBalance,
+          },
+        });
+
+        return { sale, updatedCustomer };
+      },
+      {
+        maxWait: 10000,
+        timeout: 30000,
       }
+    );
 
-      const updatedCustomer = await tx.customer.update({
-        where: { id: customer.id },
-        data: {
-          current_balance: newCurrentBalance,
-          advance_balance: newAdvanceBalance,
-        },
-      });
-
-      // Count visits for this customer
-      const visitCount = await tx.sale.count({
-        where: { customer_id: customer.id },
-      });
-
-      // Get clinic settings
-      const settings = await tx.companySetting.findFirst();
-
-      // Generate daily token
-      const startOfDay = new Date();
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date();
-      endOfDay.setHours(23, 59, 59, 999);
-      const salesToday = await tx.sale.count({
-        where: {
-          date: { gte: startOfDay, lte: endOfDay },
-        },
-      });
-      const token = `P-${salesToday.toString().padStart(2, "0")}`;
-
-      return {
-        sale,
+    return NextResponse.json(
+      {
+        sale: result.sale,
         token,
         visitCount,
         settings,
-        customer: updatedCustomer || sale.customer,
-      };
-    });
-
-    return NextResponse.json(result, { status: 201 });
+        customer: result.updatedCustomer || customer,
+      },
+      { status: 201 }
+    );
   } catch (error: any) {
     console.error("POST /api/sales error:", error);
     console.error("Error details:", error?.message, error?.stack);
