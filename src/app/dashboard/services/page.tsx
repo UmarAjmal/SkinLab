@@ -84,7 +84,7 @@ export default function ServicesPage() {
   };
 
   const onProductSubmit = async (values: any) => {
-    const url = editingProductId ? `/api/products/ {editingProductId}` : "/api/products";
+    const url = editingProductId ? `/api/products/${editingProductId}` : "/api/products";
     const method = editingProductId ? "PUT" : "POST";
     await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(values) });
     setIsProductModalOpen(false);
@@ -94,7 +94,7 @@ export default function ServicesPage() {
   };
 
   const onDealSubmit = async (values: any) => {
-    const url = editingDealId ? `/api/deals/ {editingDealId}` : "/api/deals";
+    const url = editingDealId ? `/api/deals/${editingDealId}` : "/api/deals";
     const method = editingDealId ? "PUT" : "POST";
     await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(values) });
     setIsDealModalOpen(false);
@@ -105,14 +105,14 @@ export default function ServicesPage() {
 
   const deleteProduct = async (id: string) => {
     if (confirm("Are you sure you want to delete this service?")) {
-      await fetch(`/api/products/ {id}`, { method: "DELETE" });
+      await fetch(`/api/products/${id}`, { method: "DELETE" });
       fetchData();
     }
   };
 
   const deleteDeal = async (id: string) => {
     if (confirm("Are you sure you want to delete this package?")) {
-      await fetch(`/api/deals/ {id}`, { method: "DELETE" });
+      await fetch(`/api/deals/${id}`, { method: "DELETE" });
       fetchData();
     }
   };

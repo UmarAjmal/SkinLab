@@ -57,7 +57,7 @@ export default function InvoiceModal({
         return;
       }
 
-      const res = await fetch(`/api/sales/ {selectedSale.id}/return`, {
+      const res = await fetch(`/api/sales/${selectedSale.id}/return`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reason: refundReason, items: itemsToReturn })

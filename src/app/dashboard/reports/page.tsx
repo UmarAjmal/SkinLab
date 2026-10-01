@@ -29,22 +29,22 @@ export default function ReportsPage() {
     const fetchReports = async () => {
       setIsLoading(true);
       try {
-        const queryParams = `?startDate= {startDate}&endDate= {endDate}T23:59:59.999Z`;
+        const queryParams = `?startDate=${startDate}&endDate=${endDate}T23:59:59.999Z`;
 
         if (activeTab === "sales_register") {
-          const res = await fetch(`/api/sales {queryParams}`);
+          const res = await fetch(`/api/sales${queryParams}`);
           const data = await res.json();
 
           setSales(Array.isArray(data) ? data : []);
         }
         else if (activeTab === "service_performance") {
-          const res = await fetch(`/api/reports/service-performance {queryParams}`);
+          const res = await fetch(`/api/reports/service-performance${queryParams}`);
           const data = await res.json();
 
           setServicePerformance(Array.isArray(data) ? data : []);
         }
         else if (activeTab === "payment_breakdown") {
-          const res = await fetch(`/api/reports/payment-breakdown {queryParams}`);
+          const res = await fetch(`/api/reports/payment-breakdown${queryParams}`);
           const data = await res.json();
 
           setPaymentBreakdown(Array.isArray(data) ? data : []);
@@ -71,7 +71,7 @@ export default function ReportsPage() {
   // Fetch specific patient data
   useEffect(() => {
     if (selectedPatientId) {
-      fetch(`/api/patients/ {selectedPatientId}`)
+      fetch(`/api/patients/${selectedPatientId}`)
         .then(r => r.json())
         .then(data => setSelectedPatientData(data));
     } else {

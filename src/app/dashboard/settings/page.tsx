@@ -270,7 +270,7 @@ export default function SettingsPage() {
         payload.password = editUserData.password.trim();
       }
 
-      const res = await fetch(`/api/users/ {editingUser.id}`, {
+      const res = await fetch(`/api/users/${editingUser.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -295,7 +295,7 @@ export default function SettingsPage() {
   // ─── Toggle User Active ───────────────────────────────
   const toggleUserActive = async (userId: string, currentActive: boolean) => {
     try {
-      const res = await fetch(`/api/users/ {userId}`, {
+      const res = await fetch(`/api/users/${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ is_active: !currentActive })
@@ -315,7 +315,7 @@ export default function SettingsPage() {
     setDeleteUserModal(prev => ({ ...prev, isDeleting: true, error: "" }));
 
     try {
-      const res = await fetch(`/api/users/ {deleteUserModal.user.id}`, {
+      const res = await fetch(`/api/users/${deleteUserModal.user.id}`, {
         method: "DELETE",
       });
       const data = await res.json();
@@ -471,7 +471,7 @@ export default function SettingsPage() {
           body: JSON.stringify(payload),
         });
       } else {
-        res = await fetch(`/api/roles/ {currentRoleId}`, {
+        res = await fetch(`/api/roles/${currentRoleId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -498,7 +498,7 @@ export default function SettingsPage() {
     setDeleteRoleModal(prev => ({ ...prev, isDeleting: true, error: "" }));
 
     try {
-      const res = await fetch(`/api/roles/ {deleteRoleModal.role.id}`, {
+      const res = await fetch(`/api/roles/${deleteRoleModal.role.id}`, {
         method: "DELETE",
       });
       const data = await res.json();

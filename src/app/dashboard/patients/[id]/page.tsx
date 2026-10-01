@@ -42,7 +42,7 @@ export default function PatientDetailPage() {
 
   const fetchPatient = async () => {
     try {
-      const res = await fetch(`/api/patients/ {id}`);
+      const res = await fetch(`/api/patients/${id}`);
       if (!res.ok) throw new Error("Not found");
       const data = await res.json();
       setPatient(data);
@@ -61,7 +61,7 @@ export default function PatientDetailPage() {
 
   const onSubmit = async (values: PatientFormValues) => {
     try {
-      const res = await fetch(`/api/patients/ {id}`, {
+      const res = await fetch(`/api/patients/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
@@ -81,7 +81,7 @@ export default function PatientDetailPage() {
     setPaymentProcessing(true);
 
     try {
-      const res = await fetch(`/api/sales/ {selectedSale.id}/payment`, {
+      const res = await fetch(`/api/sales/${selectedSale.id}/payment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount: parseFloat(paymentAmount), payment_method: paymentMethod })

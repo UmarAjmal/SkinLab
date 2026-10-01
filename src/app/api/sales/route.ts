@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth";
-
-const prisma = new PrismaClient();
 
 export async function POST(request: Request) {
   const session = await getServerSession();
@@ -118,7 +116,7 @@ export async function POST(request: Request) {
           date: { gte: startOfDay, lte: endOfDay }
         }
       });
-      const token = `P- {salesToday.toString().padStart(2, '0')}`;
+      const token = `P-${salesToday.toString().padStart(2, '0')}`;
 
       return { sale, token };
     });

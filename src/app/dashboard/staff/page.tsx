@@ -89,7 +89,7 @@ export default function StaffPage() {
 
   const onSubmitEmployee = async (data: EmployeeForm) => {
     try {
-      const url = editingEmployee ? `/api/employees/ {editingEmployee.id}` : "/api/employees";
+      const url = editingEmployee ? `/api/employees/${editingEmployee.id}` : "/api/employees";
       const method = editingEmployee ? "PUT" : "POST";
 
       const res = await fetch(url, {
@@ -112,7 +112,7 @@ export default function StaffPage() {
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this employee?")) return;
     try {
-      const res = await fetch(`/api/employees/ {id}`, { method: "DELETE" });
+      const res = await fetch(`/api/employees/${id}`, { method: "DELETE" });
       if (res.ok) fetchData();
     } catch (e) {
       console.error(e);

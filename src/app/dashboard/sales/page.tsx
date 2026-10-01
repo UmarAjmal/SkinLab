@@ -36,7 +36,7 @@ export default function SalesHistoryPage() {
       if (search) query.append("search", search);
       if (statusFilter !== "ALL") query.append("status", statusFilter);
 
-      const res = await fetch(`/api/sales? {query.toString()}`);
+      const res = await fetch(`/api/sales?${query.toString()}`);
       if (res.ok) {
         const data = await res.json();
         setSales(Array.isArray(data) ? data : []);
@@ -86,7 +86,7 @@ export default function SalesHistoryPage() {
     setPaymentProcessing(true);
 
     try {
-      const res = await fetch(`/api/sales/ {selectedSale.id}/payment`, {
+      const res = await fetch(`/api/sales/${selectedSale.id}/payment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount: parseFloat(paymentAmount), payment_method: paymentMethod })
