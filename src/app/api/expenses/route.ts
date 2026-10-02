@@ -108,7 +108,7 @@ export async function GET(request: Request) {
     const categoryBreakdown: Record<string, { name: string; amount: number; count: number }> = {};
     const paymentMethodBreakdown: Record<string, number> = {};
 
-    expenses.forEach((exp) => {
+    expenses.forEach((exp: any) => {
       const catName = exp.category?.name || "Uncategorized";
       if (!categoryBreakdown[catName]) {
         categoryBreakdown[catName] = { name: catName, amount: 0, count: 0 };

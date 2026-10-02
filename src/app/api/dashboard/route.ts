@@ -113,7 +113,7 @@ export async function GET() {
     const todayCollected = todayPayments._sum.amount || 0;
     const patientsTreatedToday = patientsTodayQuery.length;
     const activeDues = activeDuesSales.reduce(
-      (acc, sale) => acc + (sale.grand_total - (sale.paid_amount || 0)),
+      (acc: number, sale: { grand_total: number; paid_amount: number | null }) => acc + (sale.grand_total - (sale.paid_amount || 0)),
       0
     );
 
@@ -124,7 +124,7 @@ export async function GET() {
       revenueMap[d] = 0;
     }
 
-    recentSales.forEach((sale) => {
+    recentSales.forEach((sale: { date: Date; grand_total: number }) => {
       const d = dayjs(sale.date).format("MMM DD");
       if (revenueMap[d] !== undefined) {
         revenueMap[d] += sale.grand_total;
@@ -138,7 +138,7 @@ export async function GET() {
 
     // Calculate top treatments
     const treatmentsMap: Record<string, { name: string; count: number; revenue: number }> = {};
-    recentItems.forEach((item) => {
+    recentItems.forEach((item: any) => {
       if (!item.product) return;
       const pid = item.product_id;
       if (!treatmentsMap[pid]) {
