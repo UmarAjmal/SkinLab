@@ -233,51 +233,46 @@ export default function ReportsPage() {
         {/* Tabs */}
         <div className="flex border-b border-gray-100 bg-gray-50/50 px-4 pt-4 overflow-x-auto whitespace-nowrap shrink-0">
           <button
-            className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${
-              activeTab === 'sales_register' 
-                ? 'border-indigo-600 text-indigo-700 bg-white shadow-xs' 
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
-            }`}
+            className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${activeTab === 'sales_register'
+              ? 'border-indigo-600 text-indigo-700 bg-white shadow-xs'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
+              }`}
             onClick={() => setActiveTab('sales_register')}
           >
             <FileText className="w-4 h-4 mr-2" /> Sales Register
           </button>
           <button
-            className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${
-              activeTab === 'service_performance' 
-                ? 'border-indigo-600 text-indigo-700 bg-white shadow-xs' 
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
-            }`}
+            className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${activeTab === 'service_performance'
+              ? 'border-indigo-600 text-indigo-700 bg-white shadow-xs'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
+              }`}
             onClick={() => setActiveTab('service_performance')}
           >
             <BarChart3 className="w-4 h-4 mr-2" /> Service Performance
           </button>
           <button
-            className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${
-              activeTab === 'payment_breakdown' 
-                ? 'border-indigo-600 text-indigo-700 bg-white shadow-xs' 
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
-            }`}
+            className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${activeTab === 'payment_breakdown'
+              ? 'border-indigo-600 text-indigo-700 bg-white shadow-xs'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
+              }`}
             onClick={() => setActiveTab('payment_breakdown')}
           >
             <PieChart className="w-4 h-4 mr-2" /> Payment Breakdown
           </button>
           <button
-            className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${
-              activeTab === 'expense_report' 
-                ? 'border-rose-600 text-rose-700 bg-white shadow-xs font-bold' 
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
-            }`}
+            className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${activeTab === 'expense_report'
+              ? 'border-rose-600 text-rose-700 bg-white shadow-xs font-bold'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
+              }`}
             onClick={() => setActiveTab('expense_report')}
           >
             <Receipt className="w-4 h-4 mr-2 text-rose-600" /> Expense Report
           </button>
           <button
-            className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${
-              activeTab === 'patient_ledger' 
-                ? 'border-indigo-600 text-indigo-700 bg-white shadow-xs' 
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
-            }`}
+            className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${activeTab === 'patient_ledger'
+              ? 'border-indigo-600 text-indigo-700 bg-white shadow-xs'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
+              }`}
             onClick={() => setActiveTab('patient_ledger')}
           >
             <UserSquare className="w-4 h-4 mr-2" /> Patient Ledger
@@ -320,9 +315,9 @@ export default function ReportsPage() {
                             <td className="py-4 px-6 text-gray-500 whitespace-nowrap">{dayjs(s.date).format('MMM DD, YYYY')}</td>
                             <td className="py-4 px-6 font-medium text-indigo-600">{s.invoice_number}</td>
                             <td className="py-4 px-6 font-medium text-gray-900">{s.customer?.name}</td>
-                            <td className="py-4 px-6 text-right font-medium text-gray-700">Rs. {s.subtotal.toFixed(2)}</td>
-                            <td className="py-4 px-6 text-right text-red-500 font-medium">- Rs. {s.discount_amount.toFixed(2)}</td>
-                            <td className="py-4 px-6 text-right font-bold text-gray-900">Rs. {s.grand_total.toFixed(2)}</td>
+                            <td className="py-4 px-6 text-right font-medium text-gray-700">PKR {s.subtotal.toFixed(2)}</td>
+                            <td className="py-4 px-6 text-right text-red-500 font-medium">- PKR {s.discount_amount.toFixed(2)}</td>
+                            <td className="py-4 px-6 text-right font-bold text-gray-900">PKR {s.grand_total.toFixed(2)}</td>
                             <td className="py-4 px-6 text-center">
                               {s.payment_status === "PAID" && <span className="bg-green-100 text-green-700 px-2.5 py-1 rounded-lg text-xs font-bold tracking-wide">PAID</span>}
                               {s.payment_status === "PARTIAL" && <span className="bg-orange-100 text-orange-700 px-2.5 py-1 rounded-lg text-xs font-bold tracking-wide">PARTIAL</span>}
@@ -357,7 +352,7 @@ export default function ReportsPage() {
                             <td className="py-4 px-6 font-medium text-gray-900">{s.name}</td>
                             <td className="py-4 px-6 text-gray-500 font-mono text-xs">{s.sku}</td>
                             <td className="py-4 px-6 text-right font-medium">{s.quantity_sold}</td>
-                            <td className="py-4 px-6 text-right font-bold text-gray-900">Rs. {s.revenue.toFixed(2)}</td>
+                            <td className="py-4 px-6 text-right font-bold text-gray-900">PKR {s.revenue.toFixed(2)}</td>
                           </tr>
                         ))
                       )}
@@ -378,7 +373,7 @@ export default function ReportsPage() {
                         paymentBreakdown.map(p => (
                           <div key={p.method} className="flex justify-between items-center p-4 bg-white rounded-xl shadow-xs border border-gray-100">
                             <span className="font-medium text-gray-700">{p.method}</span>
-                            <span className="font-bold text-gray-900 text-lg">Rs. {p.amount.toFixed(2)}</span>
+                            <span className="font-bold text-gray-900 text-lg">PKR {p.amount.toFixed(2)}</span>
                           </div>
                         ))
                       )}
@@ -387,7 +382,7 @@ export default function ReportsPage() {
                       <div className="mt-6 pt-6 border-t border-gray-200 flex justify-between items-center px-2">
                         <span className="font-bold text-gray-900">Total Collected</span>
                         <span className="font-black text-indigo-600 text-2xl">
-                          Rs. {paymentBreakdown.reduce((sum, p) => sum + p.amount, 0).toFixed(2)}
+                          PKR {paymentBreakdown.reduce((sum, p) => sum + p.amount, 0).toFixed(2)}
                         </span>
                       </div>
                     )}
@@ -437,7 +432,7 @@ export default function ReportsPage() {
                         <div className="bg-indigo-50 border border-indigo-100 p-5 rounded-2xl flex flex-col justify-center">
                           <span className="text-indigo-600 text-xs font-semibold mb-1 uppercase tracking-wider">Total Spending</span>
                           <span className="text-2xl sm:text-3xl font-black text-indigo-900">
-                            Rs. {(selectedPatientData.sales || []).reduce((sum: number, s: any) => sum + s.grand_total, 0).toFixed(2)}
+                            PKR {(selectedPatientData.sales || []).reduce((sum: number, s: any) => sum + s.grand_total, 0).toFixed(2)}
                           </span>
                         </div>
                         <div className="bg-gray-50 border border-gray-100 p-5 rounded-2xl flex flex-col justify-center">
@@ -449,13 +444,13 @@ export default function ReportsPage() {
                         <div className="bg-red-50 border border-red-100 p-5 rounded-2xl flex flex-col justify-center">
                           <span className="text-red-600 text-xs font-semibold mb-1 uppercase tracking-wider">Due Balance</span>
                           <span className="text-2xl sm:text-3xl font-black text-red-900">
-                            Rs. {(selectedPatientData.current_balance || 0).toFixed(2)}
+                            PKR {(selectedPatientData.current_balance || 0).toFixed(2)}
                           </span>
                         </div>
                         <div className="bg-green-50 border border-green-100 p-5 rounded-2xl flex flex-col justify-center">
                           <span className="text-green-600 text-xs font-semibold mb-1 uppercase tracking-wider">Advance Balance</span>
                           <span className="text-2xl sm:text-3xl font-black text-green-900">
-                            Rs. {(selectedPatientData.advance_balance || 0).toFixed(2)}
+                            PKR {(selectedPatientData.advance_balance || 0).toFixed(2)}
                           </span>
                         </div>
                       </div>
@@ -481,8 +476,8 @@ export default function ReportsPage() {
                                   <tr key={sale.id} className="hover:bg-gray-50 transition-colors">
                                     <td className="p-4 text-gray-900">{dayjs(sale.date).format('MMM DD, YYYY')}</td>
                                     <td className="p-4 font-medium text-indigo-600">{sale.invoice_number}</td>
-                                    <td className="p-4 text-right font-medium text-gray-900">Rs. {sale.grand_total.toFixed(2)}</td>
-                                    <td className="p-4 text-right text-gray-600">Rs. {sale.paid_amount.toFixed(2)}</td>
+                                    <td className="p-4 text-right font-medium text-gray-900">PKR {sale.grand_total.toFixed(2)}</td>
+                                    <td className="p-4 text-right text-gray-600">PKR {sale.paid_amount.toFixed(2)}</td>
                                     <td className="p-4 text-center">
                                       {sale.payment_status === "PAID" && <span className="bg-green-100 text-green-700 px-2.5 py-1 rounded-lg text-xs font-semibold">PAID</span>}
                                       {sale.payment_status === "PARTIAL" && <span className="bg-orange-100 text-orange-700 px-2.5 py-1 rounded-lg text-xs font-semibold">PARTIAL</span>}
@@ -522,7 +517,7 @@ export default function ReportsPage() {
                                       <span className="bg-slate-100 px-2.5 py-1 rounded-md text-xs">{pmt.payment_method}</span>
                                     </td>
                                     <td className="p-4 text-gray-500 text-xs">{pmt.notes || "Payment received"}</td>
-                                    <td className="p-4 text-right font-bold text-emerald-700">Rs. {pmt.amount.toFixed(2)}</td>
+                                    <td className="p-4 text-right font-bold text-emerald-700">PKR {pmt.amount.toFixed(2)}</td>
                                   </tr>
                                 ))
                               )}
@@ -578,7 +573,7 @@ export default function ReportsPage() {
                         Total Period Expenses
                       </span>
                       <div className="text-2xl font-black text-rose-600">
-                        Rs. {Number(expenseReport?.summary?.totalExpenseAmount || 0).toLocaleString("en-PK", { minimumFractionDigits: 2 })}
+                        PKR {Number(expenseReport?.summary?.totalExpenseAmount || 0).toLocaleString("en-PK", { minimumFractionDigits: 2 })}
                       </div>
                       <p className="text-[11px] text-gray-500 mt-1">
                         {expenseReport?.summary?.totalTransactions || 0} expense transaction(s)
@@ -591,10 +586,10 @@ export default function ReportsPage() {
                         Total Sales Revenue (Collected)
                       </span>
                       <div className="text-2xl font-black text-emerald-700">
-                        Rs. {Number(expenseReport?.summary?.totalCollections || 0).toLocaleString("en-PK", { minimumFractionDigits: 2 })}
+                        PKR {Number(expenseReport?.summary?.totalCollections || 0).toLocaleString("en-PK", { minimumFractionDigits: 2 })}
                       </div>
                       <p className="text-[11px] text-gray-500 mt-1">
-                        Gross Invoiced: Rs. {Number(expenseReport?.summary?.totalInvoicedSales || 0).toLocaleString()}
+                        Gross Invoiced: PKR {Number(expenseReport?.summary?.totalInvoicedSales || 0).toLocaleString()}
                       </p>
                     </div>
 
@@ -604,7 +599,7 @@ export default function ReportsPage() {
                         Net Operating Cash Flow
                       </span>
                       <div className={`text-2xl font-black ${(expenseReport?.summary?.netOperatingCash || 0) >= 0 ? "text-indigo-900" : "text-rose-600"}`}>
-                        Rs. {Number(expenseReport?.summary?.netOperatingCash || 0).toLocaleString("en-PK", { minimumFractionDigits: 2 })}
+                        PKR {Number(expenseReport?.summary?.netOperatingCash || 0).toLocaleString("en-PK", { minimumFractionDigits: 2 })}
                       </div>
                       <p className="text-[11px] text-gray-500 mt-1">
                         Revenue minus expenses
@@ -617,7 +612,7 @@ export default function ReportsPage() {
                         Average Expense / Voucher
                       </span>
                       <div className="text-2xl font-black text-amber-700">
-                        Rs. {Number(expenseReport?.summary?.averageExpensePerTx || 0).toLocaleString("en-PK", { minimumFractionDigits: 2 })}
+                        PKR {Number(expenseReport?.summary?.averageExpensePerTx || 0).toLocaleString("en-PK", { minimumFractionDigits: 2 })}
                       </div>
                       <p className="text-[11px] text-gray-500 mt-1">
                         Per transaction average
@@ -645,7 +640,7 @@ export default function ReportsPage() {
                             <div key={cIdx} className="space-y-1">
                               <div className="flex justify-between text-xs font-semibold text-gray-700">
                                 <span>{cat.name} ({cat.count} txns)</span>
-                                <span>Rs. {Number(cat.amount).toLocaleString()} ({cat.percentage}%)</span>
+                                <span>PKR {Number(cat.amount).toLocaleString()} ({cat.percentage}%)</span>
                               </div>
                               <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
                                 <div
@@ -674,7 +669,7 @@ export default function ReportsPage() {
                             <div key={pIdx} className="space-y-1">
                               <div className="flex justify-between text-xs font-semibold text-gray-700">
                                 <span>{pm.method} ({pm.count} txns)</span>
-                                <span>Rs. {Number(pm.amount).toLocaleString()} ({pm.percentage}%)</span>
+                                <span>PKR {Number(pm.amount).toLocaleString()} ({pm.percentage}%)</span>
                               </div>
                               <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
                                 <div
@@ -741,7 +736,7 @@ export default function ReportsPage() {
                                     </span>
                                   </td>
                                   <td className="p-4 text-right font-black text-rose-600 whitespace-nowrap text-xs sm:text-sm">
-                                    Rs. {Number(exp.amount).toFixed(2)}
+                                    PKR {Number(exp.amount).toFixed(2)}
                                   </td>
                                 </tr>
                               ))

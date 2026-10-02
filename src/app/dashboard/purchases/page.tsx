@@ -157,11 +157,11 @@ export default function PurchasesPage() {
                     <input type="number" step="1" {...register(`items.${index}.quantity` as const, { required: true, min: 1 })} className="w-full px-3 py-2 border border-gray-200 rounded-xl shadow-2xs text-sm text-slate-900 bg-white font-medium text-center focus:ring-2 focus:ring-indigo-500" placeholder="Qty" />
                   </div>
                   <div className="w-full sm:w-36">
-                    <label className="block text-xs font-medium text-gray-500 mb-1 sm:hidden">Unit Cost (Rs.)</label>
+                    <label className="block text-xs font-medium text-gray-500 mb-1 sm:hidden">Unit Cost (PKR)</label>
                     <input type="number" step="0.01" {...register(`items.${index}.unit_cost` as const, { required: true, min: 0 })} className="w-full px-3 py-2 border border-gray-200 rounded-xl shadow-2xs text-sm text-slate-900 bg-white font-medium focus:ring-2 focus:ring-indigo-500" placeholder="Cost" />
                   </div>
                   <div className="w-full sm:w-36 pt-2 sm:pt-0 font-bold text-gray-900 sm:text-right">
-                    Rs. {(Number(watchItems[index]?.quantity || 0) * Number(watchItems[index]?.unit_cost || 0)).toFixed(2)}
+                    PKR {(Number(watchItems[index]?.quantity || 0) * Number(watchItems[index]?.unit_cost || 0)).toFixed(2)}
                   </div>
                   <button type="button" onClick={() => remove(index)} className="text-gray-400 hover:text-rose-600 p-1.5 rounded-xl hover:bg-rose-50 transition-colors ml-auto sm:ml-0 mt-[-2rem] sm:mt-0">
                     <Trash2 className="w-4 h-4" />
@@ -175,19 +175,19 @@ export default function PurchasesPage() {
             <div className="w-full max-w-sm space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500 font-medium">Subtotal:</span>
-                <span className="font-bold text-gray-900">Rs. {subtotal.toFixed(2)}</span>
+                <span className="font-bold text-gray-900">PKR {subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm items-center">
                 <span className="text-gray-500 font-medium">Delivery / Shipping:</span>
                 <input type="number" step="0.01" {...register("delivery_charges")} className="w-28 px-3 py-1.5 border border-gray-200 rounded-xl text-sm font-semibold text-right text-slate-900 bg-white focus:ring-2 focus:ring-indigo-500" />
               </div>
               <div className="flex justify-between text-sm items-center border-b border-gray-100 pb-3">
-                <span className="text-gray-500 font-medium">Tax (Rs.):</span>
+                <span className="text-gray-500 font-medium">Tax (PKR):</span>
                 <input type="number" step="0.01" {...register("tax")} className="w-28 px-3 py-1.5 border border-gray-200 rounded-xl text-sm font-semibold text-right text-slate-900 bg-white focus:ring-2 focus:ring-indigo-500" />
               </div>
               <div className="flex justify-between text-lg font-bold text-gray-900 pt-2">
                 <span>Grand Total:</span>
-                <span className="text-indigo-600">Rs. {grandTotal.toFixed(2)}</span>
+                <span className="text-indigo-600">PKR {grandTotal.toFixed(2)}</span>
               </div>
             </div>
 
@@ -242,11 +242,10 @@ export default function PurchasesPage() {
                       <span className="bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-lg text-xs font-mono">{p.invoice_number}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{p.supplier?.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-900 font-bold">Rs. {p.grand_total?.toFixed(2)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-900 font-bold">PKR {p.grand_total?.toFixed(2)}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2.5 py-1 inline-flex text-xs font-bold rounded-lg ${
-                        p.status === 'RECEIVED' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
-                      }`}>
+                      <span className={`px-2.5 py-1 inline-flex text-xs font-bold rounded-lg ${p.status === 'RECEIVED' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                        }`}>
                         {p.status}
                       </span>
                     </td>

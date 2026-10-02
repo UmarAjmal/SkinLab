@@ -31,7 +31,26 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [clinicName, setClinicName] = useState("Skin-Lab");
+  const [clinicLogo, setClinicLogo] = useState<string | null>(null);
   const pathname = usePathname();
+
+  // Fetch clinic settings for branding
+  useEffect(() => {
+    const fetchClinicSettings = async () => {
+      try {
+        const res = await fetch("/api/settings");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.name) setClinicName(data.name);
+          if (data.logo) setClinicLogo(data.logo);
+        }
+      } catch (err) {
+        console.error("Failed to load clinic settings in sidebar:", err);
+      }
+    };
+    fetchClinicSettings();
+  }, []);
 
   // Load saved collapse preference from localStorage
   useEffect(() => {
@@ -96,13 +115,21 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
       {/* ========================================= */}
       {/* MOBILE TOP NAVIGATION BAR (< md screens)  */}
       {/* ========================================= */}
-      <div className="md:hidden bg-indigo-950 text-white flex items-center justify-between px-4 py-3.5 border-b border-indigo-900/60 shrink-0 z-30">
+      <div className="md:hidden bg-indigo-950 text-white flex items-center justify-between px-4 py-3 border-b border-indigo-900/60 shrink-0 z-30">
         <div className="flex items-center space-x-2.5">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-md shadow-indigo-600/30">
-            <FlaskConical className="w-5 h-5 text-white" />
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-md shadow-indigo-600/30 overflow-hidden shrink-0">
+            {clinicLogo ? (
+              <img
+                src={clinicLogo}
+                alt={clinicName}
+                className="w-full h-full object-contain p-0.5 bg-white/10"
+              />
+            ) : (
+              <FlaskConical className="w-5 h-5 text-white" />
+            )}
           </div>
-          <span className="text-lg font-bold tracking-tight bg-gradient-to-r from-white via-indigo-100 to-indigo-200 bg-clip-text text-transparent">
-            Skin-Lab POS
+          <span className="text-base font-bold tracking-tight bg-gradient-to-r from-white via-indigo-100 to-indigo-200 bg-clip-text text-transparent truncate max-w-[170px]">
+            {clinicName}
           </span>
         </div>
         <div className="flex items-center space-x-2">
@@ -141,12 +168,20 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
         {/* Mobile Drawer Header */}
         <div className="p-4 border-b border-indigo-900/60 flex items-center justify-between">
           <div className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-md shadow-indigo-600/30">
-              <FlaskConical className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-md shadow-indigo-600/30 overflow-hidden shrink-0">
+              {clinicLogo ? (
+                <img
+                  src={clinicLogo}
+                  alt={clinicName}
+                  className="w-full h-full object-contain p-1 bg-white/10"
+                />
+              ) : (
+                <FlaskConical className="w-5 h-5 text-white" />
+              )}
             </div>
             <div>
-              <div className="text-base font-bold text-white tracking-tight">Skin-Lab</div>
-              <div className="text-[11px] text-indigo-300 font-medium tracking-wide">POS & CLINIC SYSTEM</div>
+              <div className="text-base font-bold text-white tracking-tight truncate max-w-[160px]">{clinicName}</div>
+              <div className="text-[10px] text-indigo-300 font-semibold tracking-wide uppercase">POS &amp; CLINIC SYSTEM</div>
             </div>
           </div>
           <button
@@ -232,13 +267,23 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
         {/* Desktop Sidebar Header */}
         <div className="h-16 px-3.5 border-b border-indigo-900/60 flex items-center justify-between shrink-0 relative overflow-hidden">
           <div className="flex items-center space-x-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-md shadow-indigo-600/30 shrink-0">
-              <FlaskConical className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-md shadow-indigo-600/30 shrink-0 overflow-hidden">
+              {clinicLogo ? (
+                <img
+                  src={clinicLogo}
+                  alt={clinicName}
+                  className="w-full h-full object-contain p-1 bg-white/10"
+                />
+              ) : (
+                <FlaskConical className="w-5 h-5 text-white" />
+              )}
             </div>
             <div className={`transition-all duration-300 whitespace-nowrap overflow-hidden ${
               isDesktopExpanded ? "opacity-100 max-w-[130px]" : "opacity-0 max-w-0 pointer-events-none"
             }`}>
-              <div className="text-base font-bold text-white tracking-tight leading-tight">Skin-Lab</div>
+              <div className="text-base font-bold text-white tracking-tight leading-tight truncate" title={clinicName}>
+                {clinicName}
+              </div>
               <div className="text-[10px] text-indigo-300 font-semibold tracking-wider uppercase">POS SYSTEM</div>
             </div>
           </div>

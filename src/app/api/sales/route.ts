@@ -192,7 +192,7 @@ export async function POST(request: Request) {
       // Trigger RBAC Notification for follow-up session & payment
       createNotification({
         title: `Package Session Consumed: ${origSale.invoice_number}`,
-        message: `Patient ${customer.name} completed a package follow-up session${paidAmount > 0 ? ` with payment of Rs. ${paidAmount.toFixed(2)}` : ""}.`,
+        message: `Patient ${customer.name} completed a package follow-up session${paidAmount > 0 ? ` with payment of PKR ${paidAmount.toFixed(2)}` : ""}.`,
         type: "PAYMENT_RECEIVED",
         severity: "INFO",
         targetRole: "Admin",
@@ -387,7 +387,7 @@ export async function POST(request: Request) {
     // Trigger RBAC Notifications for New Sale
     createNotification({
       title: `New Sale: ${sale.invoice_number}`,
-      message: `Patient ${customer.name} billed for Rs. ${grandTotal.toFixed(2)} (Paid: Rs. ${paidAmount.toFixed(2)}${paymentStatus !== "PAID" ? `, Balance: Rs. ${(grandTotal - paidAmount).toFixed(2)}` : ""}).`,
+      message: `Patient ${customer.name} billed for PKR ${grandTotal.toFixed(2)} (Paid: PKR ${paidAmount.toFixed(2)}${paymentStatus !== "PAID" ? `, Balance: PKR ${(grandTotal - paidAmount).toFixed(2)}` : ""}).`,
       type: "SALE_CREATED",
       severity: paymentStatus === "PAID" ? "SUCCESS" : "WARNING",
       targetRole: "Admin",

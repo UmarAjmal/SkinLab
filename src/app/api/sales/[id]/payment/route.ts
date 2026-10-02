@@ -91,7 +91,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
     // Trigger Notification for Due Payment Collection
     createNotification({
       title: `Payment Received: ${sale.invoice_number}`,
-      message: `Received Rs. ${amountToCollect.toFixed(2)} from ${sale.customer.name} via ${data.payment_method || "Cash"} (Status: ${newStatus}).`,
+      message: `Received PKR ${amountToCollect.toFixed(2)} from ${sale.customer.name} via ${data.payment_method || "Cash"} (Status: ${newStatus}).`,
       type: "PAYMENT_RECEIVED",
       severity: newStatus === "PAID" ? "SUCCESS" : "INFO",
       targetRole: "Admin",

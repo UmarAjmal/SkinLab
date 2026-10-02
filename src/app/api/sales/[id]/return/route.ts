@@ -82,7 +82,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     // Trigger Notification for Return/Refund
     createNotification({
       title: `Return Processed: ${sale.invoice_number}`,
-      message: `Refund of Rs. ${totalRefundAmount.toFixed(2)} processed for ${sale.customer?.name || "Patient"} (Reason: ${reason || "Not specified"}).`,
+      message: `Refund of PKR ${totalRefundAmount.toFixed(2)} processed for ${sale.customer?.name || "Patient"} (Reason: ${reason || "Not specified"}).`,
       type: "REFUND_PROCESSED",
       severity: "WARNING",
       targetRole: "Admin",

@@ -400,7 +400,7 @@ export default function ExpensesPage() {
               Filtered Total Spent
             </span>
             <div className="text-2xl font-black text-rose-600 tracking-tight">
-              Rs. {Number(stats.totalAmount || 0).toLocaleString("en-PK", { minimumFractionDigits: 0 })}
+              PKR {Number(stats.totalAmount || 0).toLocaleString("en-PK", { minimumFractionDigits: 0 })}
             </div>
             <p className="text-[11px] text-gray-500 font-medium">
               {stats.totalCount || 0} expense voucher{stats.totalCount === 1 ? "" : "s"} recorded
@@ -418,7 +418,7 @@ export default function ExpensesPage() {
               Current Month Total
             </span>
             <div className="text-2xl font-black text-gray-900 tracking-tight">
-              Rs. {Number(stats.thisMonthAmount || 0).toLocaleString("en-PK", { minimumFractionDigits: 0 })}
+              PKR {Number(stats.thisMonthAmount || 0).toLocaleString("en-PK", { minimumFractionDigits: 0 })}
             </div>
             <p className="text-[11px] text-gray-500 font-medium">
               {dayjs().format("MMMM YYYY")} expenses
@@ -436,7 +436,7 @@ export default function ExpensesPage() {
               Today's Expenses
             </span>
             <div className="text-2xl font-black text-amber-600 tracking-tight">
-              Rs. {Number(stats.todayAmount || 0).toLocaleString("en-PK", { minimumFractionDigits: 0 })}
+              PKR {Number(stats.todayAmount || 0).toLocaleString("en-PK", { minimumFractionDigits: 0 })}
             </div>
             <p className="text-[11px] text-gray-500 font-medium">
               Petty cash & day expenditures
@@ -457,7 +457,7 @@ export default function ExpensesPage() {
               {topCategory?.name || "None"}
             </div>
             <p className="text-[11px] text-gray-500 font-medium">
-              {topCategory ? `Rs. ${topCategory.amount.toLocaleString()} (${topCategory.count} txns)` : "No expenses recorded"}
+              {topCategory ? `PKR ${topCategory.amount.toLocaleString()} (${topCategory.count} txns)` : "No expenses recorded"}
             </p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
@@ -473,41 +473,36 @@ export default function ExpensesPage() {
           <div className="flex flex-wrap items-center gap-1.5 bg-gray-50 p-1 rounded-2xl border border-gray-100 text-xs font-semibold text-gray-600">
             <button
               onClick={() => handleDatePresetChange("this_month")}
-              className={`px-3 py-1.5 rounded-xl transition-all ${
-                datePreset === "this_month" ? "bg-white text-indigo-700 shadow-xs font-bold" : "hover:text-gray-900"
-              }`}
+              className={`px-3 py-1.5 rounded-xl transition-all ${datePreset === "this_month" ? "bg-white text-indigo-700 shadow-xs font-bold" : "hover:text-gray-900"
+                }`}
             >
               This Month
             </button>
             <button
               onClick={() => handleDatePresetChange("today")}
-              className={`px-3 py-1.5 rounded-xl transition-all ${
-                datePreset === "today" ? "bg-white text-indigo-700 shadow-xs font-bold" : "hover:text-gray-900"
-              }`}
+              className={`px-3 py-1.5 rounded-xl transition-all ${datePreset === "today" ? "bg-white text-indigo-700 shadow-xs font-bold" : "hover:text-gray-900"
+                }`}
             >
               Today
             </button>
             <button
               onClick={() => handleDatePresetChange("this_week")}
-              className={`px-3 py-1.5 rounded-xl transition-all ${
-                datePreset === "this_week" ? "bg-white text-indigo-700 shadow-xs font-bold" : "hover:text-gray-900"
-              }`}
+              className={`px-3 py-1.5 rounded-xl transition-all ${datePreset === "this_week" ? "bg-white text-indigo-700 shadow-xs font-bold" : "hover:text-gray-900"
+                }`}
             >
               This Week
             </button>
             <button
               onClick={() => handleDatePresetChange("last_month")}
-              className={`px-3 py-1.5 rounded-xl transition-all ${
-                datePreset === "last_month" ? "bg-white text-indigo-700 shadow-xs font-bold" : "hover:text-gray-900"
-              }`}
+              className={`px-3 py-1.5 rounded-xl transition-all ${datePreset === "last_month" ? "bg-white text-indigo-700 shadow-xs font-bold" : "hover:text-gray-900"
+                }`}
             >
               Last Month
             </button>
             <button
               onClick={() => handleDatePresetChange("custom")}
-              className={`px-3 py-1.5 rounded-xl transition-all ${
-                datePreset === "custom" ? "bg-white text-indigo-700 shadow-xs font-bold" : "hover:text-gray-900"
-              }`}
+              className={`px-3 py-1.5 rounded-xl transition-all ${datePreset === "custom" ? "bg-white text-indigo-700 shadow-xs font-bold" : "hover:text-gray-900"
+                }`}
             >
               Custom Dates
             </button>
@@ -595,17 +590,15 @@ export default function ExpensesPage() {
             <div className="flex items-center bg-gray-100 p-1 rounded-xl text-xs font-semibold text-gray-600">
               <button
                 onClick={() => setActiveView("list")}
-                className={`px-3 py-1.5 rounded-lg transition-all ${
-                  activeView === "list" ? "bg-white text-gray-900 shadow-2xs font-bold" : "hover:text-gray-900"
-                }`}
+                className={`px-3 py-1.5 rounded-lg transition-all ${activeView === "list" ? "bg-white text-gray-900 shadow-2xs font-bold" : "hover:text-gray-900"
+                  }`}
               >
                 Vouchers Log
               </button>
               <button
                 onClick={() => setActiveView("categories")}
-                className={`px-3 py-1.5 rounded-lg transition-all ${
-                  activeView === "categories" ? "bg-white text-gray-900 shadow-2xs font-bold" : "hover:text-gray-900"
-                }`}
+                className={`px-3 py-1.5 rounded-lg transition-all ${activeView === "categories" ? "bg-white text-gray-900 shadow-2xs font-bold" : "hover:text-gray-900"
+                  }`}
               >
                 Category Summary
               </button>
@@ -712,7 +705,7 @@ export default function ExpensesPage() {
                       {/* Amount */}
                       <td className="p-4 text-right whitespace-nowrap">
                         <div className="font-black text-rose-600 text-sm sm:text-base">
-                          Rs. {Number(exp.amount).toFixed(2)}
+                          PKR {Number(exp.amount).toFixed(2)}
                         </div>
                       </td>
 
@@ -764,7 +757,7 @@ export default function ExpensesPage() {
                 </div>
 
                 <div className="text-2xl font-black text-gray-900">
-                  Rs. {Number(cat.amount).toLocaleString("en-PK", { minimumFractionDigits: 2 })}
+                  PKR {Number(cat.amount).toLocaleString("en-PK", { minimumFractionDigits: 2 })}
                 </div>
 
                 {/* Progress Bar */}
@@ -849,11 +842,11 @@ export default function ExpensesPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                    Amount (PKR / Rs.) *
+                    Amount (PKR) *
                   </label>
                   <div className="relative">
-                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">
-                      Rs.
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs">
+                      PKR
                     </span>
                     <input
                       type="number"
@@ -863,7 +856,7 @@ export default function ExpensesPage() {
                       value={formAmount}
                       onChange={(e) => setFormAmount(e.target.value)}
                       placeholder="0.00"
-                      className="w-full pl-11 pr-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-base font-black text-rose-600 focus:ring-2 focus:ring-rose-500 outline-hidden"
+                      className="w-full pl-12 pr-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-base font-black text-rose-600 focus:ring-2 focus:ring-rose-500 outline-hidden"
                     />
                   </div>
                 </div>

@@ -363,7 +363,7 @@ export default function PatientDetailPage() {
             <div>
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Due Balance</p>
               <h3 className={`text-2xl font-bold mt-1 ${dueBalance > 0 ? "text-rose-600" : "text-gray-900"}`}>
-                Rs. {dueBalance.toLocaleString("en-PK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                PKR {dueBalance.toLocaleString("en-PK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </h3>
               {dueBalance > 0 ? (
                 <span className="text-[11px] font-medium text-rose-600 flex items-center gap-1 mt-0.5">
@@ -375,9 +375,8 @@ export default function PatientDetailPage() {
                 </span>
               )}
             </div>
-            <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${
-              dueBalance > 0 ? "bg-rose-50 border border-rose-100 text-rose-600" : "bg-gray-50 border border-gray-100 text-gray-400"
-            }`}>
+            <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${dueBalance > 0 ? "bg-rose-50 border border-rose-100 text-rose-600" : "bg-gray-50 border border-gray-100 text-gray-400"
+              }`}>
               <CreditCard className="w-5 h-5" />
             </div>
           </div>
@@ -387,7 +386,7 @@ export default function PatientDetailPage() {
             <div>
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Advance Wallet</p>
               <h3 className="text-2xl font-bold text-emerald-600 mt-1">
-                Rs. {walletBalance.toLocaleString("en-PK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                PKR {walletBalance.toLocaleString("en-PK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </h3>
               <button
                 onClick={() => setIsWalletModalOpen(true)}
@@ -406,7 +405,7 @@ export default function PatientDetailPage() {
             <div>
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Lifetime Invoiced</p>
               <h3 className="text-2xl font-bold text-gray-900 mt-1">
-                Rs. {lifetimeSpent.toLocaleString("en-PK", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                PKR {lifetimeSpent.toLocaleString("en-PK", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
               </h3>
               <p className="text-[11px] text-gray-400 mt-0.5">Across {totalSalesCount} total invoices</p>
             </div>
@@ -587,7 +586,7 @@ export default function PatientDetailPage() {
                     <span className="text-xs text-rose-600 font-mono">Unpaid invoices</span>
                   </div>
                   <span className="text-lg font-bold text-rose-600">
-                    Rs. {dueBalance.toLocaleString("en-PK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    PKR {dueBalance.toLocaleString("en-PK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
 
@@ -597,7 +596,7 @@ export default function PatientDetailPage() {
                     <span className="text-xs text-emerald-600 font-mono">Patient wallet credit</span>
                   </div>
                   <span className="text-lg font-bold text-emerald-700">
-                    Rs. {walletBalance.toLocaleString("en-PK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    PKR {walletBalance.toLocaleString("en-PK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
               </div>
@@ -685,9 +684,8 @@ export default function PatientDetailPage() {
                           </div>
                           <div className="w-full bg-gray-100 h-2.5 rounded-full overflow-hidden">
                             <div
-                              className={`h-full transition-all duration-300 rounded-full ${
-                                isCompleted ? "bg-emerald-500" : "bg-gradient-to-r from-indigo-500 to-indigo-600"
-                              }`}
+                              className={`h-full transition-all duration-300 rounded-full ${isCompleted ? "bg-emerald-500" : "bg-gradient-to-r from-indigo-500 to-indigo-600"
+                                }`}
                               style={{ width: `${percentage}%` }}
                             ></div>
                           </div>
@@ -753,10 +751,10 @@ export default function PatientDetailPage() {
                               {sale.doctor?.name ? `Dr. ${sale.doctor.name}` : <span className="text-gray-400 italic">General</span>}
                             </td>
                             <td className="py-3.5 px-5 text-right font-bold text-gray-900 text-xs">
-                              Rs. {sale.grand_total.toLocaleString("en-PK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              PKR {sale.grand_total.toLocaleString("en-PK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </td>
                             <td className="py-3.5 px-5 text-right font-semibold text-emerald-700 text-xs">
-                              Rs. {(sale.paid_amount || 0).toLocaleString("en-PK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              PKR {(sale.paid_amount || 0).toLocaleString("en-PK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </td>
                             <td className="py-3.5 px-5">
                               <StatusBadge status={sale.payment_status} />
@@ -852,7 +850,7 @@ export default function PatientDetailPage() {
             <div className="p-5 space-y-4 overflow-y-auto flex-1">
               <div>
                 <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
-                  Amount to Collect (Rs.)
+                  Amount to Collect (PKR)
                 </label>
                 <input
                   type="number"
@@ -865,7 +863,7 @@ export default function PatientDetailPage() {
                 <div className="flex justify-between items-center text-xs mt-1 text-gray-500 font-medium">
                   <span>Total Remaining:</span>
                   <span className="font-bold text-rose-600">
-                    Rs. {(selectedSale.grand_total - (selectedSale.paid_amount || 0)).toFixed(2)}
+                    PKR {(selectedSale.grand_total - (selectedSale.paid_amount || 0)).toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -943,7 +941,7 @@ export default function PatientDetailPage() {
             <div className="p-5 space-y-4 overflow-y-auto flex-1">
               <div>
                 <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1">
-                  Deposit Amount (Rs.) <span className="text-red-500">*</span>
+                  Deposit Amount (PKR) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="number"

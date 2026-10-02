@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { DollarSign, Users, CreditCard, Activity, TrendingUp } from "lucide-react";
+import { Banknote, Users, CreditCard, Activity, TrendingUp } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import dayjs from "dayjs";
 import InvoiceModal, { StatusBadge } from "@/components/InvoiceModal";
@@ -74,11 +74,11 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center">
           <div className="bg-indigo-50 p-4 rounded-2xl mr-4 border border-indigo-100">
-            <DollarSign className="w-6 h-6 text-indigo-600" />
+            <Banknote className="w-6 h-6 text-indigo-600" />
           </div>
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Today's Revenue</p>
-            <h3 className="text-2xl font-bold text-gray-900 mt-1">Rs. {(todayRevenue || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</h3>
+            <h3 className="text-2xl font-bold text-gray-900 mt-1">PKR {(todayRevenue || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</h3>
           </div>
         </div>
 
@@ -98,7 +98,7 @@ export default function DashboardPage() {
           </div>
           <div>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Active Pending Dues</p>
-            <h3 className="text-2xl font-bold text-rose-600 mt-1">Rs. {(activeDues || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</h3>
+            <h3 className="text-2xl font-bold text-rose-600 mt-1">PKR {(activeDues || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</h3>
           </div>
         </div>
       </div>
@@ -123,10 +123,10 @@ export default function DashboardPage() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                 <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} tickFormatter={(val) => `Rs. ${val}`} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} tickFormatter={(val) => `PKR ${val}`} />
                 <Tooltip
                   contentStyle={{ borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                  formatter={(value: any) => [`Rs. ${Number(value).toFixed(2)}`, 'Revenue']}
+                  formatter={(value: any) => [`PKR ${Number(value).toFixed(2)}`, 'Revenue']}
                 />
                 <Area type="monotone" dataKey="revenue" stroke="#4f46e5" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
               </AreaChart>
@@ -152,7 +152,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                     <div className="font-bold text-gray-900 text-sm">
-                      Rs. {treatment.revenue.toLocaleString()}
+                      PKR {treatment.revenue.toLocaleString()}
                     </div>
                   </div>
                 ))}
@@ -199,7 +199,7 @@ export default function DashboardPage() {
                       {tx.doctor?.name || "None"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-bold text-gray-900">
-                      Rs. {tx.grand_total.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      PKR {tx.grand_total.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <StatusBadge status={tx.payment_status} />

@@ -22,7 +22,10 @@ import {
   PenLine,
   Trash,
   Sparkles,
-  UserCheck
+  UserCheck,
+  UploadCloud,
+  Image as ImageIcon,
+  RefreshCw,
 } from "lucide-react";
 import { SYSTEM_MODULES } from "@/lib/permissions";
 
@@ -79,6 +82,23 @@ export default function SettingsPage() {
   const [clinicLoading, setClinicLoading] = useState(true);
   const [clinicSaving, setClinicSaving] = useState(false);
   const [clinicSaved, setClinicSaved] = useState(false);
+  const [isLogoDragging, setIsLogoDragging] = useState(false);
+
+  const handleLogoFileUpload = (file: File) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      alert("Please upload a valid image file (PNG, JPG, JPEG, SVG, WebP)");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64 = e.target?.result as string;
+      if (base64) {
+        setClinicSettings((prev) => ({ ...prev, logo: base64 }));
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   // ─── User Management State ────────────────────────────
   const [users, setUsers] = useState<UserItem[]>([]);
@@ -626,27 +646,118 @@ export default function SettingsPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Logo URL</label>
+                  {/* Clinic Logo & Branding */}
+                  <div className="p-5 rounded-2xl bg-slate-50 border border-gray-200/80 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <label className="block text-sm font-bold text-gray-800">
+                          Clinic Brand Logo
+                        </label>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          Upload high-resolution 4K logo (PNG, JPG, SVG, WebP). Used across POS receipts, invoices, tabs, and reports.
+                        </p>
+                      </div>
+                      {clinicSettings.logo && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-extrabold bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full border border-emerald-200">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> 4K Ultra HD Ready
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-center gap-5">
+                      {/* Logo Preview Box */}
+                      <div className="relative w-32 h-32 rounded-2xl bg-white border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden shrink-0 shadow-inner group">
+                        {clinicSettings.logo ? (
+                          <>
+                            <img
+                              src={clinicSettings.logo}
+                              alt="Clinic Logo Preview"
+                              className="max-w-full max-h-full object-contain p-2"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setClinicSettings({ ...clinicSettings, logo: "" })}
+                              className="absolute inset-0 bg-black/60 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold gap-1"
+                              title="Remove Logo"
+                            >
+                              <Trash2 className="w-4 h-4 text-rose-400" />
+                              <span>Remove</span>
+                            </button>
+                          </>
+                        ) : (
+                          <div className="text-center p-3 text-gray-400">
+                            <ImageIcon className="w-8 h-8 mx-auto text-gray-300 mb-1" />
+                            <span className="text-[10px] font-semibold block leading-tight">No Logo Selected</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Dropzone & Picker */}
+                      <div
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          setIsLogoDragging(true);
+                        }}
+                        onDragLeave={() => setIsLogoDragging(false)}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setIsLogoDragging(false);
+                          if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                            handleLogoFileUpload(e.dataTransfer.files[0]);
+                          }
+                        }}
+                        className={`flex-1 w-full border-2 border-dashed rounded-2xl p-5 text-center transition-all cursor-pointer flex flex-col items-center justify-center ${
+                          isLogoDragging
+                            ? "border-indigo-600 bg-indigo-50/80 scale-[1.01]"
+                            : "border-gray-200 bg-white hover:border-indigo-400 hover:bg-slate-50/60"
+                        }`}
+                        onClick={() => document.getElementById("logo-file-input")?.click()}
+                      >
+                        <input
+                          id="logo-file-input"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              handleLogoFileUpload(e.target.files[0]);
+                            }
+                          }}
+                        />
+                        <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-2 shadow-xs">
+                          <UploadCloud className="w-5 h-5" />
+                        </div>
+                        <p className="text-xs font-bold text-gray-800">
+                          Click to browse or Drag & Drop logo here
+                        </p>
+                        <p className="text-[11px] text-gray-400 mt-1">
+                          PNG, JPG, SVG, WebP up to 4K resolution (stored directly in database)
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Direct URL Fallback Option */}
+                    <div className="pt-2 border-t border-gray-100 flex items-center gap-2">
+                      <span className="text-xs text-gray-400 shrink-0 font-medium">Or paste image URL:</span>
                       <input
                         type="text"
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                        placeholder="https://example.com/logo.png"
+                        className="flex-1 px-3 py-1.5 text-xs border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all bg-white"
+                        placeholder="https://..."
                         value={clinicSettings.logo}
-                        onChange={e => setClinicSettings({ ...clinicSettings, logo: e.target.value })}
+                        onChange={(e) => setClinicSettings({ ...clinicSettings, logo: e.target.value })}
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Tax / Registration Number</label>
-                      <input
-                        type="text"
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                        placeholder="NTN-1234567-8"
-                        value={clinicSettings.tax_number}
-                        onChange={e => setClinicSettings({ ...clinicSettings, tax_number: e.target.value })}
-                      />
-                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Tax / NTN Registration Number</label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                      placeholder="NTN-1234567-8"
+                      value={clinicSettings.tax_number}
+                      onChange={e => setClinicSettings({ ...clinicSettings, tax_number: e.target.value })}
+                    />
                   </div>
 
                   <div>

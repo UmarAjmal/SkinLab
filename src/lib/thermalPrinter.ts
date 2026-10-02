@@ -34,8 +34,9 @@ export interface ThermalReceiptData {
     sessions_consumed?: number;
     sub_items?: string[];
   }>;
-  subtotal: number;
-  discount: number;
+  subtotal?: number;
+  discount?: number;
+  discountAmount?: number;
   grandTotal: number;
   paidAmount: number;
   balanceDue?: number;

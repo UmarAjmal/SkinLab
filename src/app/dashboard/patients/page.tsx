@@ -128,12 +128,11 @@ export default function PatientsPage() {
       cell: info => {
         const val = Number(info.getValue()) || 0;
         return (
-          <span className={`inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-md ${
-            val > 0
-              ? "bg-rose-50 text-rose-700 border border-rose-200"
-              : "text-gray-500 bg-gray-50 border border-gray-100"
-          }`}>
-            Rs. {val.toLocaleString("en-PK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <span className={`inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-md ${val > 0
+            ? "bg-rose-50 text-rose-700 border border-rose-200"
+            : "text-gray-500 bg-gray-50 border border-gray-100"
+            }`}>
+            PKR {val.toLocaleString("en-PK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
         );
       }
@@ -143,12 +142,11 @@ export default function PatientsPage() {
       cell: info => {
         const val = Number(info.getValue()) || 0;
         return (
-          <span className={`inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-md ${
-            val > 0
-              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-              : "text-gray-500 bg-gray-50 border border-gray-100"
-          }`}>
-            Rs. {val.toLocaleString("en-PK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <span className={`inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-md ${val > 0
+            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+            : "text-gray-500 bg-gray-50 border border-gray-100"
+            }`}>
+            PKR {val.toLocaleString("en-PK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
         );
       }
@@ -269,7 +267,7 @@ export default function PatientsPage() {
             <div>
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Outstanding Dues</p>
               <h3 className="text-xl font-bold text-rose-700 mt-1">
-                Rs. {totalDueAmount.toLocaleString("en-PK", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                PKR {totalDueAmount.toLocaleString("en-PK", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
               </h3>
             </div>
             <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center">
@@ -281,7 +279,7 @@ export default function PatientsPage() {
             <div>
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Advance Wallets</p>
               <h3 className="text-xl font-bold text-emerald-700 mt-1">
-                Rs. {totalWalletAmount.toLocaleString("en-PK", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                PKR {totalWalletAmount.toLocaleString("en-PK", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
               </h3>
             </div>
             <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center">
@@ -316,9 +314,8 @@ export default function PatientsPage() {
                     {headerGroup.headers.map(header => (
                       <th
                         key={header.id}
-                        className={`py-3.5 px-6 font-semibold ${
-                          header.id === "actions" ? "text-right" : ""
-                        }`}
+                        className={`py-3.5 px-6 font-semibold ${header.id === "actions" ? "text-right" : ""
+                          }`}
                       >
                         {header.isPlaceholder
                           ? null

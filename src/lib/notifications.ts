@@ -91,7 +91,7 @@ export async function checkAndCreateOverdueDuesAlerts() {
         await (prisma as any).notification.create({
           data: {
             title: `Overdue Dues Alert (Pending ${daysPending} Days)`,
-            message: `Invoice ${sale.invoice_number} for patient ${sale.customer?.name || "Patient"} has an outstanding balance of Rs. ${balance.toFixed(2)}.`,
+            message: `Invoice ${sale.invoice_number} for patient ${sale.customer?.name || "Patient"} has an outstanding balance ofPKR ${balance.toFixed(2)}.`,
             type: "OVERDUE_DUES",
             severity: "URGENT",
             target_role: "Admin",
@@ -163,7 +163,7 @@ export async function checkAndCreateDailyClosingNotification() {
         await (prisma as any).notification.create({
           data: {
             title: `📊 Daily Closing Summary (${yesterday.format("DD MMM YYYY")})`,
-            message: `Sales: Rs. ${totalSales.toLocaleString()} | Collections: Rs. ${totalPayments.toLocaleString()} | Expenses: Rs. ${totalExpenses.toLocaleString()} | Net Cash: Rs. ${netCashflow.toLocaleString()} (${patientsCount.length} Patients, ${invoiceCount} Invoices)`,
+            message: `Sales:PKR ${totalSales.toLocaleString()} | Collections:PKR ${totalPayments.toLocaleString()} | Expenses:PKR ${totalExpenses.toLocaleString()} | Net Cash:PKR ${netCashflow.toLocaleString()} (${patientsCount.length} Patients, ${invoiceCount} Invoices)`,
             type: "DAILY_CLOSING_SUMMARY",
             severity: "SUCCESS",
             target_role: "Admin",
@@ -183,7 +183,7 @@ export async function checkAndCreateDailyClosingNotification() {
         await (prisma as any).notification.create({
           data: {
             title: `📊 Daily Sales Summary (${yesterday.format("DD MMM YYYY")})`,
-            message: `Clinic recorded Rs. ${totalSales.toLocaleString()} sales with Rs. ${totalPayments.toLocaleString()} collected across ${patientsCount.length} patients.`,
+            message: `Clinic recordedPKR ${totalSales.toLocaleString()} sales withPKR ${totalPayments.toLocaleString()} collected across ${patientsCount.length} patients.`,
             type: "DAILY_CLOSING_SUMMARY",
             severity: "INFO",
             target_role: "Manager",
@@ -244,7 +244,7 @@ export async function checkAndCreateMonthlyClosingNotification() {
         await (prisma as any).notification.create({
           data: {
             title: `📈 Monthly Financial Summary (${lastMonth.format("MMMM YYYY")})`,
-            message: `Monthly Revenue: Rs. ${totalSales.toLocaleString()} | Expenses: Rs. ${totalExpenses.toLocaleString()} | Net Profit: Rs. ${netProfit.toLocaleString()} (${invoicesCount} Invoices, Collected: Rs. ${totalPayments.toLocaleString()})`,
+            message: `Monthly Revenue:PKR ${totalSales.toLocaleString()} | Expenses:PKR ${totalExpenses.toLocaleString()} | Net Profit:PKR ${netProfit.toLocaleString()} (${invoicesCount} Invoices, Collected:PKR ${totalPayments.toLocaleString()})`,
             type: "MONTHLY_CLOSING_SUMMARY",
             severity: "SUCCESS",
             target_role: "Admin",

@@ -214,7 +214,7 @@ export async function POST(request: Request) {
 
     // Trigger Notification for New Expense
     createNotification({
-      title: `New Expense: Rs. ${amount.toFixed(2)}`,
+      title: `New Expense: PKR ${amount.toFixed(2)}`,
       message: `'${title}' recorded under category ${created.category?.name || "General"}${payee ? ` (Paid to: ${payee})` : ""}.`,
       type: "EXPENSE_CREATED",
       severity: "INFO",

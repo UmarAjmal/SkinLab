@@ -143,7 +143,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     // Trigger Notification for Invoice Edit
     createNotification({
       title: `Invoice Modified: ${existingSale.invoice_number}`,
-      message: `Invoice ${existingSale.invoice_number} for ${updatedSale.customer?.name} was modified. New Total: Rs. ${newGrandTotal.toFixed(2)}.`,
+      message: `Invoice ${existingSale.invoice_number} for ${updatedSale.customer?.name} was modified. New Total: PKR ${newGrandTotal.toFixed(2)}.`,
       type: "SALE_UPDATED",
       severity: "WARNING",
       targetRole: "Admin",

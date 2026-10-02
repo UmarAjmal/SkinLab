@@ -160,18 +160,18 @@ export default function ServicesPage() {
           </button>
           <button
             type="button"
-            onClick={() => { 
-              setEditingProductId(null); 
-              productForm.reset({ 
-                name: "", 
-                category_id: "", 
-                sku: "", 
-                cost_price: 0, 
-                selling_price: 0, 
-                stock_quantity: 0, 
-                tax_class: "Standard" 
-              }); 
-              setIsProductModalOpen(true); 
+            onClick={() => {
+              setEditingProductId(null);
+              productForm.reset({
+                name: "",
+                category_id: "",
+                sku: "",
+                cost_price: 0,
+                selling_price: 0,
+                stock_quantity: 0,
+                tax_class: "Standard"
+              });
+              setIsProductModalOpen(true);
             }}
             className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 text-xs sm:text-sm font-semibold flex items-center shadow-xs transition-all active:scale-95"
           >
@@ -185,22 +185,20 @@ export default function ServicesPage() {
           <button
             type="button"
             onClick={() => setActiveTab("services")}
-            className={`px-4 py-2.5 border-b-2 text-sm font-semibold flex items-center transition-all ${
-              activeTab === "services"
+            className={`px-4 py-2.5 border-b-2 text-sm font-semibold flex items-center transition-all ${activeTab === "services"
                 ? "border-indigo-600 text-indigo-600"
                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
+              }`}
           >
             <LayoutList className="w-4 h-4 mr-2" /> Services & Procedures
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("deals")}
-            className={`px-4 py-2.5 border-b-2 text-sm font-semibold flex items-center transition-all ${
-              activeTab === "deals"
+            className={`px-4 py-2.5 border-b-2 text-sm font-semibold flex items-center transition-all ${activeTab === "deals"
                 ? "border-indigo-600 text-indigo-600"
                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
+              }`}
           >
             <Package className="w-4 h-4 mr-2" /> Packages & Multi-Sessions
           </button>
@@ -246,24 +244,24 @@ export default function ServicesPage() {
                           </span>
                         </td>
                         <td className="py-3.5 px-6 font-bold text-gray-900">
-                          Rs. {Number(p.selling_price || 0).toLocaleString("en-PK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          PKR {Number(p.selling_price || 0).toLocaleString("en-PK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </td>
                         <td className="py-3.5 px-6 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <button
                               type="button"
-                              onClick={() => { 
-                                setEditingProductId(p.id); 
-                                productForm.reset({ 
-                                  name: p.name, 
-                                  category_id: p.category_id || "", 
-                                  sku: p.sku || "", 
-                                  cost_price: p.cost_price || 0, 
-                                  selling_price: p.selling_price || 0, 
-                                  stock_quantity: p.stock_quantity || 0, 
-                                  tax_class: p.tax_class || "Standard" 
-                                }); 
-                                setIsProductModalOpen(true); 
+                              onClick={() => {
+                                setEditingProductId(p.id);
+                                productForm.reset({
+                                  name: p.name,
+                                  category_id: p.category_id || "",
+                                  sku: p.sku || "",
+                                  cost_price: p.cost_price || 0,
+                                  selling_price: p.selling_price || 0,
+                                  stock_quantity: p.stock_quantity || 0,
+                                  tax_class: p.tax_class || "Standard"
+                                });
+                                setIsProductModalOpen(true);
                               }}
                               className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-gray-200"
                               title="Edit Service"
@@ -311,7 +309,7 @@ export default function ServicesPage() {
                     <div>
                       <h3 className="font-bold text-base text-gray-900">{d.name}</h3>
                       <p className="text-indigo-600 font-bold text-lg mt-0.5">
-                        Rs. {Number(d.total_price || d.price || 0).toLocaleString("en-PK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        PKR {Number(d.total_price || d.price || 0).toLocaleString("en-PK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </p>
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -416,24 +414,24 @@ export default function ServicesPage() {
                     <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
                       SKU Code <span className="text-gray-400 font-normal text-xs">(Auto if blank)</span>
                     </label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. SRV-0002" 
-                      {...productForm.register("sku")} 
-                      className="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm font-mono focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-xs" 
+                    <input
+                      type="text"
+                      placeholder="e.g. SRV-0002"
+                      {...productForm.register("sku")}
+                      className="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm font-mono focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-xs"
                     />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
-                      Selling Price (Rs.) <span className="text-gray-400 font-normal text-xs">(Optional)</span>
+                      Selling Price (PKR) <span className="text-gray-400 font-normal text-xs">(Optional)</span>
                     </label>
                     <input type="number" step="0.01" placeholder="0.00" {...productForm.register("selling_price")} className="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-xs" />
                     {productForm.formState.errors.selling_price && <p className="mt-1 text-xs text-red-500 font-medium">{productForm.formState.errors.selling_price.message as string}</p>}
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Cost Price (Rs.)</label>
+                    <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Cost Price (PKR)</label>
                     <input type="number" step="0.01" placeholder="0.00" {...productForm.register("cost_price")} className="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-xs" />
                   </div>
                 </div>
@@ -471,7 +469,7 @@ export default function ServicesPage() {
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
-                      Bundle Price (Rs.) <span className="text-gray-400 font-normal text-xs">(Optional)</span>
+                      Bundle Price (PKR) <span className="text-gray-400 font-normal text-xs">(Optional)</span>
                     </label>
                     <input type="number" step="0.01" placeholder="0.00" {...dealForm.register("price")} className="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-xs" />
                     {dealForm.formState.errors.price && <p className="mt-1 text-xs text-red-500 font-medium">{dealForm.formState.errors.price.message as string}</p>}

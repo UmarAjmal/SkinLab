@@ -12,12 +12,29 @@ interface TopHeaderProps {
 
 export default function TopHeader({ userEmail, userRole }: TopHeaderProps) {
   const [currentDateTime, setCurrentDateTime] = useState("");
+  const [clinicName, setClinicName] = useState<string>("Skin-Lab Clinic");
+  const [clinicLogo, setClinicLogo] = useState<string | null>(null);
 
   useEffect(() => {
     setCurrentDateTime(dayjs().format("ddd, DD MMM YYYY • hh:mm A"));
     const interval = setInterval(() => {
       setCurrentDateTime(dayjs().format("ddd, DD MMM YYYY • hh:mm A"));
     }, 30000);
+
+    const fetchClinicSettings = async () => {
+      try {
+        const res = await fetch("/api/settings");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.name) setClinicName(data.name);
+          if (data.logo) setClinicLogo(data.logo);
+        }
+      } catch (e) {
+        console.error("TopHeader settings fetch error:", e);
+      }
+    };
+    fetchClinicSettings();
+
     return () => clearInterval(interval);
   }, []);
 
@@ -36,8 +53,20 @@ export default function TopHeader({ userEmail, userRole }: TopHeaderProps) {
 
   return (
     <header className="hidden md:flex items-center justify-between px-6 py-3.5 bg-white/90 backdrop-blur-md border-b border-gray-100 shrink-0 z-20 w-full">
-      {/* Left: Date & Time + Status */}
+      {/* Left: Clinic Brand + Date & Time + Status */}
       <div className="flex items-center gap-3">
+        {clinicLogo && (
+          <div className="flex items-center gap-2 pr-2 border-r border-gray-200">
+            <img
+              src={clinicLogo}
+              alt={clinicName}
+              className="w-7 h-7 object-contain rounded-lg border border-gray-100 bg-white shadow-2xs"
+            />
+            <span className="text-xs font-bold text-gray-800 tracking-tight max-w-[150px] truncate">
+              {clinicName}
+            </span>
+          </div>
+        )}
         <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-100">
           <Clock className="w-3.5 h-3.5 text-indigo-500" />
           <span>{currentDateTime || "Live Clinic System"}</span>

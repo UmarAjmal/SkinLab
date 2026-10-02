@@ -35,10 +35,20 @@ export default function NotificationCenter({ userRole = "" }: { userRole?: strin
   const [unreadCount, setUnreadCount] = useState(0);
   const [activeTab, setActiveTab] = useState<"all" | "unread" | "alerts" | "closings">("all");
   const [loading, setLoading] = useState(false);
+  const [clinicLogo, setClinicLogo] = useState<string | null>(null);
 
   const prevIdsRef = useRef<Set<string>>(new Set());
   const isFirstLoadRef = useRef(true);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.logo) setClinicLogo(d.logo);
+      })
+      .catch(() => {});
+  }, []);
 
   // Fetch notifications
   const fetchNotifications = async (showLoading = false) => {
@@ -265,6 +275,13 @@ export default function NotificationCenter({ userRole = "" }: { userRole?: strin
           {/* Header */}
           <div className="p-4 border-b border-gray-100 bg-slate-50/90 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2">
+              {clinicLogo && (
+                <img
+                  src={clinicLogo}
+                  alt="Clinic"
+                  className="w-5 h-5 object-contain rounded-md bg-white border border-gray-200"
+                />
+              )}
               <h3 className="font-extrabold text-gray-900 text-base flex items-center gap-1.5">
                 Notifications
               </h3>

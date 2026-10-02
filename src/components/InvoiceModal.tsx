@@ -1,40 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import dayjs from "dayjs";
 import {
-  FileText,
   X,
-  CheckCircle2,
-  Clock,
-  RotateCcw,
-  AlertCircle,
+  FileText,
   Printer,
-  Sparkles,
-  Layers,
+  RotateCcw,
+  CheckCircle2,
+  AlertCircle,
+  Calendar,
   User,
   Stethoscope,
-  Calendar,
+  Sparkles,
+  Layers,
+  Building2,
 } from "lucide-react";
-import dayjs from "dayjs";
 import { printThermalReceipt } from "@/lib/thermalPrinter";
 
 export const StatusBadge = ({ status }: { status: string }) => {
   if (status === "PAID")
     return (
-      <span className="bg-emerald-100 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full text-xs font-bold flex items-center w-fit shadow-xs">
-        <CheckCircle2 className="w-3 h-3 mr-1" /> PAID
-      </span>
-    );
-  if (status === "DUE")
-    return (
-      <span className="bg-red-100 text-red-700 border border-red-200 px-2.5 py-0.5 rounded-full text-xs font-bold flex items-center w-fit shadow-xs">
-        <Clock className="w-3 h-3 mr-1" /> DUE
+      <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full text-xs font-bold flex items-center gap-1">
+        <CheckCircle2 className="w-3 h-3" /> Paid
       </span>
     );
   if (status === "PARTIAL")
     return (
-      <span className="bg-amber-100 text-amber-800 border border-amber-200 px-2.5 py-0.5 rounded-full text-xs font-bold flex items-center w-fit shadow-xs">
-        <Clock className="w-3 h-3 mr-1" /> PARTIAL
+      <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-0.5 rounded-full text-xs font-bold flex items-center gap-1">
+        <AlertCircle className="w-3 h-3" /> Partial
+      </span>
+    );
+  if (status === "DUE")
+    return (
+      <span className="bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-0.5 rounded-full text-xs font-bold flex items-center gap-1">
+        <AlertCircle className="w-3 h-3" /> Due
       </span>
     );
   return <span className="bg-gray-100 text-gray-700 px-2.5 py-0.5 rounded-full text-xs font-bold">{status}</span>;
@@ -57,6 +57,17 @@ export default function InvoiceModal({
   const [refundReason, setRefundReason] = useState("Patient relocation");
   const [refundQuantities, setRefundQuantities] = useState<Record<string, number>>({});
   const [refundProcessing, setRefundProcessing] = useState(false);
+  const [clinicSettings, setClinicSettings] = useState<any>(null);
+
+  // Fetch clinic settings for logo and brand info
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && !data.error) setClinicSettings(data);
+      })
+      .catch(() => { });
+  }, []);
 
   if (!selectedSale) return null;
 
@@ -119,53 +130,63 @@ export default function InvoiceModal({
       const res = await fetch(`/api/sales/${selectedSale.id}/return`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: refundReason, items: itemsToReturn }),
+        body: JSON.stringify({
+          items: itemsToReturn,
+          reason: refundReason,
+        }),
       });
 
-      if (!res.ok) {
+      if (res.ok) {
+        alert("Refund processed successfully! Amount credited to patient advance wallet.");
+        setIsRefundMode(false);
+        setRefundQuantities({});
+        if (onRefundComplete) onRefundComplete();
+        onClose();
+      } else {
         const data = await res.json();
-        throw new Error(data.error || "Failed to process refund");
+        alert(data.error || "Failed to process refund");
       }
-
-      setIsRefundMode(false);
-      onRefundComplete?.();
-      onClose();
-    } catch (e: any) {
-      alert(e.message);
+    } catch (e) {
+      console.error(e);
+      alert("Error processing refund");
     } finally {
       setRefundProcessing(false);
     }
   };
 
-  const handlePrintSlip = async () => {
+  const handlePrintSlip = () => {
     try {
-      const settingsRes = await fetch("/api/settings");
-      const clinic = settingsRes.ok ? await settingsRes.json() : null;
-
       printThermalReceipt({
-        clinic,
         invoiceNumber: selectedSale.invoice_number,
         date: selectedSale.date,
+        tokenNumber: selectedSale.token_number || selectedSale.tokenNumber || "P-01",
+        visitNo: selectedSale.visit_count || selectedSale.visitNo || 1,
         customer: {
           name: selectedSale.customer?.name || "Walk-in Patient",
-          phone: selectedSale.customer?.phone || null,
-          medical_id: selectedSale.customer?.medical_id || null,
-          current_balance: selectedSale.customer?.current_balance,
+          phone: selectedSale.customer?.phone || "",
+          medical_id: selectedSale.customer?.medical_id || "",
         },
-        doctor: selectedSale.doctor || null,
-        tokenNumber: selectedSale.token || "P-01",
+        doctor: selectedSale.doctor ? { name: selectedSale.doctor.name } : null,
+        clinic: {
+          name: clinicSettings?.name || "Skin-Lab Clinic",
+          phone: clinicSettings?.phone || "",
+          logo: clinicSettings?.logo || "",
+          address: clinicSettings?.address || "",
+          tax_number: clinicSettings?.tax_number || "",
+          footer_note: clinicSettings?.footer_note || "Thank you for choosing Skin-Lab!",
+        },
         items: (selectedSale.items || []).map((it: any) => ({
           name: it.product?.name || "Service",
-          product_name: it.product?.name,
           item_group_name: it.item_group_name || null,
-          quantity: it.quantity || 1,
-          unit_price: Number(it.unit_price) || 0,
-          total_price: Number(it.total_price) || 0,
-          sessions_allowed: it.sessions_allowed || it.quantity || 1,
-          sessions_consumed: it.sessions_consumed !== undefined ? it.sessions_consumed : 1,
+          quantity: it.quantity,
+          unit_price: it.unit_price,
+          total_price: it.total_price,
+          sessions_allowed: it.sessions_allowed || 1,
+          sessions_consumed: it.sessions_consumed || 0,
+          is_prepaid: it.unit_price === 0 && (it.sessions_allowed || 1) > 1,
         })),
         subtotal: selectedSale.subtotal || selectedSale.grand_total,
-        discount: selectedSale.discount_amount || 0,
+        discountAmount: selectedSale.discount_amount || 0,
         grandTotal: selectedSale.grand_total,
         paidAmount: selectedSale.paid_amount || 0,
         balanceDue: Math.max(0, selectedSale.grand_total - (selectedSale.paid_amount || 0)),
@@ -209,6 +230,37 @@ export default function InvoiceModal({
         <div className="p-5 sm:p-6 overflow-y-auto flex-1">
           {!isRefundMode && (
             <>
+              {/* Clinic Branding Header Card (4K Logo & Clinic Info) */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 pb-5 border-b border-gray-100">
+                <div className="flex items-center gap-3.5">
+                  {clinicSettings?.logo ? (
+                    <img
+                      src={clinicSettings.logo}
+                      alt="Clinic Logo"
+                      className="w-14 h-14 object-contain rounded-2xl border border-gray-200/80 bg-white p-1 shadow-xs shrink-0"
+                    />
+                  ) : (
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center font-black text-xl shadow-md shadow-indigo-600/20 shrink-0">
+                      SL
+                    </div>
+                  )}
+                  <div>
+                    <h2 className="text-base sm:text-lg font-extrabold text-gray-900 tracking-tight leading-tight">
+                      {clinicSettings?.name || "Skin-Lab Aesthetics Clinic"}
+                    </h2>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {clinicSettings?.address || "Clinical Aesthetics & Skin Care"}
+                      {clinicSettings?.phone ? ` • ${clinicSettings.phone}` : ""}
+                    </p>
+                    {clinicSettings?.tax_number && (
+                      <p className="text-[10px] font-bold text-gray-400 mt-0.5">
+                        NTN: {clinicSettings.tax_number}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               {/* Patient & Doctor Meta Card */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 p-4 rounded-2xl bg-slate-50 border border-gray-100">
                 <div>
@@ -281,7 +333,7 @@ export default function InvoiceModal({
                           Package Total
                         </div>
                         <div className="font-extrabold text-gray-900 text-sm sm:text-base">
-                          Rs. {pkg.totalPrice.toFixed(2)}
+                          PKR {pkg.totalPrice.toFixed(2)}
                         </div>
                       </div>
                     </div>
@@ -314,7 +366,7 @@ export default function InvoiceModal({
                                   {cleanName}
                                 </div>
                                 <div className="text-[11px] text-gray-500 mt-0.5 pl-3">
-                                  Bundled Qty: {item.quantity} {item.unit_price > 0 ? `• Rs. ${Number(item.unit_price).toFixed(2)} / session` : ""}
+                                  Bundled Qty: {item.quantity} {item.unit_price > 0 ? `•PKR ${Number(item.unit_price).toFixed(2)} / session` : ""}
                                 </div>
                               </div>
 
@@ -342,9 +394,8 @@ export default function InvoiceModal({
                                 {/* Visual Progress Bar */}
                                 <div className="w-16 sm:w-20 bg-gray-100 h-2.5 rounded-full overflow-hidden border border-gray-200 shrink-0">
                                   <div
-                                    className={`h-full transition-all duration-300 ${
-                                      isCompleted ? "bg-emerald-500" : "bg-indigo-600"
-                                    }`}
+                                    className={`h-full transition-all duration-300 ${isCompleted ? "bg-emerald-500" : "bg-indigo-600"
+                                      }`}
                                     style={{
                                       width: `${Math.min(100, Math.round((consumed / allowed) * 100))}%`,
                                     }}
@@ -402,10 +453,10 @@ export default function InvoiceModal({
                                   )}
                                 </td>
                                 <td className="p-3 text-xs sm:text-sm text-right text-gray-600">
-                                  Rs. {Number(item.unit_price).toFixed(2)}
+                                  PKR {Number(item.unit_price).toFixed(2)}
                                 </td>
                                 <td className="p-3 text-xs sm:text-sm text-right font-bold text-gray-900">
-                                  Rs. {Number(item.total_price).toFixed(2)}
+                                  PKR {Number(item.total_price).toFixed(2)}
                                 </td>
                               </tr>
                             );
@@ -437,27 +488,27 @@ export default function InvoiceModal({
                 <div className="flex justify-between text-gray-600 text-xs sm:text-sm">
                   <span>Subtotal</span>
                   <span className="font-medium">
-                    Rs. {(selectedSale.subtotal || selectedSale.grand_total).toFixed(2)}
+                    PKR {(selectedSale.subtotal || selectedSale.grand_total).toFixed(2)}
                   </span>
                 </div>
                 {selectedSale.discount_amount > 0 && (
                   <div className="flex justify-between text-emerald-600 text-xs sm:text-sm font-medium">
                     <span>Discount</span>
-                    <span>-Rs. {selectedSale.discount_amount.toFixed(2)}</span>
+                    <span>-PKR {selectedSale.discount_amount.toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex justify-between font-bold text-base text-gray-900 border-t border-gray-200 pt-2 mt-2">
                   <span>Grand Total</span>
-                  <span>Rs. {selectedSale.grand_total.toFixed(2)}</span>
+                  <span>PKR {selectedSale.grand_total.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-sm text-emerald-700">
                   <span>Paid To Date</span>
-                  <span>Rs. {(selectedSale.paid_amount || 0).toFixed(2)}</span>
+                  <span>PKR {(selectedSale.paid_amount || 0).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between font-extrabold text-base text-indigo-700 border-t border-gray-200 pt-2 mt-2">
                   <span>Balance Due</span>
                   <span>
-                    Rs.{" "}
+                    PKR{" "}
                     {Math.max(
                       0,
                       selectedSale.grand_total - (selectedSale.paid_amount || 0)
@@ -477,7 +528,7 @@ export default function InvoiceModal({
                       <div key={p.id || idx} className="p-3 flex justify-between items-center">
                         <div>
                           <div className="font-bold text-gray-900">
-                            Rs. {Number(p.amount).toFixed(2)}{" "}
+                            PKR {Number(p.amount).toFixed(2)}{" "}
                             <span className="font-normal text-gray-500">via {p.payment_method}</span>
                           </div>
                           <div className="text-gray-500 text-[11px] mt-0.5">
@@ -576,7 +627,7 @@ export default function InvoiceModal({
                             />
                           </td>
                           <td className="p-3 text-xs sm:text-sm text-right font-bold text-red-600">
-                            Rs. {lineRefund.toFixed(2)}
+                            PKR {lineRefund.toFixed(2)}
                           </td>
                         </tr>
                       );
@@ -591,7 +642,7 @@ export default function InvoiceModal({
                     Total Refund Amount
                   </div>
                   <div className="text-2xl font-extrabold text-red-600">
-                    Rs. {calculateRefundTotal().toFixed(2)}
+                    PKR {calculateRefundTotal().toFixed(2)}
                   </div>
                 </div>
               </div>

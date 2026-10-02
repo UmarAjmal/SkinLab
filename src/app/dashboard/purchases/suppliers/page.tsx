@@ -105,7 +105,7 @@ export default function SuppliersPage() {
                     <td className="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">{s.name}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-gray-600">{s.contact_person || "-"}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-gray-600">{s.phone || "-"}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-900 font-bold">Rs. {s.balance?.toFixed(2) || "0.00"}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-900 font-bold">PKR {s.balance?.toFixed(2) || "0.00"}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right font-medium">
                       <button onClick={() => openEditModal(s)} className="p-1.5 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded-xl mr-2 transition-colors">
                         <Edit className="w-4 h-4" />

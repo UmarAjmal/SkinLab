@@ -197,16 +197,16 @@ export default function SalesHistoryPage() {
                             )}
                           </td>
                           <td className="p-4 text-right font-bold text-gray-900 text-sm">
-                            Rs. {sale.grand_total.toFixed(2)}
+                            PKR {sale.grand_total.toFixed(2)}
                           </td>
                           <td className="p-4 text-right font-bold text-emerald-700 text-sm">
-                            Rs. {(sale.paid_amount || 0).toFixed(2)}
+                            PKR {(sale.paid_amount || 0).toFixed(2)}
                           </td>
                           <td className="p-4 text-right font-medium text-sm">
                             {balanceDue > 0 ? (
-                              <span className="text-rose-600 font-bold">Rs. {balanceDue.toFixed(2)}</span>
+                              <span className="text-rose-600 font-bold">PKR {balanceDue.toFixed(2)}</span>
                             ) : (
-                              <span className="text-gray-400">Rs. 0.00</span>
+                              <span className="text-gray-400">PKR 0.00</span>
                             )}
                           </td>
                           <td className="p-4 text-center">
@@ -324,12 +324,12 @@ export default function SalesHistoryPage() {
               <div>
                 <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">Amount to collect</label>
                 <div className="relative">
-                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 font-semibold text-xs">Rs.</span>
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 font-semibold text-xs">PKR</span>
                   <input
                     type="number"
                     step="0.01"
                     max={(selectedSale.grand_total - (selectedSale.paid_amount || 0)).toFixed(2)}
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-slate-900 bg-white font-bold"
+                    className="w-full pl-12 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-slate-900 bg-white font-bold"
                     value={paymentAmount}
                     onChange={(e) => setPaymentAmount(e.target.value)}
                   />

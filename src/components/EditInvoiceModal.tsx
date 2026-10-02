@@ -110,7 +110,7 @@ export default function EditInvoiceModal({
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden border border-gray-100 my-auto animate-in fade-in zoom-in-95 duration-200">
-        
+
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-slate-50/80 shrink-0">
           <div>
@@ -202,10 +202,10 @@ export default function EditInvoiceModal({
                   <tr>
                     <th className="p-3 font-semibold">Service / Deal</th>
                     <th className="p-3 font-semibold text-center w-20">Qty</th>
-                    <th className="p-3 font-semibold text-right w-32">Unit Price (Rs.)</th>
+                    <th className="p-3 font-semibold text-right w-32">Unit Price (PKR)</th>
                     <th className="p-3 font-semibold text-center w-24">Allowed</th>
                     <th className="p-3 font-semibold text-center w-24">Consumed</th>
-                    <th className="p-3 font-semibold text-right w-32">Total</th>
+                    <th className="p-3 font-semibold text-right w-32">Total (PKR)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 text-sm">
@@ -259,7 +259,7 @@ export default function EditInvoiceModal({
                         />
                       </td>
                       <td className="p-3 text-right font-bold text-gray-900 text-xs sm:text-sm">
-                        Rs. {Number(item.total_price).toFixed(2)}
+                        PKR {Number(item.total_price).toFixed(2)}
                       </td>
                     </tr>
                   ))}
@@ -286,10 +286,10 @@ export default function EditInvoiceModal({
             <div className="bg-slate-50 p-4 rounded-2xl border border-gray-100 space-y-2.5 text-xs sm:text-sm">
               <div className="flex justify-between text-gray-600">
                 <span>Subtotal</span>
-                <span className="font-semibold text-gray-900">Rs. {calculatedSubtotal.toFixed(2)}</span>
+                <span className="font-semibold text-gray-900">PKR {calculatedSubtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between items-center text-gray-600">
-                <span>Discount (Rs.)</span>
+                <span>Discount (PKR)</span>
                 <input
                   type="number"
                   min="0"
@@ -301,15 +301,15 @@ export default function EditInvoiceModal({
               </div>
               <div className="flex justify-between font-bold text-sm sm:text-base text-gray-900 border-t border-gray-200 pt-2">
                 <span>Grand Total</span>
-                <span>Rs. {calculatedGrandTotal.toFixed(2)}</span>
+                <span>PKR {calculatedGrandTotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-emerald-700 font-semibold">
                 <span>Paid To Date</span>
-                <span>Rs. {paidAmount.toFixed(2)}</span>
+                <span>PKR {paidAmount.toFixed(2)}</span>
               </div>
               <div className="flex justify-between font-bold text-indigo-700 border-t border-gray-200 pt-2">
                 <span>Balance Due</span>
-                <span>Rs. {calculatedBalanceDue.toFixed(2)}</span>
+                <span>PKR {calculatedBalanceDue.toFixed(2)}</span>
               </div>
             </div>
           </div>
