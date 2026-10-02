@@ -48,16 +48,17 @@ model Employee {
 }
 
 model User {
-  id          String    @id @default(uuid())
-  email       String    @unique
-  password    String
-  is_active   Boolean   @default(true)
-  role_id     String
-  role        Role      @relation(fields: [role_id], references: [id])
-  employee_id String?
-  employee    Employee? @relation(fields: [employee_id], references: [id])
-  sales       Sale[]    @relation("UserSales")
-  expenses    Expense[] @relation("UserExpenses")
+  id            String         @id @default(uuid())
+  email         String         @unique
+  password      String
+  is_active     Boolean        @default(true)
+  role_id       String
+  role          Role           @relation(fields: [role_id], references: [id])
+  employee_id   String?
+  employee      Employee?      @relation(fields: [employee_id], references: [id])
+  sales         Sale[]         @relation("UserSales")
+  expenses      Expense[]      @relation("UserExpenses")
+  notifications Notification[] @relation("UserNotifications")
 }
 
 model Customer {
@@ -269,4 +270,28 @@ model Expense {
   @@index([date])
   @@index([category_id])
 }
+
+model Notification {
+  id          String   @id @default(uuid())
+  title       String
+  message     String
+  type        String   // SALE_CREATED, SALE_UPDATED, EXPENSE_CREATED, REFUND_PROCESSED, OVERDUE_DUES, PAYMENT_RECEIVED, SYSTEM_ALERT
+  severity    String   @default("INFO") // INFO, WARNING, URGENT, SUCCESS
+  link_url    String?  // URL to navigate upon clicking
+  is_read     Boolean  @default(false)
+  
+  // RBAC targeting: null = broadcast to role / all, or targeted user
+  target_role String?  // "Admin", "Manager", "Doctor", "Cashier" (null = all staff)
+  user_id     String?  // targeted specific user ID
+  user        User?    @relation("UserNotifications", fields: [user_id], references: [id], onDelete: Cascade)
+  
+  metadata    Json?    // Optional structured metadata
+  created_at  DateTime @default(now())
+
+  @@index([created_at])
+  @@index([is_read])
+  @@index([target_role])
+  @@index([user_id])
+}
+
 

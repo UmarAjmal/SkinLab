@@ -18,6 +18,7 @@ import {
   FlaskConical,
   Receipt,
 } from "lucide-react";
+import NotificationCenter from "@/components/notifications/NotificationCenter";
 
 interface SidebarProps {
   userEmail: string;
@@ -104,13 +105,16 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
             Skin-Lab POS
           </span>
         </div>
-        <button
-          onClick={toggleMobileSidebar}
-          aria-label="Toggle navigation menu"
-          className="p-2 rounded-xl bg-indigo-900/50 hover:bg-indigo-800 text-indigo-100 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400"
-        >
-          {isMobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+        <div className="flex items-center space-x-2">
+          <NotificationCenter userRole={userRole} />
+          <button
+            onClick={toggleMobileSidebar}
+            aria-label="Toggle navigation menu"
+            className="p-2 rounded-xl bg-indigo-900/50 hover:bg-indigo-800 text-indigo-100 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          >
+            {isMobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
       </div>
 
       {/* ========================================= */}

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth";
+import { createNotification } from "@/lib/notifications";
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -19,7 +20,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     // 1. Get the original sale
     const sale = await prisma.sale.findUnique({
       where: { id: params.id },
-      include: { items: true },
+      include: { items: true, customer: true },
     });
 
     if (!sale) return NextResponse.json({ error: "Sale not found" }, { status: 404 });
@@ -77,6 +78,16 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         },
       });
     }
+
+    // Trigger Notification for Return/Refund
+    createNotification({
+      title: `Return Processed: ${sale.invoice_number}`,
+      message: `Refund of Rs. ${totalRefundAmount.toFixed(2)} processed for ${sale.customer?.name || "Patient"} (Reason: ${reason || "Not specified"}).`,
+      type: "REFUND_PROCESSED",
+      severity: "WARNING",
+      targetRole: "Admin",
+      linkUrl: `/dashboard/sales?search=${sale.invoice_number}`,
+    }).catch(console.error);
 
     return NextResponse.json(returnSale, { status: 201 });
   } catch (error: any) {

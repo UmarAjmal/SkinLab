@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth";
+import { createNotification } from "@/lib/notifications";
+
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession();
@@ -137,6 +139,16 @@ export async function PUT(request: Request, { params }: { params: { id: string }
         });
       }
     }
+
+    // Trigger Notification for Invoice Edit
+    createNotification({
+      title: `Invoice Modified: ${existingSale.invoice_number}`,
+      message: `Invoice ${existingSale.invoice_number} for ${updatedSale.customer?.name} was modified. New Total: Rs. ${newGrandTotal.toFixed(2)}.`,
+      type: "SALE_UPDATED",
+      severity: "WARNING",
+      targetRole: "Admin",
+      linkUrl: `/dashboard/sales?search=${existingSale.invoice_number}`,
+    }).catch(console.error);
 
     return NextResponse.json(updatedSale, { status: 200 });
   } catch (error: any) {

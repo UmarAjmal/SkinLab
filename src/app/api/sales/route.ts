@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth";
+import { createNotification } from "@/lib/notifications";
+
 
 export async function POST(request: Request) {
   const session = await getServerSession();
@@ -187,6 +189,27 @@ export async function POST(request: Request) {
 
       const updatedCustomer = await prisma.customer.findUnique({ where: { id: customer.id } });
 
+      // Trigger RBAC Notification for follow-up session & payment
+      createNotification({
+        title: `Package Session Consumed: ${origSale.invoice_number}`,
+        message: `Patient ${customer.name} completed a package follow-up session${paidAmount > 0 ? ` with payment of Rs. ${paidAmount.toFixed(2)}` : ""}.`,
+        type: "PAYMENT_RECEIVED",
+        severity: "INFO",
+        targetRole: "Admin",
+        linkUrl: `/dashboard/sales?search=${origSale.invoice_number}`,
+      }).catch(console.error);
+
+      if (origSale.doctor_id) {
+        createNotification({
+          title: `Follow-up Session: ${origSale.invoice_number}`,
+          message: `Patient ${customer.name} checked in for scheduled treatment.`,
+          type: "PAYMENT_RECEIVED",
+          severity: "INFO",
+          targetRole: "Doctor",
+          linkUrl: `/dashboard/sales?search=${origSale.invoice_number}`,
+        }).catch(console.error);
+      }
+
       return NextResponse.json(
         {
           is_followup: true,
@@ -360,6 +383,27 @@ export async function POST(request: Request) {
         advance_balance: newAdvanceBalance,
       },
     });
+
+    // Trigger RBAC Notifications for New Sale
+    createNotification({
+      title: `New Sale: ${sale.invoice_number}`,
+      message: `Patient ${customer.name} billed for Rs. ${grandTotal.toFixed(2)} (Paid: Rs. ${paidAmount.toFixed(2)}${paymentStatus !== "PAID" ? `, Balance: Rs. ${(grandTotal - paidAmount).toFixed(2)}` : ""}).`,
+      type: "SALE_CREATED",
+      severity: paymentStatus === "PAID" ? "SUCCESS" : "WARNING",
+      targetRole: "Admin",
+      linkUrl: `/dashboard/sales?search=${sale.invoice_number}`,
+    }).catch(console.error);
+
+    if (validDoctorId) {
+      createNotification({
+        title: `Patient Consultation/Procedure: ${sale.invoice_number}`,
+        message: `Patient ${customer.name} assigned to your schedule for treatment.`,
+        type: "SALE_CREATED",
+        severity: "INFO",
+        targetRole: "Doctor",
+        linkUrl: `/dashboard/sales?search=${sale.invoice_number}`,
+      }).catch(console.error);
+    }
 
     return NextResponse.json(
       {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth";
+import { createNotification } from "@/lib/notifications";
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession();
@@ -86,6 +87,16 @@ export async function POST(request: Request, { params }: { params: { id: string 
         advance_balance: newAdvanceBalance,
       },
     });
+
+    // Trigger Notification for Due Payment Collection
+    createNotification({
+      title: `Payment Received: ${sale.invoice_number}`,
+      message: `Received Rs. ${amountToCollect.toFixed(2)} from ${sale.customer.name} via ${data.payment_method || "Cash"} (Status: ${newStatus}).`,
+      type: "PAYMENT_RECEIVED",
+      severity: newStatus === "PAID" ? "SUCCESS" : "INFO",
+      targetRole: "Admin",
+      linkUrl: `/dashboard/sales?search=${sale.invoice_number}`,
+    }).catch(console.error);
 
     return NextResponse.json(updatedSale, { status: 200 });
   } catch (error: any) {

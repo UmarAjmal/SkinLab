@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth";
+import { createNotification } from "@/lib/notifications";
 import dayjs from "dayjs";
+
 
 export async function GET(request: Request) {
   const session = await getServerSession();
@@ -209,6 +211,16 @@ export async function POST(request: Request) {
         },
       },
     });
+
+    // Trigger Notification for New Expense
+    createNotification({
+      title: `New Expense: Rs. ${amount.toFixed(2)}`,
+      message: `'${title}' recorded under category ${created.category?.name || "General"}${payee ? ` (Paid to: ${payee})` : ""}.`,
+      type: "EXPENSE_CREATED",
+      severity: "INFO",
+      targetRole: "Admin",
+      linkUrl: `/dashboard/expenses`,
+    }).catch(console.error);
 
     return NextResponse.json(created, { status: 201 });
   } catch (error: any) {
