@@ -25,6 +25,7 @@ export default function EditInvoiceModal({
     (sale?.items || []).map((it: any) => ({
       id: it.id,
       name: it.product?.name || "Service / Product",
+      item_group_name: it.item_group_name || null,
       quantity: it.quantity,
       unit_price: it.unit_price,
       sessions_allowed: it.sessions_allowed || 1,
@@ -108,7 +109,7 @@ export default function EditInvoiceModal({
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden border border-gray-100 my-auto animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden border border-gray-100 my-auto animate-in fade-in zoom-in-95 duration-200">
         
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-slate-50/80 shrink-0">
@@ -199,10 +200,11 @@ export default function EditInvoiceModal({
               <table className="w-full text-left border-collapse">
                 <thead className="bg-gray-50 border-b border-gray-200 text-gray-600 text-xs uppercase tracking-wider">
                   <tr>
-                    <th className="p-3 font-semibold">Service / Product</th>
-                    <th className="p-3 font-semibold text-center w-24">Qty</th>
-                    <th className="p-3 font-semibold text-right w-36">Unit Price (Rs.)</th>
-                    <th className="p-3 font-semibold text-center w-28">Sessions</th>
+                    <th className="p-3 font-semibold">Service / Deal</th>
+                    <th className="p-3 font-semibold text-center w-20">Qty</th>
+                    <th className="p-3 font-semibold text-right w-32">Unit Price (Rs.)</th>
+                    <th className="p-3 font-semibold text-center w-24">Allowed</th>
+                    <th className="p-3 font-semibold text-center w-24">Consumed</th>
                     <th className="p-3 font-semibold text-right w-32">Total</th>
                   </tr>
                 </thead>
@@ -210,7 +212,12 @@ export default function EditInvoiceModal({
                   {items.map((item, idx) => (
                     <tr key={item.id || idx} className="hover:bg-gray-50/50">
                       <td className="p-3 font-medium text-gray-900 text-xs sm:text-sm">
-                        {item.name}
+                        <div>{item.name}</div>
+                        {item.item_group_name && (
+                          <span className="inline-block mt-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded">
+                            Package: {item.item_group_name}
+                          </span>
+                        )}
                       </td>
                       <td className="p-3 text-center">
                         <input
@@ -218,7 +225,7 @@ export default function EditInvoiceModal({
                           min="1"
                           value={item.quantity}
                           onChange={(e) => handleItemChange(idx, "quantity", parseInt(e.target.value) || 1)}
-                          className="w-16 px-2 py-1 border border-gray-200 rounded-lg text-center font-bold text-gray-800 text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
+                          className="w-14 px-2 py-1 border border-gray-200 rounded-lg text-center font-bold text-gray-800 text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
                         />
                       </td>
                       <td className="p-3 text-right">
@@ -228,7 +235,7 @@ export default function EditInvoiceModal({
                           step="any"
                           value={item.unit_price}
                           onChange={(e) => handleItemChange(idx, "unit_price", parseFloat(e.target.value) || 0)}
-                          className="w-28 px-2 py-1 border border-gray-200 rounded-lg text-right font-bold text-gray-800 text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
+                          className="w-24 px-2 py-1 border border-gray-200 rounded-lg text-right font-bold text-gray-800 text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
                         />
                       </td>
                       <td className="p-3 text-center">
@@ -238,6 +245,16 @@ export default function EditInvoiceModal({
                           title="Total sessions allowed"
                           value={item.sessions_allowed}
                           onChange={(e) => handleItemChange(idx, "sessions_allowed", parseInt(e.target.value) || 1)}
+                          className="w-16 px-2 py-1 border border-gray-200 rounded-lg text-center font-medium text-gray-700 text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
+                        />
+                      </td>
+                      <td className="p-3 text-center">
+                        <input
+                          type="number"
+                          min="0"
+                          title="Sessions consumed so far"
+                          value={item.sessions_consumed}
+                          onChange={(e) => handleItemChange(idx, "sessions_consumed", parseInt(e.target.value) || 0)}
                           className="w-16 px-2 py-1 border border-gray-200 rounded-lg text-center font-medium text-gray-700 text-xs focus:ring-2 focus:ring-indigo-500 outline-hidden"
                         />
                       </td>
