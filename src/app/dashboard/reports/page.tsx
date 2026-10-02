@@ -1,20 +1,41 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Download, Search, Calendar as CalendarIcon, FileText, PieChart, BarChart3, UserSquare } from "lucide-react";
+import {
+  Download,
+  Search,
+  Calendar as CalendarIcon,
+  FileText,
+  PieChart,
+  BarChart3,
+  UserSquare,
+  Receipt,
+  TrendingDown,
+  Wallet,
+  DollarSign,
+  Layers,
+  Tag,
+  ArrowUpRight,
+} from "lucide-react";
 import dayjs from "dayjs";
+import { useSearchParams } from "next/navigation";
 
 export default function ReportsPage() {
-  const [activeTab, setActiveTab] = useState("sales_register");
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get("tab") || "sales_register";
+
+  const [activeTab, setActiveTab] = useState(initialTab);
 
   // Date Range
-  const [startDate, setStartDate] = useState(dayjs().subtract(30, 'day').format('YYYY-MM-DD'));
-  const [endDate, setEndDate] = useState(dayjs().format('YYYY-MM-DD'));
+  const [startDate, setStartDate] = useState(dayjs().startOf("month").format("YYYY-MM-DD"));
+  const [endDate, setEndDate] = useState(dayjs().endOf("month").format("YYYY-MM-DD"));
 
   // Data States
   const [sales, setSales] = useState<any[]>([]);
   const [servicePerformance, setServicePerformance] = useState<any[]>([]);
   const [paymentBreakdown, setPaymentBreakdown] = useState<any[]>([]);
+  const [expenseReport, setExpenseReport] = useState<any>(null);
+  const [expenseCategoryFilter, setExpenseCategoryFilter] = useState("ALL");
 
   // Patient Ledger State
   const [patients, setPatients] = useState<any[]>([]);
@@ -23,6 +44,14 @@ export default function ReportsPage() {
   const [selectedPatientData, setSelectedPatientData] = useState<any>(null);
 
   const [isLoading, setIsLoading] = useState(false);
+
+  // Update tab if URL searchParams change
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   // Fetch Reports Data
   useEffect(() => {
@@ -34,20 +63,20 @@ export default function ReportsPage() {
         if (activeTab === "sales_register") {
           const res = await fetch(`/api/sales${queryParams}`);
           const data = await res.json();
-
           setSales(Array.isArray(data) ? data : []);
-        }
-        else if (activeTab === "service_performance") {
+        } else if (activeTab === "service_performance") {
           const res = await fetch(`/api/reports/service-performance${queryParams}`);
           const data = await res.json();
-
           setServicePerformance(Array.isArray(data) ? data : []);
-        }
-        else if (activeTab === "payment_breakdown") {
+        } else if (activeTab === "payment_breakdown") {
           const res = await fetch(`/api/reports/payment-breakdown${queryParams}`);
           const data = await res.json();
-
           setPaymentBreakdown(Array.isArray(data) ? data : []);
+        } else if (activeTab === "expense_report") {
+          const catQuery = expenseCategoryFilter !== "ALL" ? `&categoryId=${expenseCategoryFilter}` : "";
+          const res = await fetch(`/api/reports/expenses${queryParams}${catQuery}`);
+          const data = await res.json();
+          setExpenseReport(data);
         }
       } catch (e) {
         console.error("[Reports] Error fetching reports:", e);
@@ -59,12 +88,14 @@ export default function ReportsPage() {
     if (activeTab !== "patient_ledger") {
       fetchReports();
     }
-  }, [activeTab, startDate, endDate]);
+  }, [activeTab, startDate, endDate, expenseCategoryFilter]);
 
   // Fetch Patients for Ledger
   useEffect(() => {
     if (activeTab === "patient_ledger" && patients.length === 0) {
-      fetch("/api/patients").then(r => r.json()).then(data => setPatients(data));
+      fetch("/api/patients")
+        .then((r) => r.json())
+        .then((data) => setPatients(data));
     }
   }, [activeTab, patients.length]);
 
@@ -72,18 +103,21 @@ export default function ReportsPage() {
   useEffect(() => {
     if (selectedPatientId) {
       fetch(`/api/patients/${selectedPatientId}`)
-        .then(r => r.json())
-        .then(data => setSelectedPatientData(data));
+        .then((r) => r.json())
+        .then((data) => setSelectedPatientData(data));
     } else {
       setSelectedPatientData(null);
     }
   }, [selectedPatientId]);
 
-  const filteredPatients = patients.filter(p =>
-    p.name.toLowerCase().includes(patientSearch.toLowerCase()) ||
-    (p.phone && p.phone.includes(patientSearch)) ||
-    p.medical_id.toLowerCase().includes(patientSearch.toLowerCase())
-  ).slice(0, 5);
+  const filteredPatients = patients
+    .filter(
+      (p) =>
+        p.name.toLowerCase().includes(patientSearch.toLowerCase()) ||
+        (p.phone && p.phone.includes(patientSearch)) ||
+        p.medical_id.toLowerCase().includes(patientSearch.toLowerCase())
+    )
+    .slice(0, 5);
 
   const exportCSV = (data: any[], filename: string) => {
     if (!data || data.length === 0) return;
@@ -96,19 +130,19 @@ export default function ReportsPage() {
     csvRows.push(headers.join(","));
 
     for (const row of data) {
-      const values = headers.map(header => {
-        const escaped = ('' + row[header]).replace(/"/g, '\\"');
+      const values = headers.map((header) => {
+        const escaped = ("" + (row[header] !== undefined ? row[header] : "")).replace(/"/g, '\\"');
         return `"${escaped}"`;
       });
       csvRows.push(values.join(","));
     }
 
-    const blob = new Blob([csvRows.join("\n")], { type: 'text/csv' });
+    const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.setAttribute('hidden', '');
-    a.setAttribute('href', url);
-    a.setAttribute('download', `${filename}.csv`);
+    const a = document.createElement("a");
+    a.setAttribute("hidden", "");
+    a.setAttribute("href", url);
+    a.setAttribute("download", `${filename}.csv`);
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -116,36 +150,49 @@ export default function ReportsPage() {
 
   const handleExport = () => {
     if (activeTab === "sales_register") {
-      const exportData = sales.map(s => ({
-        Date: dayjs(s.date).format('YYYY-MM-DD'),
+      const exportData = sales.map((s) => ({
+        Date: dayjs(s.date).format("YYYY-MM-DD"),
         Invoice: s.invoice_number,
         Patient: s.customer?.name,
         GrossAmount: s.subtotal,
         Discount: s.discount_amount,
         NetTotal: s.grand_total,
         Paid: s.paid_amount,
-        Status: s.payment_status
+        Status: s.payment_status,
       }));
       exportCSV(exportData, `Sales_Register_${startDate}_to_${endDate}`);
     } else if (activeTab === "service_performance") {
-      const exportData = servicePerformance.map(s => ({
+      const exportData = servicePerformance.map((s) => ({
         SKU: s.sku,
         Service: s.name,
         QuantitySold: s.quantity_sold,
-        Revenue: s.revenue
+        Revenue: s.revenue,
       }));
       exportCSV(exportData, `Service_Performance_${startDate}_to_${endDate}`);
     } else if (activeTab === "payment_breakdown") {
       exportCSV(paymentBreakdown, `Payment_Breakdown_${startDate}_to_${endDate}`);
+    } else if (activeTab === "expense_report" && expenseReport?.expenses) {
+      const exportData = (expenseReport.expenses || []).map((exp: any) => ({
+        Date: dayjs(exp.date).format("YYYY-MM-DD HH:mm"),
+        Title: exp.title,
+        Category: exp.category?.name || "General",
+        Payee: exp.payee || "",
+        PaymentMethod: exp.payment_method || "Cash",
+        VoucherRef: exp.reference_no || "",
+        Amount: exp.amount,
+        RecordedBy: exp.created_by?.email || "",
+        Notes: exp.notes || "",
+      }));
+      exportCSV(exportData, `Expense_Report_${startDate}_to_${endDate}`);
     } else if (activeTab === "patient_ledger" && selectedPatientData) {
       const exportData = (selectedPatientData.sales || []).map((s: any) => ({
-        Date: dayjs(s.date).format('YYYY-MM-DD'),
+        Date: dayjs(s.date).format("YYYY-MM-DD"),
         Invoice: s.invoice_number,
         NetTotal: s.grand_total,
         Paid: s.paid_amount,
-        Status: s.payment_status
+        Status: s.payment_status,
       }));
-      exportCSV(exportData, `Patient_Ledger_${selectedPatientData.name.replace(/\s+/g, '_')}`);
+      exportCSV(exportData, `Patient_Ledger_${selectedPatientData.name.replace(/\s+/g, "_")}`);
     }
   };
 
@@ -214,6 +261,16 @@ export default function ReportsPage() {
             onClick={() => setActiveTab('payment_breakdown')}
           >
             <PieChart className="w-4 h-4 mr-2" /> Payment Breakdown
+          </button>
+          <button
+            className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${
+              activeTab === 'expense_report' 
+                ? 'border-rose-600 text-rose-700 bg-white shadow-xs font-bold' 
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
+            }`}
+            onClick={() => setActiveTab('expense_report')}
+          >
+            <Receipt className="w-4 h-4 mr-2 text-rose-600" /> Expense Report
           </button>
           <button
             className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${
@@ -481,6 +538,219 @@ export default function ReportsPage() {
                       <p className="font-medium text-lg text-gray-500">Search for a patient to view their ledger</p>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* TAB 5: Expense Report & Analytics */}
+              {activeTab === 'expense_report' && (
+                <div className="space-y-6 w-full min-w-0">
+                  {/* Category Filter for Expense Report */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3.5 rounded-2xl border border-gray-100">
+                    <div className="flex items-center gap-2">
+                      <Tag className="w-4 h-4 text-indigo-600 shrink-0" />
+                      <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        Filter By Category:
+                      </span>
+                      <select
+                        value={expenseCategoryFilter}
+                        onChange={(e) => setExpenseCategoryFilter(e.target.value)}
+                        className="px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm font-semibold text-gray-800 focus:ring-2 focus:ring-rose-500 outline-hidden"
+                      >
+                        <option value="ALL">All Expense Categories</option>
+                        {(expenseReport?.categories || []).map((cat: any) => (
+                          <option key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="text-xs text-gray-500 font-medium">
+                      Showing expenses from <strong>{startDate}</strong> to <strong>{endDate}</strong>
+                    </div>
+                  </div>
+
+                  {/* Summary Metric Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {/* Total Expenses */}
+                    <div className="bg-gradient-to-br from-rose-50/60 via-white to-white p-5 rounded-2xl border border-rose-100 shadow-2xs">
+                      <span className="text-[11px] font-bold text-rose-500 uppercase tracking-wider block mb-1">
+                        Total Period Expenses
+                      </span>
+                      <div className="text-2xl font-black text-rose-600">
+                        Rs. {Number(expenseReport?.summary?.totalExpenseAmount || 0).toLocaleString("en-PK", { minimumFractionDigits: 2 })}
+                      </div>
+                      <p className="text-[11px] text-gray-500 mt-1">
+                        {expenseReport?.summary?.totalTransactions || 0} expense transaction(s)
+                      </p>
+                    </div>
+
+                    {/* Total Collections */}
+                    <div className="bg-gradient-to-br from-emerald-50/60 via-white to-white p-5 rounded-2xl border border-emerald-100 shadow-2xs">
+                      <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider block mb-1">
+                        Total Sales Revenue (Collected)
+                      </span>
+                      <div className="text-2xl font-black text-emerald-700">
+                        Rs. {Number(expenseReport?.summary?.totalCollections || 0).toLocaleString("en-PK", { minimumFractionDigits: 2 })}
+                      </div>
+                      <p className="text-[11px] text-gray-500 mt-1">
+                        Gross Invoiced: Rs. {Number(expenseReport?.summary?.totalInvoicedSales || 0).toLocaleString()}
+                      </p>
+                    </div>
+
+                    {/* Net Operating Cash Balance */}
+                    <div className="bg-gradient-to-br from-indigo-50/60 via-white to-white p-5 rounded-2xl border border-indigo-100 shadow-2xs">
+                      <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider block mb-1">
+                        Net Operating Cash Flow
+                      </span>
+                      <div className={`text-2xl font-black ${(expenseReport?.summary?.netOperatingCash || 0) >= 0 ? "text-indigo-900" : "text-rose-600"}`}>
+                        Rs. {Number(expenseReport?.summary?.netOperatingCash || 0).toLocaleString("en-PK", { minimumFractionDigits: 2 })}
+                      </div>
+                      <p className="text-[11px] text-gray-500 mt-1">
+                        Revenue minus expenses
+                      </p>
+                    </div>
+
+                    {/* Average Expense per Tx */}
+                    <div className="bg-gradient-to-br from-amber-50/60 via-white to-white p-5 rounded-2xl border border-amber-100 shadow-2xs">
+                      <span className="text-[11px] font-bold text-amber-600 uppercase tracking-wider block mb-1">
+                        Average Expense / Voucher
+                      </span>
+                      <div className="text-2xl font-black text-amber-700">
+                        Rs. {Number(expenseReport?.summary?.averageExpensePerTx || 0).toLocaleString("en-PK", { minimumFractionDigits: 2 })}
+                      </div>
+                      <p className="text-[11px] text-gray-500 mt-1">
+                        Per transaction average
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Category Distribution & Payment Mode Breakdown */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Category Distribution */}
+                    <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-2xs space-y-3">
+                      <h4 className="font-bold text-gray-900 text-sm flex items-center justify-between">
+                        <span className="flex items-center gap-1.5">
+                          <Layers className="w-4 h-4 text-indigo-600" /> Category Breakdown
+                        </span>
+                        <span className="text-xs text-gray-400 font-normal">
+                          {(expenseReport?.categoryBreakdown || []).length} categories
+                        </span>
+                      </h4>
+                      {(!expenseReport?.categoryBreakdown || expenseReport.categoryBreakdown.length === 0) ? (
+                        <p className="text-xs text-gray-400 py-6 text-center">No category data in this period.</p>
+                      ) : (
+                        <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                          {expenseReport.categoryBreakdown.map((cat: any, cIdx: number) => (
+                            <div key={cIdx} className="space-y-1">
+                              <div className="flex justify-between text-xs font-semibold text-gray-700">
+                                <span>{cat.name} ({cat.count} txns)</span>
+                                <span>Rs. {Number(cat.amount).toLocaleString()} ({cat.percentage}%)</span>
+                              </div>
+                              <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                                <div
+                                  className="bg-rose-500 h-full rounded-full transition-all duration-300"
+                                  style={{ width: `${Math.min(100, cat.percentage)}%` }}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Payment Method Distribution */}
+                    <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-2xs space-y-3">
+                      <h4 className="font-bold text-gray-900 text-sm flex items-center justify-between">
+                        <span className="flex items-center gap-1.5">
+                          <Wallet className="w-4 h-4 text-emerald-600" /> Payment Modes
+                        </span>
+                      </h4>
+                      {(!expenseReport?.paymentMethodBreakdown || expenseReport.paymentMethodBreakdown.length === 0) ? (
+                        <p className="text-xs text-gray-400 py-6 text-center">No payment method data available.</p>
+                      ) : (
+                        <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                          {expenseReport.paymentMethodBreakdown.map((pm: any, pIdx: number) => (
+                            <div key={pIdx} className="space-y-1">
+                              <div className="flex justify-between text-xs font-semibold text-gray-700">
+                                <span>{pm.method} ({pm.count} txns)</span>
+                                <span>Rs. {Number(pm.amount).toLocaleString()} ({pm.percentage}%)</span>
+                              </div>
+                              <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                                <div
+                                  className="bg-indigo-600 h-full rounded-full transition-all duration-300"
+                                  style={{ width: `${Math.min(100, pm.percentage)}%` }}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Detailed Expenses Table */}
+                  <div>
+                    <h4 className="font-bold text-gray-900 text-sm mb-3">Expense Vouchers Log</h4>
+                    <div className="border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-2xs">
+                      <div className="overflow-x-auto w-full">
+                        <table className="w-full text-left border-collapse min-w-[650px]">
+                          <thead className="bg-slate-50 border-b border-gray-200 text-gray-600 text-xs uppercase tracking-wider">
+                            <tr>
+                              <th className="p-4 font-semibold">Date</th>
+                              <th className="p-4 font-semibold">Description</th>
+                              <th className="p-4 font-semibold">Category</th>
+                              <th className="p-4 font-semibold">Payee</th>
+                              <th className="p-4 font-semibold">Method</th>
+                              <th className="p-4 font-semibold text-right">Amount</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100 text-sm">
+                            {(!expenseReport?.expenses || expenseReport.expenses.length === 0) ? (
+                              <tr>
+                                <td colSpan={6} className="p-8 text-center text-gray-400">
+                                  No expenses recorded for the selected period.
+                                </td>
+                              </tr>
+                            ) : (
+                              expenseReport.expenses.map((exp: any) => (
+                                <tr key={exp.id} className="hover:bg-gray-50/70 transition-colors">
+                                  <td className="p-4 text-gray-900 whitespace-nowrap text-xs sm:text-sm">
+                                    <div className="font-bold">{dayjs(exp.date).format("MMM DD, YYYY")}</div>
+                                    <div className="text-[11px] text-gray-400">{dayjs(exp.date).format("hh:mm A")}</div>
+                                  </td>
+                                  <td className="p-4 font-medium text-gray-900 text-xs sm:text-sm">
+                                    {exp.title}
+                                    {exp.reference_no && (
+                                      <span className="block text-[10px] text-gray-500 font-normal">
+                                        Ref: {exp.reference_no}
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="p-4 whitespace-nowrap">
+                                    <span className="bg-indigo-50 text-indigo-700 text-xs font-semibold px-2 py-0.5 rounded-full border border-indigo-100">
+                                      {exp.category?.name || "General"}
+                                    </span>
+                                  </td>
+                                  <td className="p-4 text-gray-600 text-xs sm:text-sm">
+                                    {exp.payee || "—"}
+                                  </td>
+                                  <td className="p-4 text-gray-600 text-xs sm:text-sm">
+                                    <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-xs">
+                                      {exp.payment_method || "Cash"}
+                                    </span>
+                                  </td>
+                                  <td className="p-4 text-right font-black text-rose-600 whitespace-nowrap text-xs sm:text-sm">
+                                    Rs. {Number(exp.amount).toFixed(2)}
+                                  </td>
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </>

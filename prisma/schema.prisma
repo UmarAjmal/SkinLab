@@ -57,6 +57,7 @@ model User {
   employee_id String?
   employee    Employee? @relation(fields: [employee_id], references: [id])
   sales       Sale[]    @relation("UserSales")
+  expenses    Expense[] @relation("UserExpenses")
 }
 
 model Customer {
@@ -238,3 +239,34 @@ model Payment {
   @@index([customer_id])
   @@index([sale_id])
 }
+
+model ExpenseCategory {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @default(now()) @updatedAt
+  expenses    Expense[]
+}
+
+model Expense {
+  id             String          @id @default(uuid())
+  title          String
+  amount         Float
+  category_id    String
+  category       ExpenseCategory @relation(fields: [category_id], references: [id], onDelete: Restrict)
+  date           DateTime        @default(now())
+  payment_method String          @default("Cash") // Cash, Bank Transfer, Card, Online, Cheque, Other
+  payee          String?         // Vendor, employee, landlord, utility company, etc.
+  notes          String?
+  reference_no   String?         // Bill number, receipt voucher no, cheque no
+  receipt_url    String?
+  created_by_id  String?
+  created_by     User?           @relation("UserExpenses", fields: [created_by_id], references: [id])
+  created_at     DateTime        @default(now())
+  updated_at     DateTime        @default(now()) @updatedAt
+
+  @@index([date])
+  @@index([category_id])
+}
+
