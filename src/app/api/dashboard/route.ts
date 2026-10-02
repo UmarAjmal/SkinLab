@@ -34,7 +34,7 @@ export async function GET() {
         },
       }),
 
-      // 1b. Today's Total Cash/Payment Collections
+      // 1b. Today's Total Cash / Payment Collections
       prisma.payment.aggregate({
         _sum: { amount: true },
         where: {
