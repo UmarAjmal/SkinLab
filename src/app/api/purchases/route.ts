@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/auth";
-import { createNotification } from "@/lib/notifications";
 
 export async function GET() {
   try {
@@ -65,17 +64,6 @@ export async function POST(req: Request) {
         },
       });
     }
-
-    // Trigger RBAC Notifications for Inventory Purchase
-    createNotification({
-      title: `Inventory Restocked: ${purchase.invoice_number}`,
-      message: `New purchase order received worth Rs. ${grand_total.toLocaleString()} (${items.length} product items added to inventory).`,
-      type: "PURCHASE_RECEIVED",
-      severity: "INFO",
-      targetRole: "Admin",
-      linkUrl: `/dashboard/purchases`,
-      metadata: { purchase_id: purchase.id, grand_total, items_count: items.length },
-    }).catch(console.error);
 
     return NextResponse.json(purchase, { status: 201 });
   } catch (error: any) {

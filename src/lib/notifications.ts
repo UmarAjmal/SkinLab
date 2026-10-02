@@ -9,8 +9,6 @@ export type NotificationType =
   | "REFUND_PROCESSED"
   | "OVERDUE_DUES"
   | "PAYMENT_RECEIVED"
-  | "PURCHASE_RECEIVED"
-  | "LOW_STOCK_ALERT"
   | "DAILY_CLOSING_SUMMARY"
   | "MONTHLY_CLOSING_SUMMARY"
   | "YEARLY_CLOSING_SUMMARY"
@@ -34,7 +32,7 @@ export interface CreateNotificationParams {
  */
 export async function createNotification(params: CreateNotificationParams) {
   try {
-    const notification = await prisma.notification.create({
+    const notification = await (prisma as any).notification.create({
       data: {
         title: params.title,
         message: params.message,
@@ -81,7 +79,7 @@ export async function checkAndCreateOverdueDuesAlerts() {
       const daysPending = dayjs().diff(dayjs(sale.date), "day");
 
       // Check if we already alerted about this invoice in the last 7 days
-      const existingAlert = await prisma.notification.findFirst({
+      const existingAlert = await (prisma as any).notification.findFirst({
         where: {
           type: "OVERDUE_DUES",
           link_url: { contains: sale.invoice_number },
@@ -90,7 +88,7 @@ export async function checkAndCreateOverdueDuesAlerts() {
       });
 
       if (!existingAlert) {
-        await prisma.notification.create({
+        await (prisma as any).notification.create({
           data: {
             title: `Overdue Dues Alert (Pending ${daysPending} Days)`,
             message: `Invoice ${sale.invoice_number} for patient ${sale.customer?.name || "Patient"} has an outstanding balance of Rs. ${balance.toFixed(2)}.`,
@@ -119,13 +117,12 @@ export async function checkAndCreateOverdueDuesAlerts() {
 export async function checkAndCreateDailyClosingNotification() {
   try {
     const now = dayjs();
-    // Check for yesterday's closing summary
     const yesterday = now.subtract(1, "day");
     const yStart = yesterday.startOf("day").toDate();
     const yEnd = yesterday.endOf("day").toDate();
     const yKey = yesterday.format("YYYY-MM-DD");
 
-    const existingDaily = await prisma.notification.findFirst({
+    const existingDaily = await (prisma as any).notification.findFirst({
       where: {
         type: "DAILY_CLOSING_SUMMARY",
         link_url: { contains: yKey },
@@ -140,11 +137,11 @@ export async function checkAndCreateDailyClosingNotification() {
           _sum: { grand_total: true },
           _count: { id: true },
         }),
-        prisma.payment.aggregate({
+        (prisma as any).payment.aggregate({
           where: { payment_date: { gte: yStart, lte: yEnd } },
           _sum: { amount: true },
         }),
-        prisma.expense.aggregate({
+        (prisma as any).expense.aggregate({
           where: { date: { gte: yStart, lte: yEnd } },
           _sum: { amount: true },
         }),
@@ -163,7 +160,7 @@ export async function checkAndCreateDailyClosingNotification() {
 
       // Only generate if there was activity yesterday
       if (totalSales > 0 || totalPayments > 0 || totalExpenses > 0) {
-        await prisma.notification.create({
+        await (prisma as any).notification.create({
           data: {
             title: `📊 Daily Closing Summary (${yesterday.format("DD MMM YYYY")})`,
             message: `Sales: Rs. ${totalSales.toLocaleString()} | Collections: Rs. ${totalPayments.toLocaleString()} | Expenses: Rs. ${totalExpenses.toLocaleString()} | Net Cash: Rs. ${netCashflow.toLocaleString()} (${patientsCount.length} Patients, ${invoiceCount} Invoices)`,
@@ -183,7 +180,7 @@ export async function checkAndCreateDailyClosingNotification() {
         });
 
         // Also send to Manager
-        await prisma.notification.create({
+        await (prisma as any).notification.create({
           data: {
             title: `📊 Daily Sales Summary (${yesterday.format("DD MMM YYYY")})`,
             message: `Clinic recorded Rs. ${totalSales.toLocaleString()} sales with Rs. ${totalPayments.toLocaleString()} collected across ${patientsCount.length} patients.`,
@@ -211,7 +208,7 @@ export async function checkAndCreateMonthlyClosingNotification() {
     const lmEnd = lastMonth.endOf("month").toDate();
     const mKey = lastMonth.format("YYYY-MM");
 
-    const existingMonthly = await prisma.notification.findFirst({
+    const existingMonthly = await (prisma as any).notification.findFirst({
       where: {
         type: "MONTHLY_CLOSING_SUMMARY",
         link_url: { contains: mKey },
@@ -225,11 +222,11 @@ export async function checkAndCreateMonthlyClosingNotification() {
           _sum: { grand_total: true },
           _count: { id: true },
         }),
-        prisma.payment.aggregate({
+        (prisma as any).payment.aggregate({
           where: { payment_date: { gte: lmStart, lte: lmEnd } },
           _sum: { amount: true },
         }),
-        prisma.expense.aggregate({
+        (prisma as any).expense.aggregate({
           where: { date: { gte: lmStart, lte: lmEnd } },
           _sum: { amount: true },
         }),
@@ -244,7 +241,7 @@ export async function checkAndCreateMonthlyClosingNotification() {
       const netProfit = totalSales - totalExpenses;
 
       if (totalSales > 0 || totalExpenses > 0) {
-        await prisma.notification.create({
+        await (prisma as any).notification.create({
           data: {
             title: `📈 Monthly Financial Summary (${lastMonth.format("MMMM YYYY")})`,
             message: `Monthly Revenue: Rs. ${totalSales.toLocaleString()} | Expenses: Rs. ${totalExpenses.toLocaleString()} | Net Profit: Rs. ${netProfit.toLocaleString()} (${invoicesCount} Invoices, Collected: Rs. ${totalPayments.toLocaleString()})`,
@@ -269,60 +266,12 @@ export async function checkAndCreateMonthlyClosingNotification() {
 }
 
 /**
- * Checks and creates Low Stock Inventory Alerts
- */
-export async function checkAndCreateLowStockAlerts() {
-  try {
-    const threeDaysAgo = dayjs().subtract(3, "days").toDate();
-
-    // Find products with stock_quantity <= 5
-    const lowStockProducts = await prisma.product.findMany({
-      where: {
-        stock_quantity: { lte: 5 },
-      },
-      take: 10,
-    });
-
-    for (const prod of lowStockProducts) {
-      const existingAlert = await prisma.notification.findFirst({
-        where: {
-          type: "LOW_STOCK_ALERT",
-          link_url: { contains: prod.id },
-          created_at: { gte: threeDaysAgo },
-        },
-      });
-
-      if (!existingAlert) {
-        await prisma.notification.create({
-          data: {
-            title: `⚠️ Low Stock Alert: ${prod.name}`,
-            message: `Product ${prod.name} has only ${prod.stock_quantity} unit(s) remaining in stock. Please reorder inventory.`,
-            type: "LOW_STOCK_ALERT",
-            severity: prod.stock_quantity <= 0 ? "URGENT" : "WARNING",
-            target_role: "Admin",
-            link_url: `/dashboard/purchases?product_id=${prod.id}`,
-            metadata: JSON.stringify({
-              product_id: prod.id,
-              product_name: prod.name,
-              stock_quantity: prod.stock_quantity,
-            }),
-          },
-        });
-      }
-    }
-  } catch (error) {
-    console.error("Failed to check low stock alerts:", error);
-  }
-}
-
-/**
- * Master scanner runner that triggers all background clinic checks idempotently
+ * Master scanner runner that triggers automated background clinic checks idempotently
  */
 export async function runAutomatedClinicScanners() {
   await Promise.allSettled([
     checkAndCreateOverdueDuesAlerts(),
     checkAndCreateDailyClosingNotification(),
     checkAndCreateMonthlyClosingNotification(),
-    checkAndCreateLowStockAlerts(),
   ]);
 }

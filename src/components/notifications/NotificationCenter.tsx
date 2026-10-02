@@ -16,10 +16,6 @@ import {
   ExternalLink,
   BarChart3,
   CalendarCheck,
-  PackageX,
-  PackagePlus,
-  Sparkles,
-  TrendingUp,
 } from "lucide-react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -169,12 +165,7 @@ export default function NotificationCenter({ userRole = "" }: { userRole?: strin
   const filteredList = notifications.filter((n) => {
     if (activeTab === "unread") return !n.is_read;
     if (activeTab === "alerts")
-      return (
-        n.severity === "URGENT" ||
-        n.severity === "WARNING" ||
-        n.type === "OVERDUE_DUES" ||
-        n.type === "LOW_STOCK_ALERT"
-      );
+      return n.severity === "URGENT" || n.severity === "WARNING" || n.type === "OVERDUE_DUES";
     if (activeTab === "closings")
       return (
         n.type === "DAILY_CLOSING_SUMMARY" ||
@@ -204,20 +195,6 @@ export default function NotificationCenter({ userRole = "" }: { userRole?: strin
       return (
         <div className="p-2.5 rounded-2xl bg-violet-100 text-violet-700 shrink-0 shadow-xs">
           <CalendarCheck className="w-4 h-4" />
-        </div>
-      );
-    }
-    if (type === "LOW_STOCK_ALERT") {
-      return (
-        <div className="p-2.5 rounded-2xl bg-amber-100 text-amber-700 shrink-0 shadow-xs">
-          <PackageX className="w-4 h-4" />
-        </div>
-      );
-    }
-    if (type === "PURCHASE_RECEIVED") {
-      return (
-        <div className="p-2.5 rounded-2xl bg-cyan-100 text-cyan-700 shrink-0 shadow-xs">
-          <PackagePlus className="w-4 h-4" />
         </div>
       );
     }
