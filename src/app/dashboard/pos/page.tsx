@@ -300,53 +300,56 @@ function POSContent() {
 
   // Cart Calculations
   const subtotal = useMemo(() => {
-    if (selectedFollowUpInvoice) {
-      const packageDue = followUpPendingDue;
-      const extraItemsSum = cart.reduce((sum, item) => {
-        if (item.is_follow_up_session) return sum;
-        if (item.type === "package") return sum + (Number(item.package_price) || 0);
-        return sum + (Number(item.unit_price) || 0) * (Number(item.quantity) || 1);
-      }, 0);
-      return packageDue + extraItemsSum;
-    }
-
     return cart.reduce((sum, item) => {
+      if (item.is_follow_up_session) return sum;
       if (item.type === "package") {
         return sum + (Number(item.package_price) || 0);
       }
       return sum + (Number(item.unit_price) || 0) * (Number(item.quantity) || 1);
     }, 0);
-  }, [cart, selectedFollowUpInvoice, followUpPendingDue]);
+  }, [cart]);
 
   const grandTotal = Math.max(0, subtotal - discountAmount);
-  const remainingDue = Math.max(0, grandTotal - paidAmount);
+  const totalPayable = useMemo(() => {
+    if (selectedFollowUpInvoice) {
+      return grandTotal + followUpPendingDue;
+    }
+    return grandTotal;
+  }, [grandTotal, selectedFollowUpInvoice, followUpPendingDue]);
+
+  const remainingDue = Math.max(
+    0,
+    (selectedFollowUpInvoice ? totalPayable : grandTotal) - paidAmount
+  );
 
   // Handle Payment Method Switch
   const handlePaymentMethodChange = (method: string) => {
     setPaymentMethod(method);
+    const targetAmount = selectedFollowUpInvoice ? totalPayable : grandTotal;
     if (method === "Credit") {
       setPaidAmount(0);
     } else if (method === "Card") {
-      setPaidAmount(grandTotal);
+      setPaidAmount(targetAmount);
     } else if (method === "Cash") {
-      if (paidAmount === 0 && grandTotal > 0) {
-        setPaidAmount(grandTotal);
+      if (paidAmount === 0 && targetAmount > 0) {
+        setPaidAmount(targetAmount);
       }
     }
   };
 
   // Auto-sync paid amount when grand total changes
   useEffect(() => {
+    const targetAmount = selectedFollowUpInvoice ? totalPayable : grandTotal;
     if (paymentMethod === "Credit") {
       setPaidAmount(0);
     } else if (paymentMethod === "Card") {
-      setPaidAmount(grandTotal);
+      setPaidAmount(targetAmount);
     } else if (paymentMethod === "Cash") {
-      if (paidAmount === 0 && grandTotal > 0 && cart.length > 0) {
-        setPaidAmount(grandTotal);
+      if (paidAmount === 0 && targetAmount > 0 && cart.length > 0) {
+        setPaidAmount(targetAmount);
       }
     }
-  }, [grandTotal, paymentMethod, cart.length]);
+  }, [grandTotal, totalPayable, paymentMethod, cart.length, selectedFollowUpInvoice]);
 
   // Handlers
   const handleAddPatient = async (e: React.FormEvent) => {
@@ -527,12 +530,14 @@ function POSContent() {
             product_id: cartEntry.product_id,
             name: `${cartEntry.item_group_name ? `${cartEntry.item_group_name} - ` : ""}${cartEntry.name}`,
             quantity: 1,
-            unit_price: followUpPendingDue > 0 ? followUpPendingDue : 0,
+            unit_price: 0,
             sessions_allowed: cartEntry.sessions_allowed || 1,
             sessions_consumed: (cartEntry.sessions_consumed || 0) + 1,
-            total_price: followUpPendingDue > 0 ? followUpPendingDue : 0,
+            total_price: 0,
             item_group_name: cartEntry.item_group_name || null,
             consumed_from_item_id: cartEntry.original_sale_item_id || null,
+            is_follow_up: true,
+            is_follow_up_session: true,
           });
         } else if (cartEntry.type === "package") {
           const totalPkgPrice = Number(cartEntry.package_price) || 0;
@@ -598,10 +603,13 @@ function POSContent() {
         const activeDoctor = employees.find((e) => e.id === selectedDoctorId) || data.sale?.doctor || null;
         const activePatient = patients.find((p) => p.id === selectedPatientId) || data.customer || data.sale?.customer;
 
+        const isFollowUp = Boolean(data.is_followup || selectedFollowUpInvoice);
+        const receiptSale = data.sale || selectedFollowUpInvoice;
+
         const receiptData: ThermalReceiptData = {
           clinic: data.settings || clinicSettings,
-          invoiceNumber: data.sale?.invoice_number || nextInvoice,
-          date: data.sale?.date || new Date(),
+          invoiceNumber: receiptSale?.invoice_number || nextInvoice,
+          date: receiptSale?.date || new Date(),
           customer: {
             name: activePatient?.name || "Walk-in Patient",
             phone: activePatient?.phone || null,
@@ -622,12 +630,16 @@ function POSContent() {
             sessions_allowed: c.sessions_allowed,
             sessions_consumed: c.sessions_consumed,
           })),
-          subtotal: subtotal,
-          discount: discountAmount,
-          grandTotal: grandTotal,
-          paidAmount: finalPaidAmount,
-          balanceDue: Math.max(0, grandTotal - finalPaidAmount),
-          remainingDue: data.customer?.current_balance ?? (grandTotal - finalPaidAmount),
+          subtotal: isFollowUp ? (receiptSale?.subtotal || subtotal) : subtotal,
+          discount: isFollowUp ? (receiptSale?.discount_amount || discountAmount) : discountAmount,
+          grandTotal: isFollowUp ? (receiptSale?.grand_total || grandTotal) : grandTotal,
+          paidAmount: isFollowUp ? (data.paid_today !== undefined ? data.paid_today : finalPaidAmount) : finalPaidAmount,
+          balanceDue: isFollowUp
+            ? Math.max(0, (receiptSale?.grand_total || 0) - (receiptSale?.paid_amount || 0))
+            : Math.max(0, grandTotal - finalPaidAmount),
+          remainingDue: data.customer?.current_balance ?? (isFollowUp
+            ? Math.max(0, (receiptSale?.grand_total || 0) - (receiptSale?.paid_amount || 0))
+            : Math.max(0, grandTotal - finalPaidAmount)),
           paymentMethod: paymentMethod,
         };
 
@@ -1366,8 +1378,25 @@ function POSContent() {
           </div>
 
           <div className="space-y-3.5 border-t border-indigo-800/60 pt-5 text-sm">
+            {selectedFollowUpInvoice && (
+              <div className="bg-indigo-950/90 p-3 rounded-xl border border-indigo-700/80 text-xs space-y-1.5 mb-2">
+                <div className="flex justify-between text-indigo-200">
+                  <span>Package Selected:</span>
+                  <span className="font-bold text-white">{selectedFollowUpInvoice.invoice_number}</span>
+                </div>
+                <div className="flex justify-between text-indigo-200">
+                  <span>Package Total:</span>
+                  <span className="font-semibold text-white">Rs. {Number(selectedFollowUpInvoice.grand_total).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-indigo-200 pt-1 border-t border-indigo-800/50">
+                  <span>Pending Package Due:</span>
+                  <span className="font-bold text-amber-300">Rs. {followUpPendingDue.toFixed(2)}</span>
+                </div>
+              </div>
+            )}
+
             <div className="flex justify-between items-center text-indigo-100">
-              <span>Subtotal</span>
+              <span>{selectedFollowUpInvoice ? "New Extra Services" : "Subtotal"}</span>
               <span className="font-semibold text-white">Rs. {subtotal.toFixed(2)}</span>
             </div>
 
@@ -1383,8 +1412,12 @@ function POSContent() {
             </div>
 
             <div className="flex justify-between items-center pt-3 border-t border-indigo-800/60">
-              <span className="text-base font-bold text-white">Grand Total</span>
-              <span className="text-2xl font-black text-white">Rs. {grandTotal.toFixed(2)}</span>
+              <span className="text-base font-bold text-white">
+                {selectedFollowUpInvoice ? "Total Payable Today" : "Grand Total"}
+              </span>
+              <span className="text-2xl font-black text-white">
+                Rs. {(selectedFollowUpInvoice ? totalPayable : grandTotal).toFixed(2)}
+              </span>
             </div>
           </div>
         </div>
@@ -1450,13 +1483,13 @@ function POSContent() {
                     <Lock className="w-3 h-3" /> Locked (0 Paid)
                   </span>
                 )}
-                {paymentMethod === "Cash" && grandTotal > 0 && (
+                {paymentMethod === "Cash" && (selectedFollowUpInvoice ? totalPayable : grandTotal) > 0 && (
                   <button
                     type="button"
-                    onClick={() => setPaidAmount(grandTotal)}
+                    onClick={() => setPaidAmount(selectedFollowUpInvoice ? totalPayable : grandTotal)}
                     className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold underline underline-offset-2"
                   >
-                    Set Full (Rs. {grandTotal.toFixed(2)})
+                    Set Full (Rs. {(selectedFollowUpInvoice ? totalPayable : grandTotal).toFixed(2)})
                   </button>
                 )}
               </div>
@@ -1489,22 +1522,22 @@ function POSContent() {
                 <p className="text-xs text-amber-800 bg-amber-50/90 p-2.5 rounded-xl mt-2 border border-amber-200 font-medium flex items-start gap-1.5">
                   <Lock className="w-3.5 h-3.5 shrink-0 mt-0.5 text-amber-600" />
                   <span>
-                    Full bill amount of <strong>Rs. {grandTotal.toFixed(2)}</strong> will be recorded under patient&apos;s outstanding dues.
+                    Amount of <strong>Rs. {(selectedFollowUpInvoice ? totalPayable : grandTotal).toFixed(2)}</strong> will remain under patient&apos;s outstanding dues.
                   </span>
                 </p>
               )}
               {paymentMethod === "Card" && (
                 <p className="text-xs text-indigo-800 bg-indigo-50/90 p-2.5 rounded-xl mt-2 border border-indigo-200 font-medium">
-                  Full bill of <strong>Rs. {grandTotal.toFixed(2)}</strong> will be charged via Card / Online transaction.
+                  Full bill of <strong>Rs. {(selectedFollowUpInvoice ? totalPayable : grandTotal).toFixed(2)}</strong> will be charged via Card / Online transaction.
                 </p>
               )}
               {paymentMethod === "Cash" && (
                 <p className="text-[11px] text-gray-500 mt-1.5 font-medium">
-                  {paidAmount >= grandTotal
-                    ? "Full cash payment received (Invoice marked PAID)."
+                  {paidAmount >= (selectedFollowUpInvoice ? totalPayable : grandTotal)
+                    ? "Full payment received today."
                     : paidAmount > 0
-                    ? `Partial cash received. Remaining Rs. ${(grandTotal - paidAmount).toFixed(2)} will be saved to patient's due balance.`
-                    : "No cash received. Full bill will be saved to patient's due balance."}
+                    ? `Partial cash received. Remaining Rs. ${((selectedFollowUpInvoice ? totalPayable : grandTotal) - paidAmount).toFixed(2)} will be saved to patient's due balance.`
+                    : "No cash received. Balance will remain in patient's due balance."}
                 </p>
               )}
             </div>

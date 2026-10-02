@@ -19,33 +19,36 @@ export async function GET(request: Request) {
       };
     }
 
-    const sales = await prisma.sale.findMany({
+    const payments = await prisma.payment.findMany({
       where: {
-        date: Object.keys(dateFilter).length > 0 ? dateFilter : undefined,
-        paid_amount: { gt: 0 } // Only include sales where some payment was made
-      }
+        payment_date: Object.keys(dateFilter).length > 0 ? dateFilter : undefined,
+        amount: { gt: 0 },
+      },
     });
 
-    const breakdown = {
+    const breakdown: Record<string, number> = {
       Cash: 0,
       Card: 0,
       Credit: 0,
+      Bank_Transfer: 0,
       Other: 0,
     };
 
-    for (const sale of sales) {
-      const method = sale.payment_method || "Other";
+    for (const p of payments) {
+      const method = (p.payment_method || "Other").replace(/\s+/g, "_");
       if (breakdown.hasOwnProperty(method)) {
-        breakdown[method as keyof typeof breakdown] += sale.paid_amount;
+        breakdown[method] += p.amount;
       } else {
-        breakdown.Other += sale.paid_amount;
+        breakdown[p.payment_method || "Other"] = (breakdown[p.payment_method || "Other"] || 0) + p.amount;
       }
     }
 
-    const result = Object.entries(breakdown).map(([method, amount]) => ({
-      method,
-      amount
-    })).filter(m => m.amount > 0);
+    const result = Object.entries(breakdown)
+      .map(([method, amount]) => ({
+        method: method.replace(/_/g, " "),
+        amount,
+      }))
+      .filter((m) => m.amount > 0);
 
     return NextResponse.json(result);
   } catch (error) {

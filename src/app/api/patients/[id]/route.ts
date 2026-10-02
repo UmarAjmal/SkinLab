@@ -15,11 +15,22 @@ export async function GET(request: Request, { params }: { params: { id: string }
     const patient = await prisma.customer.findUnique({
       where: { id: rawId },
       include: {
+        payments: {
+          orderBy: { payment_date: "desc" },
+          include: {
+            sale: {
+              select: { invoice_number: true, grand_total: true }
+            }
+          }
+        },
         sales: {
           orderBy: { date: "desc" },
           include: {
             doctor: {
               select: { id: true, name: true, is_doctor: true }
+            },
+            payments: {
+              orderBy: { payment_date: "desc" }
             },
             items: {
               include: {

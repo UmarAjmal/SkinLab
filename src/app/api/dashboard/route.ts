@@ -13,20 +13,32 @@ export async function GET() {
     const todayEnd = dayjs().endOf("day").toDate();
     const thirtyDaysAgo = dayjs().subtract(30, "days").startOf("day").toDate();
 
-    // Execute all 6 queries concurrently in parallel with Promise.all
+    // Execute queries concurrently in parallel with Promise.all
     const [
       todaySales,
+      todayPayments,
       patientsTodayQuery,
       activeDuesSales,
       recentSales,
       recentItems,
       recentTransactions
     ] = await Promise.all([
-      // 1. Today's Revenue
+      // 1. Today's Invoiced Sales
       prisma.sale.aggregate({
         _sum: { grand_total: true },
         where: {
           date: {
+            gte: todayStart,
+            lte: todayEnd,
+          },
+        },
+      }),
+
+      // 1b. Today's Total Cash/Payment Collections
+      prisma.payment.aggregate({
+        _sum: { amount: true },
+        where: {
+          payment_date: {
             gte: todayStart,
             lte: todayEnd,
           },
@@ -96,7 +108,9 @@ export async function GET() {
       }),
     ]);
 
-    const todayRevenue = todaySales._sum.grand_total || 0;
+    const todayRevenue = todayPayments._sum.amount || todaySales._sum.grand_total || 0;
+    const todayInvoicedSales = todaySales._sum.grand_total || 0;
+    const todayCollected = todayPayments._sum.amount || 0;
     const patientsTreatedToday = patientsTodayQuery.length;
     const activeDues = activeDuesSales.reduce(
       (acc, sale) => acc + (sale.grand_total - (sale.paid_amount || 0)),

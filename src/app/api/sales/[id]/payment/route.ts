@@ -53,7 +53,21 @@ export async function POST(request: Request, { params }: { params: { id: string 
       data: updateData,
     });
 
-    // 4. Update customer balance
+    // 4. Create Payment ledger entry
+    const sessionUserEmail = (session.user as any)?.email || (session.user as any)?.name || (session.user as any)?.id;
+    await prisma.payment.create({
+      data: {
+        sale_id: sale.id,
+        customer_id: sale.customer_id,
+        amount: amountToCollect,
+        payment_method: data.payment_method || "Cash",
+        payment_date: new Date(),
+        received_by: sessionUserEmail,
+        notes: data.notes || `Due payment collected against invoice ${sale.invoice_number}`,
+      },
+    });
+
+    // 5. Update customer balance
     let newCurrentBalance = sale.customer.current_balance;
     let newAdvanceBalance = sale.customer.advance_balance;
 

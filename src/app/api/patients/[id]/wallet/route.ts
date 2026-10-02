@@ -17,8 +17,9 @@ export async function POST(request: Request, { params }: { params: { id: string 
       return NextResponse.json({ error: "Invalid patient ID" }, { status: 400 });
     }
 
-    const { amount } = await request.json();
-    const depositAmount = parseFloat(amount);
+    const data = await request.json();
+    const depositAmount = parseFloat(data.amount);
+    const paymentMethod = data.payment_method || "Cash";
 
     if (isNaN(depositAmount) || depositAmount <= 0) {
       return NextResponse.json({ error: "Invalid advance deposit amount" }, { status: 400 });
@@ -27,6 +28,22 @@ export async function POST(request: Request, { params }: { params: { id: string 
     const patient = await prisma.customer.findUnique({ where: { id: rawId } });
     if (!patient) return NextResponse.json({ error: "Patient not found" }, { status: 404 });
 
+    const sessionUserEmail = (session.user as any)?.email || (session.user as any)?.name || (session.user as any)?.id;
+
+    // 1. Record in Payment Ledger
+    await prisma.payment.create({
+      data: {
+        sale_id: null,
+        customer_id: rawId,
+        amount: depositAmount,
+        payment_method: paymentMethod,
+        payment_date: new Date(),
+        received_by: sessionUserEmail,
+        notes: data.notes || "Advance deposit into patient wallet",
+      },
+    });
+
+    // 2. Increment advance balance
     const updated = await prisma.customer.update({
       where: { id: rawId },
       data: {

@@ -69,6 +69,7 @@ model Customer {
   current_balance Float   @default(0)
   advance_balance Float   @default(0)
   sales           Sale[]
+  payments        Payment[]
 
   @@index([phone])
   @@index([name])
@@ -132,6 +133,7 @@ model Sale {
   session_remarks String?
   items           SaleItem[]
   returns         ReturnSale[]
+  payments        Payment[]
 
   @@index([date])
   @@index([payment_status])
@@ -217,4 +219,22 @@ model SaleProductReturn {
   sale_item         SaleItem    @relation(fields: [sale_item_id], references: [id])
   quantity_returned Int
   refund_amount     Float
+}
+
+model Payment {
+  id             String    @id @default(uuid())
+  sale_id        String?
+  sale           Sale?     @relation(fields: [sale_id], references: [id], onDelete: Cascade)
+  customer_id    String
+  customer       Customer  @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  amount         Float
+  payment_method String    // Cash, Card, Credit, etc.
+  payment_date   DateTime  @default(now())
+  received_by    String?   // User / Staff ID or Name
+  notes          String?
+  created_at     DateTime  @default(now())
+
+  @@index([payment_date])
+  @@index([customer_id])
+  @@index([sale_id])
 }

@@ -404,7 +404,7 @@ export default function ReportsPage() {
                       </div>
 
                       <h3 className="font-bold text-gray-900 mb-4 text-lg">Invoice History</h3>
-                      <div className="border border-gray-200 rounded-2xl overflow-hidden bg-white w-full min-w-0 shadow-xs">
+                      <div className="border border-gray-200 rounded-2xl overflow-hidden bg-white w-full min-w-0 shadow-xs mb-8">
                         <div className="overflow-x-auto w-full">
                           <table className="w-full text-left border-collapse min-w-[600px]">
                             <thead className="bg-gray-50 border-b border-gray-200 text-gray-600 text-xs uppercase tracking-wider">
@@ -412,7 +412,7 @@ export default function ReportsPage() {
                                 <th className="p-4 font-semibold">Date</th>
                                 <th className="p-4 font-semibold">Invoice</th>
                                 <th className="p-4 font-semibold text-right">Net Total</th>
-                                <th className="p-4 font-semibold text-right">Paid</th>
+                                <th className="p-4 font-semibold text-right">Paid To Date</th>
                                 <th className="p-4 font-semibold text-center">Status</th>
                               </tr>
                             </thead>
@@ -431,6 +431,41 @@ export default function ReportsPage() {
                                       {sale.payment_status === "PARTIAL" && <span className="bg-orange-100 text-orange-700 px-2.5 py-1 rounded-lg text-xs font-semibold">PARTIAL</span>}
                                       {sale.payment_status === "DUE" && <span className="bg-red-100 text-red-700 px-2.5 py-1 rounded-lg text-xs font-semibold">DUE</span>}
                                     </td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      {/* Payment History Table */}
+                      <h3 className="font-bold text-gray-900 mb-4 text-lg">Payments & Cash Receipts</h3>
+                      <div className="border border-gray-200 rounded-2xl overflow-hidden bg-white w-full min-w-0 shadow-xs">
+                        <div className="overflow-x-auto w-full">
+                          <table className="w-full text-left border-collapse min-w-[600px]">
+                            <thead className="bg-gray-50 border-b border-gray-200 text-gray-600 text-xs uppercase tracking-wider">
+                              <tr>
+                                <th className="p-4 font-semibold">Payment Date</th>
+                                <th className="p-4 font-semibold">Invoice Ref</th>
+                                <th className="p-4 font-semibold">Method</th>
+                                <th className="p-4 font-semibold">Remarks</th>
+                                <th className="p-4 font-semibold text-right">Amount Received</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 text-sm">
+                              {(!selectedPatientData.payments || selectedPatientData.payments.length === 0) ? (
+                                <tr><td colSpan={5} className="p-8 text-center text-gray-400">No payment receipts found for this patient.</td></tr>
+                              ) : (
+                                selectedPatientData.payments.map((pmt: any) => (
+                                  <tr key={pmt.id} className="hover:bg-gray-50 transition-colors">
+                                    <td className="p-4 text-gray-900">{dayjs(pmt.payment_date).format('MMM DD, YYYY hh:mm A')}</td>
+                                    <td className="p-4 font-medium text-indigo-600">{pmt.sale?.invoice_number || "Advance Deposit"}</td>
+                                    <td className="p-4 text-gray-700 font-medium">
+                                      <span className="bg-slate-100 px-2.5 py-1 rounded-md text-xs">{pmt.payment_method}</span>
+                                    </td>
+                                    <td className="p-4 text-gray-500 text-xs">{pmt.notes || "Payment received"}</td>
+                                    <td className="p-4 text-right font-bold text-emerald-700">Rs. {pmt.amount.toFixed(2)}</td>
                                   </tr>
                                 ))
                               )}

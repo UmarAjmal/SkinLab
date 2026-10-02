@@ -134,15 +134,51 @@ export default function InvoiceModal({
               </table>
 
               <div className="w-64 ml-auto space-y-2 text-sm">
+                <div className="flex justify-between text-gray-600">
+                  <span>Subtotal</span>
+                  <span>Rs. {(selectedSale.subtotal || selectedSale.grand_total).toFixed(2)}</span>
+                </div>
+                {selectedSale.discount_amount > 0 && (
+                  <div className="flex justify-between text-emerald-600">
+                    <span>Discount</span>
+                    <span>-Rs. {selectedSale.discount_amount.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between font-bold text-lg text-gray-900 border-t border-gray-200 pt-2 mt-2">
                   <span>Grand Total</span>
                   <span>Rs. {selectedSale.grand_total.toFixed(2)}</span>
                 </div>
+                <div className="flex justify-between font-semibold text-sm text-emerald-700">
+                  <span>Paid To Date</span>
+                  <span>Rs. {(selectedSale.paid_amount || 0).toFixed(2)}</span>
+                </div>
                 <div className="flex justify-between font-bold text-lg text-indigo-700 border-t border-gray-200 pt-2 mt-2">
                   <span>Balance Due</span>
-                  <span>Rs. {(selectedSale.grand_total - (selectedSale.paid_amount || 0)).toFixed(2)}</span>
+                  <span>Rs. {Math.max(0, selectedSale.grand_total - (selectedSale.paid_amount || 0)).toFixed(2)}</span>
                 </div>
               </div>
+
+              {/* Payment History / Receipts */}
+              {selectedSale.payments && selectedSale.payments.length > 0 && (
+                <div className="mt-6 pt-5 border-t border-gray-100">
+                  <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold mb-2.5 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Payment & Collection History
+                  </div>
+                  <div className="bg-gray-50 rounded-xl border border-gray-100 divide-y divide-gray-100 overflow-hidden text-xs">
+                    {selectedSale.payments.map((p: any, idx: number) => (
+                      <div key={p.id || idx} className="p-3 flex justify-between items-center">
+                        <div>
+                          <div className="font-bold text-gray-900">Rs. {Number(p.amount).toFixed(2)} <span className="font-normal text-gray-500">via {p.payment_method}</span></div>
+                          <div className="text-gray-500 text-[11px]">{dayjs(p.payment_date).format("DD-MMM-YYYY hh:mm A")} {p.notes ? `• ${p.notes}` : ""}</div>
+                        </div>
+                        <span className="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full text-[10px]">
+                          RECORDED
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </>
           )}
 
