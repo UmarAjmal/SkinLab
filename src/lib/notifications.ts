@@ -9,6 +9,11 @@ export type NotificationType =
   | "REFUND_PROCESSED"
   | "OVERDUE_DUES"
   | "PAYMENT_RECEIVED"
+  | "PURCHASE_RECEIVED"
+  | "LOW_STOCK_ALERT"
+  | "DAILY_CLOSING_SUMMARY"
+  | "MONTHLY_CLOSING_SUMMARY"
+  | "YEARLY_CLOSING_SUMMARY"
   | "SYSTEM_ALERT";
 
 export type NotificationSeverity = "INFO" | "WARNING" | "URGENT" | "SUCCESS";
@@ -106,4 +111,218 @@ export async function checkAndCreateOverdueDuesAlerts() {
   } catch (error) {
     console.error("Failed to check overdue dues alerts:", error);
   }
+}
+
+/**
+ * Checks and creates Day-End Closing Notification for yesterday / today evening
+ */
+export async function checkAndCreateDailyClosingNotification() {
+  try {
+    const now = dayjs();
+    // Check for yesterday's closing summary
+    const yesterday = now.subtract(1, "day");
+    const yStart = yesterday.startOf("day").toDate();
+    const yEnd = yesterday.endOf("day").toDate();
+    const yKey = yesterday.format("YYYY-MM-DD");
+
+    const existingDaily = await prisma.notification.findFirst({
+      where: {
+        type: "DAILY_CLOSING_SUMMARY",
+        link_url: { contains: yKey },
+      },
+    });
+
+    if (!existingDaily) {
+      // Calculate yesterday's stats
+      const [salesAgg, paymentsAgg, expensesAgg, patientsCount] = await Promise.all([
+        prisma.sale.aggregate({
+          where: { date: { gte: yStart, lte: yEnd } },
+          _sum: { grand_total: true },
+          _count: { id: true },
+        }),
+        prisma.payment.aggregate({
+          where: { payment_date: { gte: yStart, lte: yEnd } },
+          _sum: { amount: true },
+        }),
+        prisma.expense.aggregate({
+          where: { date: { gte: yStart, lte: yEnd } },
+          _sum: { amount: true },
+        }),
+        prisma.sale.findMany({
+          where: { date: { gte: yStart, lte: yEnd } },
+          select: { customer_id: true },
+          distinct: ["customer_id"],
+        }),
+      ]);
+
+      const totalSales = salesAgg._sum.grand_total || 0;
+      const totalPayments = paymentsAgg._sum.amount || 0;
+      const totalExpenses = expensesAgg._sum.amount || 0;
+      const netCashflow = totalPayments - totalExpenses;
+      const invoiceCount = salesAgg._count.id || 0;
+
+      // Only generate if there was activity yesterday
+      if (totalSales > 0 || totalPayments > 0 || totalExpenses > 0) {
+        await prisma.notification.create({
+          data: {
+            title: `📊 Daily Closing Summary (${yesterday.format("DD MMM YYYY")})`,
+            message: `Sales: Rs. ${totalSales.toLocaleString()} | Collections: Rs. ${totalPayments.toLocaleString()} | Expenses: Rs. ${totalExpenses.toLocaleString()} | Net Cash: Rs. ${netCashflow.toLocaleString()} (${patientsCount.length} Patients, ${invoiceCount} Invoices)`,
+            type: "DAILY_CLOSING_SUMMARY",
+            severity: "SUCCESS",
+            target_role: "Admin",
+            link_url: `/dashboard/reports/daily-sales?date=${yKey}`,
+            metadata: JSON.stringify({
+              date: yKey,
+              sales: totalSales,
+              payments: totalPayments,
+              expenses: totalExpenses,
+              net_cashflow: netCashflow,
+              patients: patientsCount.length,
+            }),
+          },
+        });
+
+        // Also send to Manager
+        await prisma.notification.create({
+          data: {
+            title: `📊 Daily Sales Summary (${yesterday.format("DD MMM YYYY")})`,
+            message: `Clinic recorded Rs. ${totalSales.toLocaleString()} sales with Rs. ${totalPayments.toLocaleString()} collected across ${patientsCount.length} patients.`,
+            type: "DAILY_CLOSING_SUMMARY",
+            severity: "INFO",
+            target_role: "Manager",
+            link_url: `/dashboard/reports/daily-sales?date=${yKey}`,
+          },
+        });
+      }
+    }
+  } catch (error) {
+    console.error("Failed to check daily closing notifications:", error);
+  }
+}
+
+/**
+ * Checks and creates Month-End Summary Notification
+ */
+export async function checkAndCreateMonthlyClosingNotification() {
+  try {
+    const now = dayjs();
+    const lastMonth = now.subtract(1, "month");
+    const lmStart = lastMonth.startOf("month").toDate();
+    const lmEnd = lastMonth.endOf("month").toDate();
+    const mKey = lastMonth.format("YYYY-MM");
+
+    const existingMonthly = await prisma.notification.findFirst({
+      where: {
+        type: "MONTHLY_CLOSING_SUMMARY",
+        link_url: { contains: mKey },
+      },
+    });
+
+    if (!existingMonthly) {
+      const [salesAgg, paymentsAgg, expensesAgg, invoicesCount] = await Promise.all([
+        prisma.sale.aggregate({
+          where: { date: { gte: lmStart, lte: lmEnd } },
+          _sum: { grand_total: true },
+          _count: { id: true },
+        }),
+        prisma.payment.aggregate({
+          where: { payment_date: { gte: lmStart, lte: lmEnd } },
+          _sum: { amount: true },
+        }),
+        prisma.expense.aggregate({
+          where: { date: { gte: lmStart, lte: lmEnd } },
+          _sum: { amount: true },
+        }),
+        prisma.sale.count({
+          where: { date: { gte: lmStart, lte: lmEnd } },
+        }),
+      ]);
+
+      const totalSales = salesAgg._sum.grand_total || 0;
+      const totalExpenses = expensesAgg._sum.amount || 0;
+      const totalPayments = paymentsAgg._sum.amount || 0;
+      const netProfit = totalSales - totalExpenses;
+
+      if (totalSales > 0 || totalExpenses > 0) {
+        await prisma.notification.create({
+          data: {
+            title: `📈 Monthly Financial Summary (${lastMonth.format("MMMM YYYY")})`,
+            message: `Monthly Revenue: Rs. ${totalSales.toLocaleString()} | Expenses: Rs. ${totalExpenses.toLocaleString()} | Net Profit: Rs. ${netProfit.toLocaleString()} (${invoicesCount} Invoices, Collected: Rs. ${totalPayments.toLocaleString()})`,
+            type: "MONTHLY_CLOSING_SUMMARY",
+            severity: "SUCCESS",
+            target_role: "Admin",
+            link_url: `/dashboard/reports/monthly-sales?month=${mKey}`,
+            metadata: JSON.stringify({
+              month: mKey,
+              sales: totalSales,
+              expenses: totalExpenses,
+              net_profit: netProfit,
+              invoices: invoicesCount,
+            }),
+          },
+        });
+      }
+    }
+  } catch (error) {
+    console.error("Failed to check monthly closing notifications:", error);
+  }
+}
+
+/**
+ * Checks and creates Low Stock Inventory Alerts
+ */
+export async function checkAndCreateLowStockAlerts() {
+  try {
+    const threeDaysAgo = dayjs().subtract(3, "days").toDate();
+
+    // Find products with stock_quantity <= 5
+    const lowStockProducts = await prisma.product.findMany({
+      where: {
+        stock_quantity: { lte: 5 },
+      },
+      take: 10,
+    });
+
+    for (const prod of lowStockProducts) {
+      const existingAlert = await prisma.notification.findFirst({
+        where: {
+          type: "LOW_STOCK_ALERT",
+          link_url: { contains: prod.id },
+          created_at: { gte: threeDaysAgo },
+        },
+      });
+
+      if (!existingAlert) {
+        await prisma.notification.create({
+          data: {
+            title: `⚠️ Low Stock Alert: ${prod.name}`,
+            message: `Product ${prod.name} has only ${prod.stock_quantity} unit(s) remaining in stock. Please reorder inventory.`,
+            type: "LOW_STOCK_ALERT",
+            severity: prod.stock_quantity <= 0 ? "URGENT" : "WARNING",
+            target_role: "Admin",
+            link_url: `/dashboard/purchases?product_id=${prod.id}`,
+            metadata: JSON.stringify({
+              product_id: prod.id,
+              product_name: prod.name,
+              stock_quantity: prod.stock_quantity,
+            }),
+          },
+        });
+      }
+    }
+  } catch (error) {
+    console.error("Failed to check low stock alerts:", error);
+  }
+}
+
+/**
+ * Master scanner runner that triggers all background clinic checks idempotently
+ */
+export async function runAutomatedClinicScanners() {
+  await Promise.allSettled([
+    checkAndCreateOverdueDuesAlerts(),
+    checkAndCreateDailyClosingNotification(),
+    checkAndCreateMonthlyClosingNotification(),
+    checkAndCreateLowStockAlerts(),
+  ]);
 }

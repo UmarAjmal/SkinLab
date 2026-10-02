@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth";
-import { checkAndCreateOverdueDuesAlerts } from "@/lib/notifications";
+import { runAutomatedClinicScanners } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -15,8 +15,8 @@ export async function GET(request: Request) {
     const userRole = (session.user as any).role || "";
     const userId = (session.user as any).id;
 
-    // Trigger overdue dues scan in background
-    checkAndCreateOverdueDuesAlerts().catch((err) => console.error("Error in overdue scan:", err));
+    // Trigger automated background scans (closing summaries, overdue dues, low stock)
+    runAutomatedClinicScanners().catch((err) => console.error("Error in clinic background scans:", err));
 
     // Build RBAC Notification where condition
     let whereCondition: any = {};

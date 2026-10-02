@@ -14,7 +14,12 @@ import {
   Edit3,
   Info,
   ExternalLink,
+  BarChart3,
+  CalendarCheck,
+  PackageX,
+  PackagePlus,
   Sparkles,
+  TrendingUp,
 } from "lucide-react";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -22,6 +27,7 @@ import { useRouter } from "next/navigation";
 import {
   requestNotificationPermission,
   sendNativeNotification,
+  setupCapacitorNotificationListeners,
 } from "@/lib/clientNotifications";
 
 dayjs.extend(relativeTime);
@@ -31,7 +37,7 @@ export default function NotificationCenter({ userRole = "" }: { userRole?: strin
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [activeTab, setActiveTab] = useState<"all" | "unread" | "alerts">("all");
+  const [activeTab, setActiveTab] = useState<"all" | "unread" | "alerts" | "closings">("all");
   const [loading, setLoading] = useState(false);
 
   const prevIdsRef = useRef<Set<string>>(new Set());
@@ -48,7 +54,7 @@ export default function NotificationCenter({ userRole = "" }: { userRole?: strin
         const incomingList: any[] = data.notifications || [];
         const count: number = data.unreadCount || 0;
 
-        // Check for brand new notifications to trigger chime & native push
+        // Check for brand new notifications to trigger sound & native mobile push
         if (!isFirstLoadRef.current && incomingList.length > 0) {
           const brandNew = incomingList.filter(
             (n) => !prevIdsRef.current.has(n.id) && !n.is_read
@@ -59,6 +65,7 @@ export default function NotificationCenter({ userRole = "" }: { userRole?: strin
               title: newest.title,
               body: newest.message,
               severity: newest.severity,
+              linkUrl: newest.link_url,
             });
           }
         }
@@ -86,10 +93,13 @@ export default function NotificationCenter({ userRole = "" }: { userRole?: strin
     return () => clearInterval(interval);
   }, []);
 
-  // Request permissions once on component mount
+  // Request permissions & set up Capacitor tap listeners once on mount
   useEffect(() => {
     requestNotificationPermission().catch(() => {});
-  }, []);
+    setupCapacitorNotificationListeners((url) => {
+      if (url) router.push(url);
+    });
+  }, [router]);
 
   // Close dropdown on outside click or ESC key
   useEffect(() => {
@@ -112,7 +122,7 @@ export default function NotificationCenter({ userRole = "" }: { userRole?: strin
     };
   }, [isOpen]);
 
-  // Mark single notification as read
+  // Mark single notification as read & navigate
   const handleMarkAsRead = async (notif: any) => {
     if (!notif.is_read) {
       try {
@@ -159,7 +169,18 @@ export default function NotificationCenter({ userRole = "" }: { userRole?: strin
   const filteredList = notifications.filter((n) => {
     if (activeTab === "unread") return !n.is_read;
     if (activeTab === "alerts")
-      return n.severity === "URGENT" || n.severity === "WARNING" || n.type === "OVERDUE_DUES";
+      return (
+        n.severity === "URGENT" ||
+        n.severity === "WARNING" ||
+        n.type === "OVERDUE_DUES" ||
+        n.type === "LOW_STOCK_ALERT"
+      );
+    if (activeTab === "closings")
+      return (
+        n.type === "DAILY_CLOSING_SUMMARY" ||
+        n.type === "MONTHLY_CLOSING_SUMMARY" ||
+        n.type === "YEARLY_CLOSING_SUMMARY"
+      );
     return true;
   });
 
@@ -167,48 +188,76 @@ export default function NotificationCenter({ userRole = "" }: { userRole?: strin
   const getNotificationIcon = (type: string, severity: string) => {
     if (type === "OVERDUE_DUES" || severity === "URGENT") {
       return (
-        <div className="p-2 rounded-xl bg-red-100 text-red-700 shrink-0">
+        <div className="p-2.5 rounded-2xl bg-red-100 text-red-700 shrink-0 shadow-xs">
           <AlertTriangle className="w-4 h-4" />
+        </div>
+      );
+    }
+    if (type === "DAILY_CLOSING_SUMMARY") {
+      return (
+        <div className="p-2.5 rounded-2xl bg-indigo-100 text-indigo-700 shrink-0 shadow-xs">
+          <BarChart3 className="w-4 h-4" />
+        </div>
+      );
+    }
+    if (type === "MONTHLY_CLOSING_SUMMARY" || type === "YEARLY_CLOSING_SUMMARY") {
+      return (
+        <div className="p-2.5 rounded-2xl bg-violet-100 text-violet-700 shrink-0 shadow-xs">
+          <CalendarCheck className="w-4 h-4" />
+        </div>
+      );
+    }
+    if (type === "LOW_STOCK_ALERT") {
+      return (
+        <div className="p-2.5 rounded-2xl bg-amber-100 text-amber-700 shrink-0 shadow-xs">
+          <PackageX className="w-4 h-4" />
+        </div>
+      );
+    }
+    if (type === "PURCHASE_RECEIVED") {
+      return (
+        <div className="p-2.5 rounded-2xl bg-cyan-100 text-cyan-700 shrink-0 shadow-xs">
+          <PackagePlus className="w-4 h-4" />
         </div>
       );
     }
     if (type === "SALE_CREATED") {
       return (
-        <div className="p-2 rounded-xl bg-emerald-100 text-emerald-700 shrink-0">
+        <div className="p-2.5 rounded-2xl bg-emerald-100 text-emerald-700 shrink-0 shadow-xs">
           <ShoppingBag className="w-4 h-4" />
         </div>
       );
     }
     if (type === "SALE_UPDATED") {
       return (
-        <div className="p-2 rounded-xl bg-amber-100 text-amber-700 shrink-0">
+        <div className="p-2.5 rounded-2xl bg-amber-100 text-amber-700 shrink-0 shadow-xs">
           <Edit3 className="w-4 h-4" />
         </div>
       );
     }
     if (type === "EXPENSE_CREATED" || type === "EXPENSE_UPDATED") {
       return (
-        <div className="p-2 rounded-xl bg-rose-100 text-rose-700 shrink-0">
+        <div className="p-2.5 rounded-2xl bg-rose-100 text-rose-700 shrink-0 shadow-xs">
           <Receipt className="w-4 h-4" />
         </div>
       );
     }
     if (type === "REFUND_PROCESSED") {
       return (
-        <div className="p-2 rounded-xl bg-orange-100 text-orange-700 shrink-0">
+        <div className="p-2.5 rounded-2xl bg-orange-100 text-orange-700 shrink-0 shadow-xs">
           <RotateCcw className="w-4 h-4" />
         </div>
       );
     }
     if (type === "PAYMENT_RECEIVED") {
       return (
-        <div className="p-2 rounded-xl bg-teal-100 text-teal-700 shrink-0">
+        <div className="p-2.5 rounded-2xl bg-teal-100 text-teal-700 shrink-0 shadow-xs">
           <CreditCard className="w-4 h-4" />
         </div>
       );
     }
     return (
-      <div className="p-2 rounded-xl bg-indigo-100 text-indigo-700 shrink-0">
+      <div className="p-2.5 rounded-2xl bg-indigo-100 text-indigo-700 shrink-0 shadow-xs">
         <Info className="w-4 h-4" />
       </div>
     );
@@ -235,9 +284,9 @@ export default function NotificationCenter({ userRole = "" }: { userRole?: strin
 
       {/* Popover / Dropdown */}
       {isOpen && (
-        <div className="fixed inset-x-3 top-16 md:absolute md:inset-auto md:right-0 md:top-full md:mt-2.5 w-auto md:w-96 max-w-[calc(100vw-24px)] bg-white rounded-3xl shadow-2xl border border-gray-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[80vh] md:max-h-[550px]">
+        <div className="fixed inset-x-3 top-16 md:absolute md:inset-auto md:right-0 md:top-full md:mt-2.5 w-auto md:w-[420px] max-w-[calc(100vw-24px)] bg-white rounded-3xl shadow-2xl border border-gray-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[82vh] md:max-h-[580px]">
           {/* Header */}
-          <div className="p-4 border-b border-gray-100 bg-slate-50/80 flex items-center justify-between shrink-0">
+          <div className="p-4 border-b border-gray-100 bg-slate-50/90 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2">
               <h3 className="font-extrabold text-gray-900 text-base flex items-center gap-1.5">
                 Notifications
@@ -279,10 +328,10 @@ export default function NotificationCenter({ userRole = "" }: { userRole?: strin
           </div>
 
           {/* Filter Tabs */}
-          <div className="flex items-center px-4 pt-2.5 pb-2 border-b border-gray-100 bg-white gap-2 text-xs font-bold text-gray-500 shrink-0">
+          <div className="flex items-center px-3 pt-2.5 pb-2 border-b border-gray-100 bg-white gap-1.5 text-xs font-bold text-gray-500 shrink-0 overflow-x-auto">
             <button
               onClick={() => setActiveTab("all")}
-              className={`px-3 py-1 rounded-xl transition-all ${
+              className={`px-3 py-1.5 rounded-xl transition-all whitespace-nowrap ${
                 activeTab === "all"
                   ? "bg-indigo-50 text-indigo-700 font-black shadow-2xs"
                   : "hover:text-gray-900"
@@ -292,7 +341,7 @@ export default function NotificationCenter({ userRole = "" }: { userRole?: strin
             </button>
             <button
               onClick={() => setActiveTab("unread")}
-              className={`px-3 py-1 rounded-xl transition-all ${
+              className={`px-3 py-1.5 rounded-xl transition-all whitespace-nowrap ${
                 activeTab === "unread"
                   ? "bg-indigo-50 text-indigo-700 font-black shadow-2xs"
                   : "hover:text-gray-900"
@@ -301,8 +350,18 @@ export default function NotificationCenter({ userRole = "" }: { userRole?: strin
               Unread ({unreadCount})
             </button>
             <button
+              onClick={() => setActiveTab("closings")}
+              className={`px-3 py-1.5 rounded-xl transition-all whitespace-nowrap ${
+                activeTab === "closings"
+                  ? "bg-violet-50 text-violet-700 font-black shadow-2xs"
+                  : "hover:text-gray-900"
+              }`}
+            >
+              Closings
+            </button>
+            <button
               onClick={() => setActiveTab("alerts")}
-              className={`px-3 py-1 rounded-xl transition-all ${
+              className={`px-3 py-1.5 rounded-xl transition-all whitespace-nowrap ${
                 activeTab === "alerts"
                   ? "bg-red-50 text-red-700 font-black shadow-2xs"
                   : "hover:text-gray-900"
@@ -315,7 +374,7 @@ export default function NotificationCenter({ userRole = "" }: { userRole?: strin
           {/* Notifications List */}
           <div className="overflow-y-auto flex-1 divide-y divide-gray-50">
             {loading ? (
-              <div className="p-8 text-center text-xs text-gray-400">Loading notifications...</div>
+              <div className="p-8 text-center text-xs text-gray-400">Loading clinic updates...</div>
             ) : filteredList.length === 0 ? (
               <div className="p-10 text-center space-y-2">
                 <Bell className="w-8 h-8 text-gray-300 mx-auto" />
@@ -323,6 +382,8 @@ export default function NotificationCenter({ userRole = "" }: { userRole?: strin
                 <p className="text-[11px] text-gray-400">
                   {activeTab === "unread"
                     ? "You're all caught up with clinic updates!"
+                    : activeTab === "closings"
+                    ? "Day-End and Month-End closing reports will appear here."
                     : "Clinic notifications will appear here in real-time."}
                 </p>
               </div>
@@ -374,7 +435,7 @@ export default function NotificationCenter({ userRole = "" }: { userRole?: strin
           {/* Footer */}
           <div className="p-2.5 bg-slate-50 border-t border-gray-100 text-center shrink-0">
             <span className="text-[10px] text-gray-400 font-medium">
-              Role: <strong className="text-gray-700">{userRole || "Staff"}</strong> • Real-time Clinic Alerts
+              Role: <strong className="text-gray-700">{userRole || "Staff"}</strong> • Real-time Clinic & Mobile Push
             </span>
           </div>
         </div>

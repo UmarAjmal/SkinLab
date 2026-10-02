@@ -1,8 +1,32 @@
 import { Capacitor } from "@capacitor/core";
 import { LocalNotifications } from "@capacitor/local-notifications";
 
+let channelsInitialized = false;
+
 /**
- * Synthesizes a pleasant audio chime using Web Audio API
+ * Initializes Android Notification Channels with High Importance (Heads-up banner + Sound + Vibration)
+ */
+async function initializeAndroidChannels() {
+  if (!Capacitor.isNativePlatform() || channelsInitialized) return;
+  try {
+    await LocalNotifications.createChannel({
+      id: "skinlab_clinic_alerts",
+      name: "SkinLab Clinic Realtime Alerts",
+      description: "Notifications for Sales, Invoices, Expenses, Closings, and Dues",
+      importance: 5, // 5 = MAX / High importance (pops up on screen & makes sound)
+      visibility: 1, // 1 = PUBLIC (visible on lockscreen)
+      vibration: true,
+      lights: true,
+      lightColor: "#4F46E5",
+    });
+    channelsInitialized = true;
+  } catch (err) {
+    console.warn("Could not create Android notification channel:", err);
+  }
+}
+
+/**
+ * Synthesizes an audible alert tone using Web Audio API for browser/desktop
  */
 export function playNotificationSound(type: "success" | "warning" | "alert" | "info" = "info") {
   try {
@@ -20,27 +44,36 @@ export function playNotificationSound(type: "success" | "warning" | "alert" | "i
     const now = ctx.currentTime;
 
     if (type === "alert" || type === "warning") {
-      // Two-tone warning beep
+      // Urgent / Warning Two-Tone Alert
       osc.type = "sine";
       osc.frequency.setValueAtTime(880, now); // A5
       osc.frequency.setValueAtTime(587.33, now + 0.12); // D5
-      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.setValueAtTime(0.18, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
       osc.start(now);
       osc.stop(now + 0.35);
-    } else {
-      // Pleasant high chime
+    } else if (type === "success") {
+      // Pleasant Ascending Chime
       osc.type = "sine";
       osc.frequency.setValueAtTime(523.25, now); // C5
       osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
       osc.frequency.setValueAtTime(783.99, now + 0.16); // G5
-      gain.gain.setValueAtTime(0.12, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
       osc.start(now);
-      osc.stop(now + 0.4);
+      osc.stop(now + 0.45);
+    } else {
+      // Standard Notice Chime
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(659.25, now); // E5
+      osc.frequency.setValueAtTime(783.99, now + 0.1); // G5
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+      osc.start(now);
+      osc.stop(now + 0.3);
     }
   } catch (e) {
-    // AudioContext autoplay restrictions or disabled
+    // AudioContext blocked by browser autoplay policy
   }
 }
 
@@ -51,13 +84,22 @@ export async function requestNotificationPermission(): Promise<boolean> {
   try {
     if (typeof window === "undefined") return false;
 
-    // 1. Capacitor Native Check
+    // 1. Capacitor Native Platform (Android / iOS)
     if (Capacitor.isNativePlatform()) {
-      const permStatus = await LocalNotifications.requestPermissions();
-      return permStatus.display === "granted";
+      const checkStatus = await LocalNotifications.checkPermissions();
+      if (checkStatus.display !== "granted") {
+        const reqStatus = await LocalNotifications.requestPermissions();
+        if (reqStatus.display === "granted") {
+          await initializeAndroidChannels();
+          return true;
+        }
+        return false;
+      }
+      await initializeAndroidChannels();
+      return true;
     }
 
-    // 2. Web Browser Notification Check
+    // 2. Web Browser Desktop / Mobile Chrome
     if ("Notification" in window) {
       if (Notification.permission === "granted") return true;
       if (Notification.permission !== "denied") {
@@ -80,12 +122,13 @@ export async function sendNativeNotification(params: {
   body: string;
   id?: number;
   severity?: "INFO" | "WARNING" | "URGENT" | "SUCCESS";
+  linkUrl?: string | null;
   extra?: any;
 }) {
   try {
     if (typeof window === "undefined") return;
 
-    // Play pleasant audio chime
+    // 1. Play synthesized audio tone
     const soundType =
       params.severity === "URGENT" || params.severity === "WARNING"
         ? "alert"
@@ -94,31 +137,64 @@ export async function sendNativeNotification(params: {
         : "info";
     playNotificationSound(soundType);
 
-    // 1. If running on Capacitor Native (Android / iOS)
+    // 2. If running on Capacitor Native (Android / iOS)
     if (Capacitor.isNativePlatform()) {
-      const notifId = params.id || Math.floor(Math.random() * 100000);
+      await initializeAndroidChannels();
+      const notifId = params.id || Math.floor(Math.random() * 1000000);
+
       await LocalNotifications.schedule({
         notifications: [
           {
+            id: notifId,
             title: params.title,
             body: params.body,
-            id: notifId,
-            schedule: { at: new Date(Date.now() + 100) },
-            extra: params.extra || null,
+            channelId: "skinlab_clinic_alerts",
+            schedule: { at: new Date(Date.now() + 50) },
+            sound: "default",
+            extra: {
+              linkUrl: params.linkUrl || null,
+              ...params.extra,
+            },
           },
         ],
       });
       return;
     }
 
-    // 2. If running on standard Web Browser
+    // 3. If running on standard Web Browser
     if ("Notification" in window && Notification.permission === "granted") {
-      new Notification(params.title, {
+      const webNotif = new Notification(params.title, {
         body: params.body,
         icon: "/favicon.ico",
       });
+
+      if (params.linkUrl) {
+        webNotif.onclick = () => {
+          window.focus();
+          window.location.href = params.linkUrl!;
+        };
+      }
     }
   } catch (e) {
     console.warn("Failed to dispatch native notification:", e);
+  }
+}
+
+/**
+ * Sets up Capacitor notification tap action listeners
+ */
+export function setupCapacitorNotificationListeners(onNavigate?: (url: string) => void) {
+  if (!Capacitor.isNativePlatform()) return;
+  try {
+    LocalNotifications.addListener("localNotificationActionPerformed", (action) => {
+      const linkUrl = action.notification?.extra?.linkUrl;
+      if (linkUrl && onNavigate) {
+        onNavigate(linkUrl);
+      } else if (linkUrl && typeof window !== "undefined") {
+        window.location.href = linkUrl;
+      }
+    });
+  } catch (err) {
+    console.warn("Failed to register notification action listener:", err);
   }
 }
