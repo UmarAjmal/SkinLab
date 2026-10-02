@@ -159,41 +159,59 @@ export default function SalesHistoryPage() {
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden w-full min-w-0">
             <div className="overflow-x-auto w-full">
-              <table className="w-full text-left border-collapse min-w-[600px]">
+              <table className="w-full text-left border-collapse min-w-[700px]">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
                     <th className="p-4 font-semibold text-sm text-gray-600">Date</th>
                     <th className="p-4 font-semibold text-sm text-gray-600">Invoice</th>
                     <th className="p-4 font-semibold text-sm text-gray-600">Customer</th>
-                    <th className="p-4 font-semibold text-sm text-gray-600 text-right">Amount</th>
-                    <th className="p-4 font-semibold text-sm text-gray-600">Status</th>
+                    <th className="p-4 font-semibold text-sm text-gray-600 text-right">Grand Total</th>
+                    <th className="p-4 font-semibold text-sm text-gray-600 text-right">Paid Amount</th>
+                    <th className="p-4 font-semibold text-sm text-gray-600 text-right">Balance Due</th>
+                    <th className="p-4 font-semibold text-sm text-gray-600 text-center">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {loading ? (
-                    <tr><td colSpan={5} className="p-8 text-center text-gray-500">Loading sales data...</td></tr>
+                    <tr><td colSpan={7} className="p-8 text-center text-gray-500">Loading sales data...</td></tr>
                   ) : sales.length === 0 ? (
-                    <tr><td colSpan={5} className="p-8 text-center text-gray-500">No sales found.</td></tr>
+                    <tr><td colSpan={7} className="p-8 text-center text-gray-500">No sales found.</td></tr>
                   ) : (
-                    sales.map((sale) => (
-                      <tr key={sale.id} className="hover:bg-gray-50 transition-colors cursor-pointer group" onClick={() => setSelectedSale(sale)}>
-                        <td className="p-4 text-sm text-gray-900 whitespace-nowrap">
-                          {dayjs(sale.date).format("MMM DD, YYYY")}
-                        </td>
-                        <td className="p-4">
-                          <span className="font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded">{sale.invoice_number}</span>
-                        </td>
-                        <td className="p-4">
-                          <div className="font-medium text-gray-900">{sale.customer?.name || "Unknown"}</div>
-                        </td>
-                        <td className="p-4 text-right font-medium text-gray-900">
-                          {sale.grand_total.toFixed(2)}
-                        </td>
-                        <td className="p-4">
-                          <StatusBadge status={sale.payment_status} />
-                        </td>
-                      </tr>
-                    ))
+                    sales.map((sale) => {
+                      const balanceDue = Math.max(0, sale.grand_total - (sale.paid_amount || 0));
+                      return (
+                        <tr key={sale.id} className="hover:bg-gray-50 transition-colors cursor-pointer group" onClick={() => setSelectedSale(sale)}>
+                          <td className="p-4 text-sm text-gray-900 whitespace-nowrap">
+                            {dayjs(sale.date).format("MMM DD, YYYY")}
+                          </td>
+                          <td className="p-4">
+                            <span className="font-medium text-indigo-600 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-lg text-xs font-mono">{sale.invoice_number}</span>
+                          </td>
+                          <td className="p-4">
+                            <div className="font-medium text-gray-900 text-sm">{sale.customer?.name || "Unknown"}</div>
+                            {sale.customer?.phone && (
+                              <div className="text-xs text-gray-500">{sale.customer.phone}</div>
+                            )}
+                          </td>
+                          <td className="p-4 text-right font-bold text-gray-900 text-sm">
+                            Rs. {sale.grand_total.toFixed(2)}
+                          </td>
+                          <td className="p-4 text-right font-bold text-emerald-700 text-sm">
+                            Rs. {(sale.paid_amount || 0).toFixed(2)}
+                          </td>
+                          <td className="p-4 text-right font-medium text-sm">
+                            {balanceDue > 0 ? (
+                              <span className="text-rose-600 font-bold">Rs. {balanceDue.toFixed(2)}</span>
+                            ) : (
+                              <span className="text-gray-400">Rs. 0.00</span>
+                            )}
+                          </td>
+                          <td className="p-4 text-center">
+                            <StatusBadge status={sale.payment_status} />
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
