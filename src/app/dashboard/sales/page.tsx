@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Filter } from "lucide-react";
+import { Search, Filter, Edit3, Eye, FileText } from "lucide-react";
 import dayjs from "dayjs";
 import { useSession } from "next-auth/react";
 import InvoiceModal, { StatusBadge } from "@/components/InvoiceModal";
+import EditInvoiceModal from "@/components/EditInvoiceModal";
 
 export default function SalesHistoryPage() {
   const { data: session } = useSession();
@@ -21,6 +22,7 @@ export default function SalesHistoryPage() {
 
   // Modal State
   const [selectedSale, setSelectedSale] = useState<any>(null);
+  const [editingSale, setEditingSale] = useState<any>(null);
 
   // Payment Modal State
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -159,7 +161,7 @@ export default function SalesHistoryPage() {
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden w-full min-w-0">
             <div className="overflow-x-auto w-full">
-              <table className="w-full text-left border-collapse min-w-[700px]">
+              <table className="w-full text-left border-collapse min-w-[760px]">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
                     <th className="p-4 font-semibold text-sm text-gray-600">Date</th>
@@ -169,13 +171,14 @@ export default function SalesHistoryPage() {
                     <th className="p-4 font-semibold text-sm text-gray-600 text-right">Paid Amount</th>
                     <th className="p-4 font-semibold text-sm text-gray-600 text-right">Balance Due</th>
                     <th className="p-4 font-semibold text-sm text-gray-600 text-center">Status</th>
+                    <th className="p-4 font-semibold text-sm text-gray-600 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {loading ? (
-                    <tr><td colSpan={7} className="p-8 text-center text-gray-500">Loading sales data...</td></tr>
+                    <tr><td colSpan={8} className="p-8 text-center text-gray-500">Loading sales data...</td></tr>
                   ) : sales.length === 0 ? (
-                    <tr><td colSpan={7} className="p-8 text-center text-gray-500">No sales found.</td></tr>
+                    <tr><td colSpan={8} className="p-8 text-center text-gray-500">No sales found.</td></tr>
                   ) : (
                     sales.map((sale) => {
                       const balanceDue = Math.max(0, sale.grand_total - (sale.paid_amount || 0));
@@ -208,6 +211,31 @@ export default function SalesHistoryPage() {
                           </td>
                           <td className="p-4 text-center">
                             <StatusBadge status={sale.payment_status} />
+                          </td>
+                          <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-end gap-1.5">
+                              {/* Edit Invoice Button */}
+                              {["Admin", "Manager"].includes(userRole) && (
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingSale(sale)}
+                                  title="Edit Invoice"
+                                  className="p-1.5 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-100/60 rounded-xl transition-colors border border-indigo-200 bg-indigo-50/60"
+                                >
+                                  <Edit3 className="w-4 h-4" />
+                                </button>
+                              )}
+
+                              {/* View Details Button */}
+                              <button
+                                type="button"
+                                onClick={() => setSelectedSale(sale)}
+                                title="View Invoice Details"
+                                className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors border border-gray-200"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -263,6 +291,15 @@ export default function SalesHistoryPage() {
             </table>
           </div>
         </div>
+      )}
+
+      {/* EDIT INVOICE MODAL */}
+      {editingSale && (
+        <EditInvoiceModal
+          sale={editingSale}
+          onClose={() => setEditingSale(null)}
+          onSaveComplete={() => fetchSales()}
+        />
       )}
 
       {/* EXTRACTED INVOICE MODAL */}
