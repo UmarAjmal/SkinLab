@@ -21,11 +21,18 @@ export default function TopHeader({ userEmail, userRole }: TopHeaderProps) {
   useEffect(() => {
     const fetchClinicSettings = async () => {
       try {
-        const res = await fetch("/api/settings/public");
+        const res = await fetch("/api/settings");
         if (res.ok) {
           const data = await res.json();
           if (data.name) setClinicName(data.name);
           if (data.logo) setClinicLogo(data.logo);
+        } else {
+          const pubRes = await fetch("/api/settings/public");
+          if (pubRes.ok) {
+            const pubData = await pubRes.json();
+            if (pubData.name) setClinicName(pubData.name);
+            if (pubData.logo) setClinicLogo(pubData.logo);
+          }
         }
       } catch (e) {
         console.error("TopHeader settings fetch error:", e);

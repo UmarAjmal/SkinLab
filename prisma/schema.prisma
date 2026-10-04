@@ -48,17 +48,22 @@ model Employee {
 }
 
 model User {
-  id            String         @id @default(uuid())
-  email         String         @unique
-  password      String
-  is_active     Boolean        @default(true)
-  role_id       String
-  role          Role           @relation(fields: [role_id], references: [id])
-  employee_id   String?
-  employee      Employee?      @relation(fields: [employee_id], references: [id])
-  sales         Sale[]         @relation("UserSales")
-  expenses      Expense[]      @relation("UserExpenses")
-  notifications Notification[] @relation("UserNotifications")
+  id             String          @id @default(uuid())
+  email          String          @unique
+  password       String
+  full_name      String?
+  phone          String?
+  is_active      Boolean         @default(true)
+  is_first_login Boolean         @default(true)
+  role_id        String
+  role           Role            @relation(fields: [role_id], references: [id])
+  employee_id    String?
+  employee       Employee?       @relation(fields: [employee_id], references: [id])
+  company_id     String?
+  company        CompanySetting? @relation(fields: [company_id], references: [id])
+  sales          Sale[]          @relation("UserSales")
+  expenses       Expense[]       @relation("UserExpenses")
+  notifications  Notification[]  @relation("UserNotifications")
 }
 
 model Customer {
@@ -193,7 +198,7 @@ model PurchaseItem {
 }
 
 model CompanySetting {
-  id           String  @id @default(uuid())
+  id           String   @id @default(uuid())
   name         String
   phone        String?
   logo         String?
@@ -201,6 +206,14 @@ model CompanySetting {
   tax_number   String?
   footer_note  String?
   theme_config String?
+  plan         String?  @default("Monthly Subscription")
+  plan_price   Float?   @default(3000)
+  owner_id     String?
+  owner_name   String?
+  owner_phone  String?
+  users        User[]
+  created_at   DateTime @default(now())
+  updated_at   DateTime @default(now()) @updatedAt
 }
 
 model ReturnSale {

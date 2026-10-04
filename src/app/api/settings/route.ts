@@ -7,7 +7,18 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
-    let settings = await prisma.companySetting.findFirst();
+    const userCompanyId = (session.user as any)?.company_id;
+    let settings = null;
+
+    if (userCompanyId) {
+      settings = await prisma.companySetting.findUnique({
+        where: { id: userCompanyId },
+      });
+    }
+
+    if (!settings) {
+      settings = await prisma.companySetting.findFirst();
+    }
     
     // Auto-create default settings if none exist
     if (!settings) {
@@ -18,7 +29,7 @@ export async function GET() {
           logo: "",
           address: "",
           tax_number: "",
-          footer_note: "Thank you for visiting Skin-Lab Clinic!"
+          footer_note: "Thank you for visiting Skin-Lab Clinic! Powered by Falcon Swift PVT. LTD."
         }
       });
     }
@@ -36,9 +47,30 @@ export async function PUT(request: Request) {
 
   try {
     const data = await request.json();
+    const userCompanyId = (session.user as any)?.company_id;
     
-    let settings = await prisma.companySetting.findFirst();
+    let settings = null;
+    if (userCompanyId) {
+      settings = await prisma.companySetting.findUnique({
+        where: { id: userCompanyId },
+      });
+    }
+
+    if (!settings) {
+      settings = await prisma.companySetting.findFirst();
+    }
     
+    const updateData: any = {};
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.phone !== undefined) updateData.phone = data.phone || null;
+    if (data.logo !== undefined) updateData.logo = data.logo || null;
+    if (data.address !== undefined) updateData.address = data.address || null;
+    if (data.tax_number !== undefined) updateData.tax_number = data.tax_number || null;
+    if (data.footer_note !== undefined) updateData.footer_note = data.footer_note || null;
+    if (data.theme_config !== undefined) {
+      updateData.theme_config = typeof data.theme_config === "object" ? JSON.stringify(data.theme_config) : data.theme_config || null;
+    }
+
     if (!settings) {
       settings = await prisma.companySetting.create({
         data: {
@@ -52,17 +84,6 @@ export async function PUT(request: Request) {
         }
       });
     } else {
-      const updateData: any = {};
-      if (data.name !== undefined) updateData.name = data.name;
-      if (data.phone !== undefined) updateData.phone = data.phone || null;
-      if (data.logo !== undefined) updateData.logo = data.logo || null;
-      if (data.address !== undefined) updateData.address = data.address || null;
-      if (data.tax_number !== undefined) updateData.tax_number = data.tax_number || null;
-      if (data.footer_note !== undefined) updateData.footer_note = data.footer_note || null;
-      if (data.theme_config !== undefined) {
-        updateData.theme_config = typeof data.theme_config === "object" ? JSON.stringify(data.theme_config) : data.theme_config || null;
-      }
-
       settings = await prisma.companySetting.update({
         where: { id: settings.id },
         data: updateData,
