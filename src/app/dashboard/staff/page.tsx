@@ -44,6 +44,9 @@ export default function StaffPage() {
 
   useEffect(() => {
     fetchData();
+    const handleManualRefresh = () => fetchData();
+    window.addEventListener("refresh-active-page-data", handleManualRefresh);
+    return () => window.removeEventListener("refresh-active-page-data", handleManualRefresh);
   }, []);
 
   const fetchData = async () => {
@@ -193,7 +196,6 @@ export default function StaffPage() {
             <Users className="w-6 h-6 text-indigo-600" />
             Staff Directory
           </h1>
-          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">Manage doctors, clinical specialists, and staff accounts</p>
         </div>
         <button
           onClick={openNewModal}

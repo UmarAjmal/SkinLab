@@ -74,7 +74,12 @@ export default function ServicesPage() {
     } catch (e) { console.error(e); }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+    const handleManualRefresh = () => fetchData();
+    window.addEventListener("refresh-active-page-data", handleManualRefresh);
+    return () => window.removeEventListener("refresh-active-page-data", handleManualRefresh);
+  }, []);
 
   // Submit Handlers
   const onCategorySubmit = async (values: any) => {
@@ -148,7 +153,6 @@ export default function ServicesPage() {
             <LayoutList className="w-6 h-6 text-indigo-600" />
             Services & Packages
           </h1>
-          <p className="text-xs sm:text-sm text-gray-500">Configure clinic treatments, pricing, and multi-session bundles</p>
         </div>
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           <button

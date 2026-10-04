@@ -72,6 +72,15 @@ export default function SalesHistoryPage() {
   };
 
   useEffect(() => {
+    const handleManualRefresh = () => {
+      if (activeTab === "sales") fetchSales();
+      else fetchReturns();
+    };
+    window.addEventListener("refresh-active-page-data", handleManualRefresh);
+    return () => window.removeEventListener("refresh-active-page-data", handleManualRefresh);
+  }, [activeTab]);
+
+  useEffect(() => {
     const timer = setTimeout(() => {
       if (activeTab === "sales") {
         fetchSales();
@@ -112,7 +121,6 @@ export default function SalesHistoryPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Sales & Returns</h1>
-          <p className="text-gray-500 text-sm mt-1">View past transactions, process payments, or handle refunds.</p>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-1 flex">

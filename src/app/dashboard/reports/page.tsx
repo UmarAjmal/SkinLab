@@ -88,6 +88,14 @@ export default function ReportsPage() {
     if (activeTab !== "patient_ledger") {
       fetchReports();
     }
+
+    const handleManualRefresh = () => {
+      if (activeTab !== "patient_ledger") {
+        fetchReports();
+      }
+    };
+    window.addEventListener("refresh-active-page-data", handleManualRefresh);
+    return () => window.removeEventListener("refresh-active-page-data", handleManualRefresh);
   }, [activeTab, startDate, endDate, expenseCategoryFilter]);
 
   // Fetch Patients for Ledger
@@ -201,7 +209,6 @@ export default function ReportsPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Reports & Analytics</h1>
-          <p className="text-gray-500 text-sm mt-1">View insights and track business performance.</p>
         </div>
 
         {/* Global Date Filter */}

@@ -74,6 +74,9 @@ export default function PatientsPage() {
 
   useEffect(() => {
     fetchPatients();
+    const handleManualRefresh = () => fetchPatients();
+    window.addEventListener("refresh-active-page-data", handleManualRefresh);
+    return () => window.removeEventListener("refresh-active-page-data", handleManualRefresh);
   }, []);
 
   const columns = [
@@ -217,7 +220,6 @@ export default function PatientsPage() {
             <Users className="w-6 h-6 text-indigo-600" />
             Patients Database
           </h1>
-          <p className="text-xs sm:text-sm text-gray-500">Manage patient records, clinical wallets, and visit profiles</p>
         </div>
         <div className="flex items-center gap-3">
           <button

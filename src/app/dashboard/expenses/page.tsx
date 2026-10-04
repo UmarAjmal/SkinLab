@@ -139,6 +139,15 @@ export default function ExpensesPage() {
   };
 
   useEffect(() => {
+    const handleManualRefresh = () => {
+      fetchExpenses();
+      fetchCategories();
+    };
+    window.addEventListener("refresh-active-page-data", handleManualRefresh);
+    return () => window.removeEventListener("refresh-active-page-data", handleManualRefresh);
+  }, []);
+
+  useEffect(() => {
     const timer = setTimeout(() => {
       fetchExpenses();
     }, 250);
@@ -353,9 +362,6 @@ export default function ExpensesPage() {
               <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
                 Expense Management
               </h1>
-              <p className="text-xs sm:text-sm text-gray-500">
-                Track, categorize, and control clinic operating costs, bills, and petty cash
-              </p>
             </div>
           </div>
         </div>

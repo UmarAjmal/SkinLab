@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import NotificationCenter from "@/components/notifications/NotificationCenter";
-import { User, Stethoscope, ShieldCheck, Sparkles, Clock } from "lucide-react";
-import dayjs from "dayjs";
+import { FlaskConical, RefreshCw, Menu } from "lucide-react";
 
 interface TopHeaderProps {
   userEmail: string;
@@ -11,19 +11,17 @@ interface TopHeaderProps {
 }
 
 export default function TopHeader({ userEmail, userRole }: TopHeaderProps) {
-  const [currentDateTime, setCurrentDateTime] = useState("");
+  const pathname = usePathname();
+  const router = useRouter();
+
   const [clinicName, setClinicName] = useState<string>("Skin-Lab Clinic");
   const [clinicLogo, setClinicLogo] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    setCurrentDateTime(dayjs().format("ddd, DD MMM YYYY • hh:mm A"));
-    const interval = setInterval(() => {
-      setCurrentDateTime(dayjs().format("ddd, DD MMM YYYY • hh:mm A"));
-    }, 30000);
-
     const fetchClinicSettings = async () => {
       try {
-        const res = await fetch("/api/settings");
+        const res = await fetch("/api/settings/public");
         if (res.ok) {
           const data = await res.json();
           if (data.name) setClinicName(data.name);
@@ -34,87 +32,126 @@ export default function TopHeader({ userEmail, userRole }: TopHeaderProps) {
       }
     };
     fetchClinicSettings();
-
-    return () => clearInterval(interval);
   }, []);
 
-  const userName = userEmail ? userEmail.split("@")[0] : "Staff";
-  const userInitial = (userEmail ? userEmail.charAt(0) : "S").toUpperCase();
+  // Determine dynamic page title from route
+  const getPageTitle = (path: string): string => {
+    if (path === "/dashboard") return "Dashboard Overview";
+    if (path === "/dashboard/patients") return "Patients Management (PRM)";
+    if (path.startsWith("/dashboard/patients/")) return "Patient Profile & Records";
+    if (path === "/dashboard/services") return "Services & Packages";
+    if (path === "/dashboard/staff") return "Staff & Doctors Directory";
+    if (path === "/dashboard/expenses") return "Expense Management";
+    if (path === "/dashboard/pos") return "Point of Sale (POS)";
+    if (path === "/dashboard/sales") return "Sales History & Invoices";
+    if (path === "/dashboard/reports") return "Analytics & Reports";
+    if (path === "/dashboard/settings") return "Settings & Access Control";
+    return "Clinic Dashboard";
+  };
 
-  const getRoleBadge = (role: string) => {
-    if (role === "Admin")
-      return <span className="bg-rose-100 text-rose-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-rose-200">Admin</span>;
-    if (role === "Doctor")
-      return <span className="bg-teal-100 text-teal-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-teal-200">Doctor</span>;
-    if (role === "Manager")
-      return (
-        <span 
-          style={{ 
-            backgroundColor: "var(--color-primary-light)", 
-            color: "var(--color-primary)",
-            borderColor: "rgba(0,0,0,0.08)"
-          }} 
-          className="text-[10px] font-extrabold px-2 py-0.5 rounded-full border"
-        >
-          Manager
-        </span>
-      );
-    return <span className="bg-slate-100 text-slate-700 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-slate-200">{role || "Staff"}</span>;
+  const pageTitle = getPageTitle(pathname);
+
+  // Live Refresh handler
+  const handleRefresh = () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    
+    // Refresh Next.js server components
+    router.refresh();
+    
+    // Broadcast custom event so client pages can refetch immediately
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("refresh-active-page-data"));
+    }
+
+    setTimeout(() => {
+      setIsRefreshing(false);
+    }, 750);
+  };
+
+  const handleToggleMobileSidebar = () => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("toggle-mobile-sidebar"));
+    }
   };
 
   return (
-    <header 
-      style={{ backgroundColor: "var(--color-header-bg)" }}
-      className="hidden md:flex items-center justify-between px-6 py-3.5 backdrop-blur-md border-b border-gray-100 shrink-0 z-20 w-full transition-colors duration-300"
+    <header
+      style={{ backgroundColor: "var(--color-header-bg, #ffffff)" }}
+      className="w-full h-14 shrink-0 border-b border-slate-200/80 px-3 sm:px-6 flex items-center justify-between z-40 transition-colors duration-300 shadow-2xs"
     >
-      {/* Left: Clinic Brand + Date & Time + Status */}
-      <div className="flex items-center gap-3">
-        {clinicLogo && (
-          <div className="flex items-center gap-2 pr-2 border-r border-gray-200">
-            <img
-              src={clinicLogo}
-              alt={clinicName}
-              className="w-7 h-7 object-contain rounded-lg border border-gray-100 bg-white shadow-2xs"
-            />
-            <span className="text-xs font-bold text-gray-800 tracking-tight max-w-[150px] truncate">
-              {clinicName}
-            </span>
+      {/* ─── Left Section: Mobile Toggle + Bold Business Name + Page Title ─── */}
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        {/* Mobile Sidebar Hamburger Toggle */}
+        <button
+          type="button"
+          onClick={handleToggleMobileSidebar}
+          aria-label="Toggle Navigation Menu"
+          className="p-1.5 rounded-xl md:hidden text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors focus:outline-none"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+
+        {/* Business Brand (Logo + Bold Name) */}
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div
+            style={{
+              background: `linear-gradient(135deg, var(--color-primary, #4f46e5), var(--color-accent, #06b6d4))`,
+            }}
+            className="w-8 h-8 rounded-xl flex items-center justify-center shadow-xs overflow-hidden shrink-0"
+          >
+            {clinicLogo ? (
+              <img
+                src={clinicLogo}
+                alt={clinicName}
+                className="w-full h-full object-contain p-0.5 bg-white/10"
+              />
+            ) : (
+              <FlaskConical className="w-4 h-4 text-white" />
+            )}
           </div>
-        )}
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-100">
-          <Clock style={{ color: "var(--color-primary)" }} className="w-3.5 h-3.5" />
-          <span>{currentDateTime || "Live Clinic System"}</span>
+
+          <span
+            className="font-black text-slate-900 text-sm sm:text-base tracking-tight truncate max-w-[150px] sm:max-w-[260px]"
+            title={clinicName}
+          >
+            {clinicName}
+          </span>
         </div>
-        <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-100">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>System Online</span>
+
+        {/* Divider & Dynamic Page Title */}
+        <div className="hidden sm:flex items-center min-w-0">
+          <span className="text-slate-300 mx-2 text-sm font-semibold">/</span>
+          <span
+            style={{ color: "var(--color-primary, #4f46e5)" }}
+            className="text-xs sm:text-sm font-bold truncate max-w-[280px]"
+          >
+            {pageTitle}
+          </span>
         </div>
       </div>
 
-      {/* Right: Notification Center + User Profile */}
-      <div className="flex items-center gap-3">
-        {/* Real-time Notification Bell */}
-        <NotificationCenter userRole={userRole} />
+      {/* ─── Right Section: Live Refresh Button + Notification Bell ─── */}
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        {/* Live Page Refresh Button */}
+        <button
+          type="button"
+          onClick={handleRefresh}
+          title="Refresh current page data"
+          disabled={isRefreshing}
+          className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80 shadow-2xs transition-all active:scale-95 cursor-pointer disabled:opacity-75"
+        >
+          <RefreshCw
+            style={isRefreshing ? { color: "var(--color-primary, #4f46e5)" } : {}}
+            className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin" : ""}`}
+          />
+          <span className="hidden md:inline">
+            {isRefreshing ? "Refreshing..." : "Refresh"}
+          </span>
+        </button>
 
-        {/* User Pill */}
-        <div className="flex items-center gap-2.5 bg-slate-50 border border-gray-200/80 px-3 py-1.5 rounded-2xl shadow-2xs">
-          <div 
-            style={{ 
-              background: `linear-gradient(135deg, var(--color-primary), var(--color-accent))` 
-            }}
-            className="w-7 h-7 rounded-xl text-white flex items-center justify-center font-bold text-xs shadow-xs"
-          >
-            {userInitial}
-          </div>
-          <div className="text-left">
-            <div className="text-xs font-bold text-gray-900 leading-tight capitalize">
-              {userName}
-            </div>
-            <div className="flex items-center gap-1 mt-0.5">
-              {getRoleBadge(userRole)}
-            </div>
-          </div>
-        </div>
+        {/* Real-Time Notification Bell */}
+        <NotificationCenter userRole={userRole} />
       </div>
     </header>
   );

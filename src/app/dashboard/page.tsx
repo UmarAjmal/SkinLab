@@ -34,11 +34,17 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchDashboardData();
+    const handleManualRefresh = () => fetchDashboardData();
+    window.addEventListener("refresh-active-page-data", handleManualRefresh);
+
     // Auto refresh every 30s
     const interval = setInterval(() => {
       fetchDashboardData();
     }, 30000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("refresh-active-page-data", handleManualRefresh);
+    };
   }, []);
 
   if (loading) {

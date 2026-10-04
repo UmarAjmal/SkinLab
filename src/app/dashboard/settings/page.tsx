@@ -576,10 +576,9 @@ export default function SettingsPage() {
     <div className="flex flex-col h-full bg-gray-50/50 -m-4 p-4 sm:-m-8 sm:p-8 overflow-y-auto w-full min-w-0">
       <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-2.5">
+          <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight flex items-center gap-2.5">
             Settings & Access Control
           </h1>
-          <p className="text-gray-500 mt-1">Configure clinic profile, custom system roles, and user permissions (RBAC).</p>
         </div>
       </div>
 

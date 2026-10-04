@@ -11,14 +11,11 @@ import {
   BarChart3,
   Settings,
   LogOut,
-  Menu,
   X,
   ChevronLeft,
   ChevronRight,
-  FlaskConical,
   Receipt,
 } from "lucide-react";
-import NotificationCenter from "@/components/notifications/NotificationCenter";
 
 interface SidebarProps {
   userEmail: string;
@@ -31,26 +28,7 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [clinicName, setClinicName] = useState("Skin-Lab");
-  const [clinicLogo, setClinicLogo] = useState<string | null>(null);
   const pathname = usePathname();
-
-  // Fetch clinic settings for branding
-  useEffect(() => {
-    const fetchClinicSettings = async () => {
-      try {
-        const res = await fetch("/api/settings");
-        if (res.ok) {
-          const data = await res.json();
-          if (data.name) setClinicName(data.name);
-          if (data.logo) setClinicLogo(data.logo);
-        }
-      } catch (err) {
-        console.error("Failed to load clinic settings in sidebar:", err);
-      }
-    };
-    fetchClinicSettings();
-  }, []);
 
   // Load saved collapse preference from localStorage
   useEffect(() => {
@@ -61,7 +39,16 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
     }
   }, []);
 
-  // Auto-close mobile drawer and reset desktop hover state upon route navigation
+  // Listen to mobile menu toggle event from TopHeader
+  useEffect(() => {
+    const handleToggle = () => setIsMobileOpen((prev) => !prev);
+    if (typeof window !== "undefined") {
+      window.addEventListener("toggle-mobile-sidebar", handleToggle);
+      return () => window.removeEventListener("toggle-mobile-sidebar", handleToggle);
+    }
+  }, []);
+
+  // Auto-close mobile drawer upon route navigation
   useEffect(() => {
     setIsMobileOpen(false);
     setIsHovered(false);
@@ -78,7 +65,6 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
   };
 
   const closeMobileSidebar = () => setIsMobileOpen(false);
-  const toggleMobileSidebar = () => setIsMobileOpen(!isMobileOpen);
 
   const allLinks = [
     { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", module: "dashboard", roles: ["Admin", "Manager", "Doctor", "Cashier"] },
@@ -86,7 +72,6 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
     { href: "/dashboard/services", icon: Stethoscope, label: "Services", module: "services", roles: ["Admin", "Manager"] },
     { href: "/dashboard/staff", icon: Users, label: "Staff", module: "staff", roles: ["Admin", "Manager"] },
     { href: "/dashboard/expenses", icon: Receipt, label: "Expenses", module: "expenses", roles: ["Admin", "Manager", "Cashier"] },
-    // { href: "/dashboard/purchases", icon: Package, label: "Purchases", module: "purchases", roles: ["Admin", "Manager"] },
     { href: "/dashboard/pos", icon: ShoppingCart, label: "POS", module: "pos", roles: ["Admin", "Manager", "Cashier"] },
     { href: "/dashboard/sales", icon: BarChart3, label: "Sales History", module: "sales", roles: ["Admin", "Manager", "Doctor", "Cashier"] },
     { href: "/dashboard/reports", icon: BarChart3, label: "Reports", module: "reports", roles: ["Admin", "Manager"] },
@@ -113,51 +98,11 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
   return (
     <>
       {/* ========================================= */}
-      {/* MOBILE TOP NAVIGATION BAR (< md screens)  */}
-      {/* ========================================= */}
-      <div 
-        style={{ backgroundColor: "var(--color-sidebar-bg)" }}
-        className="md:hidden text-white flex items-center justify-between px-4 py-3 border-b border-white/10 shrink-0 z-30 transition-colors duration-300"
-      >
-        <div className="flex items-center space-x-2.5">
-          <div 
-            style={{ 
-              background: `linear-gradient(135deg, var(--color-primary), var(--color-accent))` 
-            }}
-            className="w-8 h-8 rounded-xl flex items-center justify-center shadow-md overflow-hidden shrink-0"
-          >
-            {clinicLogo ? (
-              <img
-                src={clinicLogo}
-                alt={clinicName}
-                className="w-full h-full object-contain p-0.5 bg-white/10"
-              />
-            ) : (
-              <FlaskConical className="w-5 h-5 text-white" />
-            )}
-          </div>
-          <span className="text-base font-bold tracking-tight text-white truncate max-w-[170px]">
-            {clinicName}
-          </span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <NotificationCenter userRole={userRole} />
-          <button
-            onClick={toggleMobileSidebar}
-            aria-label="Toggle navigation menu"
-            className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors focus:outline-none"
-          >
-            {isMobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-        </div>
-      </div>
-
-      {/* ========================================= */}
       {/* MOBILE BACKDROP OVERLAY (< md screens)    */}
       {/* ========================================= */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 md:hidden transition-opacity duration-300 animate-in fade-in"
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 md:hidden transition-opacity duration-300 animate-in fade-in"
           onClick={closeMobileSidebar}
           aria-hidden="true"
         />
@@ -167,37 +112,18 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
       {/* MOBILE DRAWER SIDEBAR (< md screens)      */}
       {/* ========================================= */}
       <aside
-        style={{ backgroundColor: "var(--color-sidebar-bg)" }}
+        style={{ backgroundColor: "var(--color-sidebar-bg, #0f172a)" }}
         className={`
           fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] text-white flex flex-col 
           border-r border-white/10 shadow-2xl transform transition-transform duration-300 ease-in-out md:hidden
           ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
         `}
       >
-        {/* Mobile Drawer Header */}
-        <div className="p-4 border-b border-white/10 flex items-center justify-between">
-          <div className="flex items-center space-x-2.5">
-            <div 
-              style={{ 
-                background: `linear-gradient(135deg, var(--color-primary), var(--color-accent))` 
-              }}
-              className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md overflow-hidden shrink-0"
-            >
-              {clinicLogo ? (
-                <img
-                  src={clinicLogo}
-                  alt={clinicName}
-                  className="w-full h-full object-contain p-1 bg-white/10"
-                />
-              ) : (
-                <FlaskConical className="w-5 h-5 text-white" />
-              )}
-            </div>
-            <div>
-              <div className="text-base font-bold text-white tracking-tight truncate max-w-[160px]">{clinicName}</div>
-              <div style={{ color: "var(--color-sidebar-text)" }} className="text-[10px] font-semibold tracking-wide uppercase opacity-80">POS &amp; CLINIC SYSTEM</div>
-            </div>
-          </div>
+        {/* Mobile Drawer Top Bar */}
+        <div className="px-4 py-3.5 border-b border-white/10 flex items-center justify-between">
+          <span className="text-xs font-extrabold uppercase tracking-wider text-white/80">
+            Navigation Menu
+          </span>
           <button
             onClick={closeMobileSidebar}
             aria-label="Close menu"
@@ -221,12 +147,12 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
                 style={
                   isActive
                     ? {
-                        backgroundColor: "var(--color-sidebar-active)",
-                        color: "var(--color-primary-text)",
+                        backgroundColor: "var(--color-sidebar-active, #4f46e5)",
+                        color: "var(--color-primary-text, #ffffff)",
                         boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
                       }
                     : {
-                        color: "var(--color-sidebar-text)",
+                        color: "var(--color-sidebar-text, #cbd5e1)",
                       }
                 }
                 className={`
@@ -246,7 +172,7 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
           <div className="flex items-center mb-3.5">
             <div 
               style={{ 
-                background: `linear-gradient(135deg, var(--color-primary), var(--color-accent))` 
+                background: `linear-gradient(135deg, var(--color-primary, #4f46e5), var(--color-accent, #06b6d4))` 
               }}
               className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shadow-md shrink-0"
             >
@@ -257,7 +183,7 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
                 {userName}
               </div>
               <div 
-                style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--color-sidebar-text)" }}
+                style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--color-sidebar-text, #cbd5e1)" }}
                 className="mt-0.5 inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider"
               >
                 {userRole}
@@ -275,7 +201,7 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
       </aside>
 
       {/* ========================================================================= */}
-      {/* DESKTOP SIDEBAR (>= md screens) - Auto Layout Adjust + Collapsible + Hover */}
+      {/* DESKTOP SIDEBAR (>= md screens) - Starts below full-width TopHeader        */}
       {/* ========================================================================= */}
       <aside
         onMouseEnter={() => {
@@ -288,56 +214,31 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
             setIsHovered(false);
           }
         }}
-        style={{ backgroundColor: "var(--color-sidebar-bg)" }}
+        style={{ backgroundColor: "var(--color-sidebar-bg, #0f172a)" }}
         className={`
-          hidden md:flex flex-col h-screen shrink-0 text-white 
-          border-r border-white/10 z-30 transition-all duration-300 ease-in-out
-          ${isDesktopExpanded ? "w-64 shadow-2xl" : "w-20 shadow-md"}
+          hidden md:flex flex-col h-full shrink-0 text-white 
+          border-r border-white/10 z-30 transition-all duration-300 ease-in-out select-none
+          ${isDesktopExpanded ? "w-64 shadow-xl" : "w-20 shadow-md"}
         `}
       >
-        {/* Desktop Sidebar Header */}
-        <div className="h-16 px-3.5 border-b border-white/10 flex items-center justify-between shrink-0 relative overflow-hidden">
-          <div className="flex items-center space-x-3 min-w-0">
-            <div 
-              style={{ 
-                background: `linear-gradient(135deg, var(--color-primary), var(--color-accent))` 
-              }}
-              className="w-10 h-10 rounded-xl flex items-center justify-center shadow-md shrink-0 overflow-hidden"
-            >
-              {clinicLogo ? (
-                <img
-                  src={clinicLogo}
-                  alt={clinicName}
-                  className="w-full h-full object-contain p-1 bg-white/10"
-                />
-              ) : (
-                <FlaskConical className="w-5 h-5 text-white" />
-              )}
-            </div>
-            <div className={`transition-all duration-300 whitespace-nowrap overflow-hidden ${
-              isDesktopExpanded ? "opacity-100 max-w-[130px]" : "opacity-0 max-w-0 pointer-events-none"
-            }`}>
-              <div className="text-base font-bold text-white tracking-tight leading-tight truncate" title={clinicName}>
-                {clinicName}
-              </div>
-              <div style={{ color: "var(--color-sidebar-text)" }} className="text-[10px] font-semibold tracking-wider uppercase opacity-80">POS SYSTEM</div>
-            </div>
-          </div>
-
-          {/* Collapse / Expand Pin Toggle Button */}
+        {/* Desktop Sidebar Collapse Toggle Header */}
+        <div className={`h-11 px-3 border-b border-white/10 flex items-center shrink-0 ${isDesktopExpanded ? "justify-between" : "justify-center"}`}>
           {isDesktopExpanded && (
-            <button
-              onClick={toggleCollapse}
-              title={isCollapsed ? "Pin Sidebar Open (Keep Expanded)" : "Collapse Sidebar (Compact Icon Mode)"}
-              className="p-1.5 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-colors focus:outline-none shrink-0"
-            >
-              {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-            </button>
+            <span style={{ color: "var(--color-sidebar-text, #cbd5e1)" }} className="text-[11px] font-bold uppercase tracking-wider opacity-75">
+              Menu
+            </span>
           )}
+          <button
+            onClick={toggleCollapse}
+            title={isCollapsed ? "Pin Sidebar Open (Expanded)" : "Collapse Sidebar (Compact Icon Mode)"}
+            className="p-1.5 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-colors focus:outline-none shrink-0"
+          >
+            {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+          </button>
         </div>
 
         {/* Desktop Navigation Links */}
-        <nav className="flex-1 py-4 px-2.5 space-y-1.5 overflow-y-auto no-scrollbar">
+        <nav className="flex-1 py-3 px-2.5 space-y-1.5 overflow-y-auto no-scrollbar">
           {navLinks.map((link) => {
             const Icon = link.icon;
             const isActive = pathname === link.href;
@@ -355,12 +256,12 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
                   style={
                     isActive
                       ? {
-                          backgroundColor: "var(--color-sidebar-active)",
-                          color: "var(--color-primary-text)",
+                          backgroundColor: "var(--color-sidebar-active, #4f46e5)",
+                          color: "var(--color-primary-text, #ffffff)",
                           boxShadow: "0 4px 14px rgba(0,0,0,0.18)",
                         }
                       : {
-                          color: "var(--color-sidebar-text)",
+                          color: "var(--color-sidebar-text, #cbd5e1)",
                         }
                   }
                   className={`
@@ -384,7 +285,7 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
                   {/* Active Accent Indicator */}
                   {isActive && (
                     <span 
-                      style={{ backgroundColor: "var(--color-accent)" }}
+                      style={{ backgroundColor: "var(--color-accent, #06b6d4)" }}
                       className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-6 rounded-r-full" 
                     />
                   )}
@@ -409,25 +310,12 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
           })}
         </nav>
 
-        {/* Desktop Collapse Toggle for Collapsed Icon Mode */}
-        {!isDesktopExpanded && (
-          <div className="px-2 py-2 flex justify-center border-t border-white/10 shrink-0">
-            <button
-              onClick={toggleCollapse}
-              title="Expand & Pin Sidebar"
-              className="p-2 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-colors focus:outline-none"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-
         {/* Desktop User Profile & Logout Footer */}
         <div className="p-3 border-t border-white/10 bg-black/20 mt-auto shrink-0 overflow-hidden">
           <div className={`flex items-center mb-3 ${isDesktopExpanded ? "px-1" : "justify-center"}`}>
             <div
               style={{ 
-                background: `linear-gradient(135deg, var(--color-primary), var(--color-accent))` 
+                background: `linear-gradient(135deg, var(--color-primary, #4f46e5), var(--color-accent, #06b6d4))` 
               }}
               className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shadow-md shrink-0"
               title={userEmail}
@@ -442,7 +330,7 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
                 {userName}
               </div>
               <div 
-                style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--color-sidebar-text)" }}
+                style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--color-sidebar-text, #cbd5e1)" }}
                 className="mt-0.5 inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider"
               >
                 {userRole}
