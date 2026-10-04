@@ -65,16 +65,7 @@ export default function DashboardPage() {
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6 w-full min-w-0">
 
-      {/* Header */}
-      <div className="flex justify-between items-end mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Dashboard Overview</h1>
-          <p className="text-gray-500 mt-1">Welcome back, <span className="font-semibold text-indigo-600">{userEmail}</span> ({userRole})</p>
-        </div>
-        <div className="text-xs text-gray-400 flex items-center">
-          <Activity className="w-3 h-3 mr-1 text-green-500 animate-pulse" /> Live (Updates every 30s)
-        </div>
-      </div>
+
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

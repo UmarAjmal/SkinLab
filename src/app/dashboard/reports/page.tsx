@@ -206,11 +206,7 @@ export default function ReportsPage() {
 
   return (
     <div className="flex flex-col h-full bg-gray-50/50 -m-4 p-4 sm:-m-8 sm:p-8 overflow-y-auto w-full min-w-0">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Reports & Analytics</h1>
-        </div>
-
+      <div className="flex justify-end items-center mb-6 sm:mb-8">
         {/* Global Date Filter */}
         {activeTab !== "patient_ledger" && (
           <div className="flex flex-wrap items-center gap-2 sm:gap-3 bg-white p-2 rounded-2xl shadow-xs border border-gray-100 w-full sm:w-auto">

@@ -213,23 +213,11 @@ export default function PatientsPage() {
 
   return (
     <div className="flex flex-col h-full bg-slate-50/60">
-      {/* Top Header */}
-      <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6 sm:px-8 shrink-0 shadow-xs z-10">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-            <Users className="w-6 h-6 text-indigo-600" />
-            Patients Database
-          </h1>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={fetchPatients}
-            title="Refresh patient list"
-            className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors border border-gray-200"
-          >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin text-indigo-600" : ""}`} />
-          </button>
-          {userRole !== "Doctor" && (
+      {/* Main Container */}
+      <div className="p-4 sm:p-8 flex-1 overflow-auto w-full min-w-0 space-y-6">
+        {/* Quick Action Bar */}
+        {userRole !== "Doctor" && (
+          <div className="flex justify-end items-center">
             <button
               onClick={() => setIsModalOpen(true)}
               className="bg-indigo-600 text-white px-4 py-2.5 rounded-xl hover:bg-indigo-700 flex items-center text-sm font-semibold transition-all shadow-md shadow-indigo-600/20 active:scale-95"
@@ -237,12 +225,8 @@ export default function PatientsPage() {
               <Plus className="w-4 h-4 mr-1.5" />
               Register Patient
             </button>
-          )}
-        </div>
-      </header>
-
-      {/* Main Container */}
-      <div className="p-4 sm:p-8 flex-1 overflow-auto w-full min-w-0 space-y-6">
+          </div>
+        )}
         {/* Metric Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between">

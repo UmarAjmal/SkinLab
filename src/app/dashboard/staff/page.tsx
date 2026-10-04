@@ -190,13 +190,7 @@ export default function StaffPage() {
 
   return (
     <div className="max-w-6xl mx-auto w-full min-w-0 p-4 sm:p-0 space-y-6">
-      <div className="flex flex-wrap justify-between items-center gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
-            <Users className="w-6 h-6 text-indigo-600" />
-            Staff Directory
-          </h1>
-        </div>
+      <div className="flex justify-end items-center">
         <button
           onClick={openNewModal}
           className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold hover:bg-indigo-700 transition-all flex items-center shadow-xs active:scale-95"

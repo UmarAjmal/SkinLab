@@ -118,11 +118,7 @@ export default function SalesHistoryPage() {
 
   return (
     <div className="space-y-6 w-full min-w-0">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Sales & Returns</h1>
-        </div>
-
+      <div className="flex justify-start sm:justify-end items-center">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-1 flex">
           <button
             onClick={() => setActiveTab("sales")}

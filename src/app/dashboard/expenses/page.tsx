@@ -351,50 +351,35 @@ export default function ExpensesPage() {
 
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6 w-full min-w-0">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 sm:p-6 rounded-3xl border border-gray-100 shadow-xs">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="p-2.5 bg-gradient-to-tr from-rose-500 to-amber-500 text-white rounded-2xl shadow-md shadow-rose-500/20">
-              <Receipt className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
-                Expense Management
-              </h1>
-            </div>
-          </div>
-        </div>
+      {/* Action Toolbar */}
+      <div className="flex flex-wrap items-center justify-end gap-2.5">
+        <Link
+          href="/dashboard/reports?tab=expense_report"
+          className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition-all"
+        >
+          <BarChart3 className="w-4 h-4 text-slate-600" /> Expense Reports
+        </Link>
 
-        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
-          <Link
-            href="/dashboard/reports?tab=expense_report"
-            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition-all"
+        {isAdminOrManager && (
+          <button
+            onClick={() => {
+              fetchCategories();
+              setIsCategoryModalOpen(true);
+            }}
+            className="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition-all"
           >
-            <BarChart3 className="w-4 h-4 text-slate-600" /> Expense Reports
-          </Link>
+            <Tag className="w-4 h-4 text-indigo-600" /> Categories
+          </button>
+        )}
 
-          {isAdminOrManager && (
-            <button
-              onClick={() => {
-                fetchCategories();
-                setIsCategoryModalOpen(true);
-              }}
-              className="px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition-all"
-            >
-              <Tag className="w-4 h-4 text-indigo-600" /> Categories
-            </button>
-          )}
-
-          {canManageExpenses && (
-            <button
-              onClick={handleOpenAddModal}
-              className="px-4 py-2 bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-md shadow-rose-600/20 transition-all active:scale-95 ml-auto sm:ml-0"
-            >
-              <Plus className="w-4 h-4" /> Record Expense
-            </button>
-          )}
-        </div>
+        {canManageExpenses && (
+          <button
+            onClick={handleOpenAddModal}
+            className="px-4 py-2 bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-md shadow-rose-600/20 transition-all active:scale-95"
+          >
+            <Plus className="w-4 h-4" /> Record Expense
+          </button>
+        )}
       </div>
 
       {/* KPI Stats Cards */}
