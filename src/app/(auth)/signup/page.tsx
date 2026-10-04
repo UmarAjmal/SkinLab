@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   FlaskConical,
@@ -26,7 +26,6 @@ import PublicFooter from "@/components/PublicFooter";
 
 export default function SignUpPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   // Wizard Step State (1: Personal, 2: Plan, 3: Business & Branding)
   const [step, setStep] = useState<number>(1);
