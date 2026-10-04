@@ -47,12 +47,26 @@ export default function TopHeader({ userEmail, userRole }: TopHeaderProps) {
     if (role === "Doctor")
       return <span className="bg-teal-100 text-teal-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-teal-200">Doctor</span>;
     if (role === "Manager")
-      return <span className="bg-indigo-100 text-indigo-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-indigo-200">Manager</span>;
+      return (
+        <span 
+          style={{ 
+            backgroundColor: "var(--color-primary-light)", 
+            color: "var(--color-primary)",
+            borderColor: "rgba(0,0,0,0.08)"
+          }} 
+          className="text-[10px] font-extrabold px-2 py-0.5 rounded-full border"
+        >
+          Manager
+        </span>
+      );
     return <span className="bg-slate-100 text-slate-700 text-[10px] font-extrabold px-2 py-0.5 rounded-full border border-slate-200">{role || "Staff"}</span>;
   };
 
   return (
-    <header className="hidden md:flex items-center justify-between px-6 py-3.5 bg-white/90 backdrop-blur-md border-b border-gray-100 shrink-0 z-20 w-full">
+    <header 
+      style={{ backgroundColor: "var(--color-header-bg)" }}
+      className="hidden md:flex items-center justify-between px-6 py-3.5 backdrop-blur-md border-b border-gray-100 shrink-0 z-20 w-full transition-colors duration-300"
+    >
       {/* Left: Clinic Brand + Date & Time + Status */}
       <div className="flex items-center gap-3">
         {clinicLogo && (
@@ -68,7 +82,7 @@ export default function TopHeader({ userEmail, userRole }: TopHeaderProps) {
           </div>
         )}
         <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-100">
-          <Clock className="w-3.5 h-3.5 text-indigo-500" />
+          <Clock style={{ color: "var(--color-primary)" }} className="w-3.5 h-3.5" />
           <span>{currentDateTime || "Live Clinic System"}</span>
         </div>
         <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-100">
@@ -84,7 +98,12 @@ export default function TopHeader({ userEmail, userRole }: TopHeaderProps) {
 
         {/* User Pill */}
         <div className="flex items-center gap-2.5 bg-slate-50 border border-gray-200/80 px-3 py-1.5 rounded-2xl shadow-2xs">
-          <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+          <div 
+            style={{ 
+              background: `linear-gradient(135deg, var(--color-primary), var(--color-accent))` 
+            }}
+            className="w-7 h-7 rounded-xl text-white flex items-center justify-center font-bold text-xs shadow-xs"
+          >
             {userInitial}
           </div>
           <div className="text-left">

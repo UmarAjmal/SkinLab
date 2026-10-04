@@ -47,20 +47,25 @@ export async function PUT(request: Request) {
           logo: data.logo || "",
           address: data.address || "",
           tax_number: data.tax_number || "",
-          footer_note: data.footer_note || ""
+          footer_note: data.footer_note || "",
+          theme_config: typeof data.theme_config === "object" ? JSON.stringify(data.theme_config) : data.theme_config || null,
         }
       });
     } else {
+      const updateData: any = {};
+      if (data.name !== undefined) updateData.name = data.name;
+      if (data.phone !== undefined) updateData.phone = data.phone || null;
+      if (data.logo !== undefined) updateData.logo = data.logo || null;
+      if (data.address !== undefined) updateData.address = data.address || null;
+      if (data.tax_number !== undefined) updateData.tax_number = data.tax_number || null;
+      if (data.footer_note !== undefined) updateData.footer_note = data.footer_note || null;
+      if (data.theme_config !== undefined) {
+        updateData.theme_config = typeof data.theme_config === "object" ? JSON.stringify(data.theme_config) : data.theme_config || null;
+      }
+
       settings = await prisma.companySetting.update({
         where: { id: settings.id },
-        data: {
-          name: data.name,
-          phone: data.phone || null,
-          logo: data.logo || null,
-          address: data.address || null,
-          tax_number: data.tax_number || null,
-          footer_note: data.footer_note || null,
-        }
+        data: updateData,
       });
     }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -23,6 +23,18 @@ function LoginContent() {
   
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [clinicName, setClinicName] = useState("Skin-Lab");
+  const [clinicLogo, setClinicLogo] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/settings/public")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.name) setClinicName(d.name);
+        if (d?.logo) setClinicLogo(d.logo);
+      })
+      .catch(() => {});
+  }, []);
 
   const {
     register,
@@ -53,17 +65,41 @@ function LoginContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f4f5fb] flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
+    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
       <div className="sm:mx-auto sm:w-full max-w-[380px]">
         {/* Card Container */}
         <div className="bg-white py-8 px-6 shadow-sm rounded-3xl border border-gray-100">
           
           {/* Logo & Wordmark */}
-          <div className="flex items-center justify-center space-x-2 mb-8">
-            <div className="bg-indigo-600 p-2 rounded-xl text-white shadow-xs">
-              <FlaskConical className="w-5 h-5" strokeWidth={2.5} />
+          <div className="flex items-center justify-center space-x-2.5 mb-8">
+            <div 
+              style={{ 
+                background: `linear-gradient(135deg, var(--color-primary, #4f46e5), var(--color-accent, #06b6d4))` 
+              }}
+              className="w-10 h-10 rounded-xl text-white shadow-xs flex items-center justify-center shrink-0 overflow-hidden"
+            >
+              {clinicLogo ? (
+                <img
+                  src={clinicLogo}
+                  alt={clinicName}
+                  className="w-full h-full object-contain p-1 bg-white/10"
+                />
+              ) : (
+                <FlaskConical className="w-5 h-5 text-white" strokeWidth={2.5} />
+              )}
             </div>
-            <span className="text-xl font-bold text-gray-900 tracking-tight">Skin-Lab <span className="bg-indigo-100 text-indigo-700 text-[10px] uppercase px-2 py-0.5 rounded-lg font-bold ml-1 relative -top-1">POS</span></span>
+            <span className="text-xl font-black text-gray-900 tracking-tight flex items-center gap-1.5">
+              {clinicName}
+              <span 
+                style={{ 
+                  backgroundColor: "var(--color-primary, #4f46e5)",
+                  color: "var(--color-primary-text, #ffffff)"
+                }}
+                className="text-[10px] uppercase px-2 py-0.5 rounded-md font-bold"
+              >
+                POS
+              </span>
+            </span>
           </div>
 
           {/* Heading */}

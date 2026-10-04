@@ -26,8 +26,14 @@ import {
   UploadCloud,
   Image as ImageIcon,
   RefreshCw,
+  Palette,
+  RotateCcw,
+  Sliders,
+  Paintbrush,
+  Clock,
 } from "lucide-react";
 import { SYSTEM_MODULES } from "@/lib/permissions";
+import { useTheme } from "@/context/ThemeContext";
 
 interface RolePermissionState {
   module: string;
@@ -73,7 +79,21 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string
 export default function SettingsPage() {
   const { data: session } = useSession();
   const userRole = (session?.user as any)?.role || "";
-  const [activeTab, setActiveTab] = useState<"clinic" | "users" | "roles">("clinic");
+  const [activeTab, setActiveTab] = useState<"clinic" | "theme" | "users" | "roles">("clinic");
+
+  // ─── Theme & Appearance State ─────────────────────────
+  const {
+    activeTheme,
+    theme: savedTheme,
+    presets,
+    applyPreset,
+    updateThemeColors,
+    saveTheme,
+    isSaving: themeSaving,
+    resetPreview,
+  } = useTheme();
+  const [themeSaved, setThemeSaved] = useState(false);
+  const [activePresetFilter, setActivePresetFilter] = useState<string>("All");
 
   // ─── Clinic Profile State ─────────────────────────────
   const [clinicSettings, setClinicSettings] = useState({
@@ -567,9 +587,10 @@ export default function SettingsPage() {
         {/* Tabs Navigation Header */}
         <div className="flex border-b border-gray-100 bg-gray-50/70 px-4 pt-4 overflow-x-auto whitespace-nowrap shrink-0 gap-2">
           <button
-            className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-all  {
+            style={activeTab === 'clinic' ? { borderColor: 'var(--color-primary)', color: 'var(--color-primary)' } : {}}
+            className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-all cursor-pointer ${
               activeTab === 'clinic' 
-                ? 'border-indigo-600 text-indigo-700 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)]' 
+                ? 'bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)] font-bold' 
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/60'
             }`}
             onClick={() => setActiveTab('clinic')}
@@ -578,9 +599,22 @@ export default function SettingsPage() {
           </button>
 
           <button
-            className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-all  {
+            style={activeTab === 'theme' ? { borderColor: 'var(--color-primary)', color: 'var(--color-primary)' } : {}}
+            className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-all cursor-pointer ${
+              activeTab === 'theme' 
+                ? 'bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)] font-bold' 
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/60'
+            }`}
+            onClick={() => setActiveTab('theme')}
+          >
+            <Palette className="w-4 h-4 mr-2" /> Theme &amp; Styling
+          </button>
+
+          <button
+            style={activeTab === 'users' ? { borderColor: 'var(--color-primary)', color: 'var(--color-primary)' } : {}}
+            className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-all cursor-pointer ${
               activeTab === 'users' 
-                ? 'border-indigo-600 text-indigo-700 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)]' 
+                ? 'bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)] font-bold' 
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/60'
             }`}
             onClick={() => setActiveTab('users')}
@@ -589,9 +623,10 @@ export default function SettingsPage() {
           </button>
 
           <button
-            className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-all  {
+            style={activeTab === 'roles' ? { borderColor: 'var(--color-primary)', color: 'var(--color-primary)' } : {}}
+            className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-all cursor-pointer ${
               activeTab === 'roles' 
-                ? 'border-indigo-600 text-indigo-700 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)]' 
+                ? 'bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)] font-bold' 
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/60'
             }`}
             onClick={() => setActiveTab('roles')}
@@ -792,7 +827,645 @@ export default function SettingsPage() {
           )}
 
           {/* ═══════════════════════════════════════════════════ */}
-          {/* TAB 2: User Management                             */}
+          {/* TAB 2: Theme & Styling (Dynamic Visual Colors)      */}
+          {/* ═══════════════════════════════════════════════════ */}
+          {activeTab === 'theme' && (
+            <div className="max-w-6xl mx-auto py-2 space-y-8">
+              
+              {/* Header Banner */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shadow-md">
+                <div>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-white/10 text-indigo-200 border border-white/10 mb-2.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Dynamic System Theme Engine</span>
+                  </div>
+                  <h2 className="text-2xl font-black tracking-tight text-white">
+                    Theme &amp; Color Customization
+                  </h2>
+                  <p className="text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
+                    Personalize your clinic&apos;s UI styling across all buttons, sidebar, top header, and public home page. Page base backgrounds remain clean light / white.
+                  </p>
+                </div>
+
+                {/* Save Theme Quick Trigger */}
+                <div className="flex items-center gap-3 shrink-0">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const success = await saveTheme();
+                      if (success) {
+                        setThemeSaved(true);
+                        setTimeout(() => setThemeSaved(false), 3500);
+                      }
+                    }}
+                    disabled={themeSaving}
+                    style={{ 
+                      backgroundColor: "var(--color-primary, #4f46e5)",
+                      color: "var(--color-primary-text, #ffffff)"
+                    }}
+                    className="flex items-center px-6 py-3 rounded-xl font-bold text-sm shadow-lg hover:brightness-110 disabled:opacity-50 transition-all cursor-pointer"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    {themeSaving ? "Saving Theme..." : "Save & Apply Theme"}
+                  </button>
+                </div>
+              </div>
+
+              {themeSaved && (
+                <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-bold flex items-center gap-2.5 animate-in fade-in">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                  <span>Theme applied and saved successfully! All buttons, sidebar, top header, and home page are updated globally.</span>
+                </div>
+              )}
+
+              {/* ───────────────────────────────────────────────────────────── */}
+              {/* SECTION 1: Pre-Built Curated Presets                         */}
+              {/* ───────────────────────────────────────────────────────────── */}
+              <div>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                      <Palette className="w-5 h-5 text-indigo-600" /> Curated Theme Presets
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Select a professionally designed palette tailored for different clinic aesthetics.
+                    </p>
+                  </div>
+
+                  {/* Category Filter Chips */}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {["All", "Modern", "Male", "Female", "Clinical", "Luxury"].map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setActivePresetFilter(cat)}
+                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          activePresetFilter === cat
+                            ? "bg-slate-900 text-white shadow-xs"
+                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Preset Cards Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {presets
+                    .filter((p) => activePresetFilter === "All" || p.category === activePresetFilter)
+                    .map((preset) => {
+                      const isSelected = activeTheme.presetId === preset.id;
+                      return (
+                        <div
+                          key={preset.id}
+                          onClick={() => applyPreset(preset.id)}
+                          className={`relative p-5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
+                            isSelected
+                              ? "border-indigo-600 bg-indigo-50/20 shadow-md ring-2 ring-indigo-500/20 scale-[1.01]"
+                              : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"
+                          }`}
+                        >
+                          <div>
+                            {/* Card Top: Category Badge & Status */}
+                            <div className="flex items-center justify-between mb-3">
+                              <span
+                                className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                                  preset.category === "Male"
+                                    ? "bg-sky-100 text-sky-800"
+                                    : preset.category === "Female"
+                                    ? "bg-rose-100 text-rose-800"
+                                    : preset.category === "Clinical"
+                                    ? "bg-emerald-100 text-emerald-800"
+                                    : preset.category === "Luxury"
+                                    ? "bg-amber-100 text-amber-800"
+                                    : "bg-indigo-100 text-indigo-800"
+                                }`}
+                              >
+                                {preset.category}
+                              </span>
+
+                              {isSelected ? (
+                                <span className="inline-flex items-center gap-1 text-xs font-bold text-indigo-700 bg-indigo-100/80 px-2.5 py-0.5 rounded-full">
+                                  <Check className="w-3.5 h-3.5" /> Active
+                                </span>
+                              ) : (
+                                <span className="text-xs text-slate-400 font-medium hover:text-indigo-600">
+                                  Click to preview
+                                </span>
+                              )}
+                            </div>
+
+                            <h4 className="text-base font-bold text-slate-900 leading-tight">
+                              {preset.name}
+                            </h4>
+                            <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                              {preset.description}
+                            </p>
+                          </div>
+
+                          {/* Color Palette Indicators */}
+                          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              {/* Primary Swatch */}
+                              <div className="flex items-center gap-1">
+                                <span
+                                  style={{ backgroundColor: preset.previewColors.primary }}
+                                  className="w-5 h-5 rounded-full border border-black/10 shadow-2xs"
+                                  title={`Primary: ${preset.previewColors.primary}`}
+                                />
+                                <span className="text-[10px] text-slate-400 font-mono">Brand</span>
+                              </div>
+
+                              {/* Sidebar Swatch */}
+                              <div className="flex items-center gap-1">
+                                <span
+                                  style={{ backgroundColor: preset.previewColors.sidebar }}
+                                  className="w-5 h-5 rounded-full border border-black/10 shadow-2xs"
+                                  title={`Sidebar: ${preset.previewColors.sidebar}`}
+                                />
+                                <span className="text-[10px] text-slate-400 font-mono">Sidebar</span>
+                              </div>
+
+                              {/* Accent Swatch */}
+                              <div className="flex items-center gap-1">
+                                <span
+                                  style={{ backgroundColor: preset.previewColors.accent }}
+                                  className="w-5 h-5 rounded-full border border-black/10 shadow-2xs"
+                                  title={`Accent: ${preset.previewColors.accent}`}
+                                />
+                                <span className="text-[10px] text-slate-400 font-mono">Accent</span>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                applyPreset(preset.id);
+                              }}
+                              className={`text-xs font-bold px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                                isSelected
+                                  ? "bg-indigo-600 text-white"
+                                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                              }`}
+                            >
+                              {isSelected ? "Selected" : "Use Preset"}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+
+              {/* ───────────────────────────────────────────────────────────── */}
+              {/* SECTION 2: Custom Color Controls & Fine-Tuning               */}
+              {/* ───────────────────────────────────────────────────────────── */}
+              <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-5">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <Sliders className="w-5 h-5 text-indigo-600" /> Custom Color Palette Customizer
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Click any color swatch or type a Hex code to customize specific elements of your software.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  
+                  {/* Primary Color */}
+                  <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-bold text-slate-800">Primary Brand Color</label>
+                        <span className="text-[10px] text-slate-400 font-mono uppercase">Buttons &amp; Badges</span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mb-3">Controls main action buttons, active tab indicators, and brand highlights.</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={activeTheme.primaryColor || "#4f46e5"}
+                        onChange={(e) => updateThemeColors({ primaryColor: e.target.value })}
+                        className="w-10 h-10 rounded-xl border border-slate-200 cursor-pointer p-0.5 bg-white shrink-0"
+                      />
+                      <input
+                        type="text"
+                        value={activeTheme.primaryColor || "#4f46e5"}
+                        onChange={(e) => updateThemeColors({ primaryColor: e.target.value })}
+                        className="flex-1 font-mono text-xs px-3 py-2 border border-slate-200 rounded-xl uppercase outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Primary Hover */}
+                  <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-bold text-slate-800">Button Hover State</label>
+                        <span className="text-[10px] text-slate-400 font-mono uppercase">Interactions</span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mb-3">Darker shade triggered when users hover over interactive buttons.</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={activeTheme.primaryHover || "#4338ca"}
+                        onChange={(e) => updateThemeColors({ primaryHover: e.target.value })}
+                        className="w-10 h-10 rounded-xl border border-slate-200 cursor-pointer p-0.5 bg-white shrink-0"
+                      />
+                      <input
+                        type="text"
+                        value={activeTheme.primaryHover || "#4338ca"}
+                        onChange={(e) => updateThemeColors({ primaryHover: e.target.value })}
+                        className="flex-1 font-mono text-xs px-3 py-2 border border-slate-200 rounded-xl uppercase outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Primary Light Tint */}
+                  <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-bold text-slate-800">Soft Tint / Badge Background</label>
+                        <span className="text-[10px] text-slate-400 font-mono uppercase">Subtle Light</span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mb-3">Very light pastel background used for chips, badges, and icon containers.</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={activeTheme.primaryLight || "#eef2ff"}
+                        onChange={(e) => updateThemeColors({ primaryLight: e.target.value })}
+                        className="w-10 h-10 rounded-xl border border-slate-200 cursor-pointer p-0.5 bg-white shrink-0"
+                      />
+                      <input
+                        type="text"
+                        value={activeTheme.primaryLight || "#eef2ff"}
+                        onChange={(e) => updateThemeColors({ primaryLight: e.target.value })}
+                        className="flex-1 font-mono text-xs px-3 py-2 border border-slate-200 rounded-xl uppercase outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Sidebar Background */}
+                  <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-bold text-slate-800">Sidebar Background</label>
+                        <span className="text-[10px] text-slate-400 font-mono uppercase">Sidebar Panel</span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mb-3">Background color of the main navigation drawer &amp; desktop sidebar.</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={activeTheme.sidebarBg || "#0f172a"}
+                        onChange={(e) => updateThemeColors({ sidebarBg: e.target.value })}
+                        className="w-10 h-10 rounded-xl border border-slate-200 cursor-pointer p-0.5 bg-white shrink-0"
+                      />
+                      <input
+                        type="text"
+                        value={activeTheme.sidebarBg || "#0f172a"}
+                        onChange={(e) => updateThemeColors({ sidebarBg: e.target.value })}
+                        className="flex-1 font-mono text-xs px-3 py-2 border border-slate-200 rounded-xl uppercase outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Sidebar Inactive Text */}
+                  <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-bold text-slate-800">Sidebar Inactive Text</label>
+                        <span className="text-[10px] text-slate-400 font-mono uppercase">Menu Items</span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mb-3">Label and icon color for unselected sidebar navigation links.</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={activeTheme.sidebarText || "#cbd5e1"}
+                        onChange={(e) => updateThemeColors({ sidebarText: e.target.value })}
+                        className="w-10 h-10 rounded-xl border border-slate-200 cursor-pointer p-0.5 bg-white shrink-0"
+                      />
+                      <input
+                        type="text"
+                        value={activeTheme.sidebarText || "#cbd5e1"}
+                        onChange={(e) => updateThemeColors({ sidebarText: e.target.value })}
+                        className="flex-1 font-mono text-xs px-3 py-2 border border-slate-200 rounded-xl uppercase outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Accent Color */}
+                  <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-bold text-slate-800">Accent &amp; Indicator Color</label>
+                        <span className="text-[10px] text-slate-400 font-mono uppercase">Highlights</span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mb-3">Secondary highlight used for active sidebar indicators &amp; gradients.</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={activeTheme.accentColor || "#06b6d4"}
+                        onChange={(e) => updateThemeColors({ accentColor: e.target.value })}
+                        className="w-10 h-10 rounded-xl border border-slate-200 cursor-pointer p-0.5 bg-white shrink-0"
+                      />
+                      <input
+                        type="text"
+                        value={activeTheme.accentColor || "#06b6d4"}
+                        onChange={(e) => updateThemeColors({ accentColor: e.target.value })}
+                        className="flex-1 font-mono text-xs px-3 py-2 border border-slate-200 rounded-xl uppercase outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* ───────────────────────────────────────────────────────────── */}
+              {/* SECTION 3: Real-Time Interactive Live Software Preview       */}
+              {/* ───────────────────────────────────────────────────────────── */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                      <Eye className="w-5 h-5 text-indigo-600" /> Real-Time Software Preview
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Live preview of how your customized colors look on the Clinic Sidebar, Top Header, and Action Buttons.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Simulated Dashboard UI Mockup */}
+                <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-lg bg-white">
+                  {/* Top Bar Preview */}
+                  <div
+                    style={{ backgroundColor: activeTheme.headerBg || "#ffffff" }}
+                    className="p-4 border-b border-slate-200 flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-xl">
+                        <Clock style={{ color: activeTheme.primaryColor }} className="w-3.5 h-3.5" />
+                        <span>Live Clinic System</span>
+                      </div>
+                      <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-100">
+                        System Online
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <div
+                        style={{
+                          background: `linear-gradient(135deg, ${activeTheme.primaryColor}, ${activeTheme.accentColor})`,
+                        }}
+                        className="w-8 h-8 rounded-xl text-white font-bold text-xs flex items-center justify-center shadow-xs"
+                      >
+                        A
+                      </div>
+                      <span className="text-xs font-bold text-slate-800">Admin User</span>
+                    </div>
+                  </div>
+
+                  {/* Body: Mini Sidebar + Mini Content Canvas */}
+                  <div className="flex flex-col md:flex-row min-h-[260px]">
+                    {/* Mini Sidebar Preview */}
+                    <div
+                      style={{ backgroundColor: activeTheme.sidebarBg || "#0f172a" }}
+                      className="w-full md:w-56 p-4 text-white flex flex-col justify-between shrink-0 border-r border-white/10"
+                    >
+                      <div className="space-y-4">
+                        {/* Mini Brand Header */}
+                        <div className="flex items-center space-x-2">
+                          <div
+                            style={{
+                              background: `linear-gradient(135deg, ${activeTheme.primaryColor}, ${activeTheme.accentColor})`,
+                            }}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center shadow-xs"
+                          >
+                            <Sparkles className="w-4 h-4 text-white" />
+                          </div>
+                          <span className="text-sm font-bold tracking-tight text-white truncate">
+                            Skin-Lab Clinic
+                          </span>
+                        </div>
+
+                        {/* Mini Nav Links */}
+                        <div className="space-y-1 text-xs font-semibold">
+                          {/* Active Nav Item */}
+                          <div
+                            style={{
+                              backgroundColor: activeTheme.sidebarActive || activeTheme.primaryColor,
+                              color: activeTheme.primaryText || "#ffffff",
+                            }}
+                            className="px-3 py-2 rounded-xl flex items-center justify-between shadow-xs"
+                          >
+                            <span>Dashboard (Active)</span>
+                            <span
+                              style={{ backgroundColor: activeTheme.accentColor }}
+                              className="w-1.5 h-3 rounded-full"
+                            />
+                          </div>
+
+                          {/* Inactive Nav Items */}
+                          <div
+                            style={{ color: activeTheme.sidebarText || "#cbd5e1" }}
+                            className="px-3 py-2 rounded-xl flex items-center hover:bg-white/10 transition-colors"
+                          >
+                            <span>Patients (PRM)</span>
+                          </div>
+                          <div
+                            style={{ color: activeTheme.sidebarText || "#cbd5e1" }}
+                            className="px-3 py-2 rounded-xl flex items-center hover:bg-white/10 transition-colors"
+                          >
+                            <span>POS &amp; Billing</span>
+                          </div>
+                          <div
+                            style={{ color: activeTheme.sidebarText || "#cbd5e1" }}
+                            className="px-3 py-2 rounded-xl flex items-center hover:bg-white/10 transition-colors"
+                          >
+                            <span>Sales Reports</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Mini Sidebar Footer */}
+                      <div className="pt-3 border-t border-white/10 text-[10px] opacity-70">
+                        Theme Live Sync Active
+                      </div>
+                    </div>
+
+                    {/* Mini Content Area Preview */}
+                    <div className="flex-1 p-6 bg-slate-50/70 space-y-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-sm font-bold text-slate-800">Dynamic Action Button States</h4>
+                          <p className="text-xs text-slate-500">Live test of buttons across POS, Sales, and Reports.</p>
+                        </div>
+                        <span
+                          style={{
+                            backgroundColor: activeTheme.primaryLight,
+                            color: activeTheme.primaryColor,
+                          }}
+                          className="px-2.5 py-1 rounded-full text-xs font-extrabold"
+                        >
+                          Theme Active
+                        </span>
+                      </div>
+
+                      {/* Sample Button Showcase */}
+                      <div className="flex flex-wrap items-center gap-3">
+                        {/* Primary Button */}
+                        <button
+                          type="button"
+                          style={{
+                            backgroundColor: activeTheme.primaryColor,
+                            color: activeTheme.primaryText || "#ffffff",
+                          }}
+                          className="px-5 py-2.5 rounded-xl font-bold text-xs shadow-md hover:brightness-110 transition-all cursor-pointer flex items-center gap-1.5"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Primary Action (+ New Sale)</span>
+                        </button>
+
+                        {/* Hover State Button */}
+                        <button
+                          type="button"
+                          style={{
+                            backgroundColor: activeTheme.primaryHover,
+                            color: activeTheme.primaryText || "#ffffff",
+                          }}
+                          className="px-5 py-2.5 rounded-xl font-bold text-xs shadow-md transition-all cursor-pointer"
+                        >
+                          <span>Hover Shade Simulation</span>
+                        </button>
+
+                        {/* Soft Tint Button */}
+                        <button
+                          type="button"
+                          style={{
+                            backgroundColor: activeTheme.primaryLight,
+                            color: activeTheme.primaryColor,
+                          }}
+                          className="px-5 py-2.5 rounded-xl font-bold text-xs border border-black/5 hover:brightness-95 transition-all cursor-pointer"
+                        >
+                          <span>Soft Tint Action</span>
+                        </button>
+
+                        {/* Outline Button */}
+                        <button
+                          type="button"
+                          style={{
+                            borderColor: activeTheme.primaryColor,
+                            color: activeTheme.primaryColor,
+                          }}
+                          className="px-5 py-2.5 rounded-xl font-bold text-xs border bg-white hover:bg-slate-50 transition-all cursor-pointer"
+                        >
+                          <span>Outline Action</span>
+                        </button>
+                      </div>
+
+                      {/* Mini Stat Cards Sample */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                        <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
+                          <div>
+                            <span className="text-[11px] font-semibold text-slate-500">Today&apos;s Revenue</span>
+                            <div className="text-base font-black text-slate-900 mt-0.5">PKR 145,000</div>
+                          </div>
+                          <div
+                            style={{
+                              backgroundColor: activeTheme.primaryLight,
+                              color: activeTheme.primaryColor,
+                            }}
+                            className="w-9 h-9 rounded-xl flex items-center justify-center font-bold"
+                          >
+                            <Sparkles className="w-4 h-4" />
+                          </div>
+                        </div>
+
+                        <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs flex items-center justify-between">
+                          <div>
+                            <span className="text-[11px] font-semibold text-slate-500">Completed Sessions</span>
+                            <div className="text-base font-black text-slate-900 mt-0.5">28 Patients</div>
+                          </div>
+                          <div
+                            style={{
+                              backgroundColor: "var(--color-primary-light)",
+                              color: "var(--color-primary)",
+                            }}
+                            className="w-9 h-9 rounded-xl flex items-center justify-center font-bold"
+                          >
+                            <Users className="w-4 h-4" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ───────────────────────────────────────────────────────────── */}
+              {/* SECTION 4: Bottom Save & Reset Actions Bar                   */}
+              {/* ───────────────────────────────────────────────────────────── */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-slate-200">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={resetPreview}
+                    className="px-4 py-2.5 border border-slate-300 rounded-xl text-slate-700 hover:bg-slate-100 font-semibold text-xs transition-colors cursor-pointer flex items-center gap-1.5"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" /> Revert to Saved Theme
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => applyPreset("modern-indigo")}
+                    className="px-4 py-2.5 border border-slate-200 bg-slate-50 rounded-xl text-slate-600 hover:bg-slate-100 font-semibold text-xs transition-colors cursor-pointer"
+                  >
+                    Reset to Default Modern
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                  {themeSaved && (
+                    <span className="text-xs font-bold text-emerald-600 flex items-center gap-1 animate-in fade-in">
+                      <CheckCircle2 className="w-4 h-4" /> Saved Successfully!
+                    </span>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const success = await saveTheme();
+                      if (success) {
+                        setThemeSaved(true);
+                        setTimeout(() => setThemeSaved(false), 3500);
+                      }
+                    }}
+                    disabled={themeSaving}
+                    style={{
+                      backgroundColor: "var(--color-primary, #4f46e5)",
+                      color: "var(--color-primary-text, #ffffff)",
+                    }}
+                    className="flex-1 sm:flex-none flex items-center justify-center px-8 py-3 rounded-xl font-bold text-sm shadow-md hover:brightness-110 disabled:opacity-50 transition-all cursor-pointer"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    {themeSaving ? "Saving Theme..." : "Save & Apply Theme"}
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* ═══════════════════════════════════════════════════ */}
+          {/* TAB 3: User Management                             */}
           {/* ═══════════════════════════════════════════════════ */}
           {activeTab === 'users' && (
             <div>

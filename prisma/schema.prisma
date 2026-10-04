@@ -193,13 +193,14 @@ model PurchaseItem {
 }
 
 model CompanySetting {
-  id          String  @id @default(uuid())
-  name        String
-  phone       String?
-  logo        String?
-  address     String?
-  tax_number  String?
-  footer_note String?
+  id           String  @id @default(uuid())
+  name         String
+  phone        String?
+  logo         String?
+  address      String?
+  tax_number   String?
+  footer_note  String?
+  theme_config String?
 }
 
 model ReturnSale {
