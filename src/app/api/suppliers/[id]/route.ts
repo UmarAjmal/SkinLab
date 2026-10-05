@@ -9,7 +9,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     const supplier = await prisma.supplier.findUnique({
       where: { id: params.id },
     });
-    if (!supplier || (companyId && supplier.company_id && supplier.company_id !== companyId)) {
+    if (!supplier || (companyId && (supplier as any).company_id && (supplier as any).company_id !== companyId)) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
     return NextResponse.json(supplier);
@@ -23,7 +23,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     const session = await requireRole(["Admin", "Manager"]);
     const companyId = (session.user as any)?.company_id;
     const existing = await prisma.supplier.findUnique({ where: { id: params.id } });
-    if (!existing || (companyId && existing.company_id && existing.company_id !== companyId)) {
+    if (!existing || (companyId && (existing as any).company_id && (existing as any).company_id !== companyId)) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
@@ -50,7 +50,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     const session = await requireRole(["Admin", "Manager"]);
     const companyId = (session.user as any)?.company_id;
     const existing = await prisma.supplier.findUnique({ where: { id: params.id } });
-    if (!existing || (companyId && existing.company_id && existing.company_id !== companyId)) {
+    if (!existing || (companyId && (existing as any).company_id && (existing as any).company_id !== companyId)) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 

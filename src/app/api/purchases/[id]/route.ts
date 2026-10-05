@@ -17,7 +17,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         },
       },
     });
-    if (!purchase || (companyId && purchase.company_id && purchase.company_id !== companyId)) {
+    if (!purchase || (companyId && (purchase as any).company_id && (purchase as any).company_id !== companyId)) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
     return NextResponse.json(purchase);
@@ -31,7 +31,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     const session = await requireRole(["Admin", "Manager"]);
     const companyId = (session.user as any)?.company_id;
     const existing = await prisma.purchase.findUnique({ where: { id: params.id } });
-    if (!existing || (companyId && existing.company_id && existing.company_id !== companyId)) {
+    if (!existing || (companyId && (existing as any).company_id && (existing as any).company_id !== companyId)) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 

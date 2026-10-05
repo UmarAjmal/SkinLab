@@ -27,7 +27,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
     const companyId = (session.user as any)?.company_id;
     const patient = await prisma.customer.findUnique({ where: { id: rawId } });
-    if (!patient || (companyId && patient.company_id && patient.company_id !== companyId)) {
+    if (!patient || (companyId && (patient as any).company_id && (patient as any).company_id !== companyId)) {
       return NextResponse.json({ error: "Patient not found" }, { status: 404 });
     }
 

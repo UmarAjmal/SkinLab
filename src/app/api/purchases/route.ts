@@ -8,7 +8,7 @@ export async function GET() {
     const companyId = (session.user as any)?.company_id;
 
     const purchases = await prisma.purchase.findMany({
-      where: companyId ? { company_id: companyId } : {},
+      where: (companyId ? { company_id: companyId } : {}) as any,
       orderBy: { date: "desc" },
       include: {
         supplier: true,
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
             total_cost: item.total_cost,
           })),
         },
-      },
+      } as any,
       include: {
         items: true,
       },

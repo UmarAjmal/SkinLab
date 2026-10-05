@@ -8,7 +8,7 @@ export async function GET() {
     const companyId = (session.user as any)?.company_id;
 
     const suppliers = await prisma.supplier.findMany({
-      where: companyId ? { company_id: companyId } : {},
+      where: (companyId ? { company_id: companyId } : {}) as any,
       orderBy: { name: "asc" },
     });
     return NextResponse.json(suppliers);
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
         tax_number: body.tax_number,
         balance: body.balance || 0,
         ...(companyId ? { company_id: companyId } : {}),
-      },
+      } as any,
     });
     return NextResponse.json(supplier, { status: 201 });
   } catch (error: any) {
