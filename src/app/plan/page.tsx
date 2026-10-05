@@ -66,10 +66,6 @@ export default function PlanPage() {
       {/* Header */}
       <section className="bg-gradient-to-b from-white to-slate-50 py-16 sm:py-20 border-b border-slate-200/70">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs sm:text-sm font-bold shadow-2xs">
-            <Sparkles className="w-4 h-4 text-emerald-600" />
-            <span>Transparent, Affordable Pricing</span>
-          </div>
 
           <h1 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
             Simple, all-inclusive pricing for your clinic.

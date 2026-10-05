@@ -7,35 +7,41 @@ export default function PublicFooter() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 lg:gap-12">
           {/* Col 1: Brand Info */}
+          {/* Col 1: Brand Info */}
           <div className="md:col-span-2 space-y-4">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-500 to-cyan-500 flex items-center justify-center text-white shadow-md">
-                <FlaskConical className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center p-1.5 shadow-md shrink-0">
+                <img src="/logo.png" alt="Falcon Swift" className="w-full h-full object-contain" />
               </div>
-              <span className="text-2xl font-black text-white tracking-tight">
-                SkinLab <span className="text-indigo-400 font-normal text-lg">POS</span>
-              </span>
+              <div>
+                <span className="text-xl font-black text-white tracking-tight flex items-center gap-1.5">
+                  Falcon Swift
+                  <span className="text-indigo-400 font-bold text-[10px] uppercase bg-indigo-950/80 border border-indigo-800/60 px-2 py-0.5 rounded-md">
+                    PVT. LTD.
+                  </span>
+                </span>
+                <p className="text-xs text-slate-400 font-medium">
+                  SkinLab Healthcare &amp; Clinical POS Systems
+                </p>
+              </div>
             </div>
             
             <p className="text-sm text-slate-400 max-w-md leading-relaxed font-medium">
               Enterprise clinical practice management, point-of-sale billing, multi-session package tracking, and financial intelligence suite.
             </p>
 
-            <div className="p-4 rounded-2xl bg-slate-800/80 border border-slate-700/60 max-w-md space-y-2">
-              <div className="text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5" /> Developed &amp; Powered By
-              </div>
-              <div className="text-base font-extrabold text-white">
-                Falcon Swift PVT. LTD.
-              </div>
-              <div className="text-xs text-slate-400 flex flex-wrap items-center gap-x-4 gap-y-1">
-                <span className="flex items-center gap-1">
-                  <Phone className="w-3 h-3 text-emerald-400" /> WhatsApp: <strong>0326-3392082</strong>
-                </span>
-                <span className="flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3 text-indigo-400" /> Cloud &amp; Offline Ready
-                </span>
-              </div>
+            <div className="pt-1 text-xs text-slate-400 flex flex-wrap items-center gap-x-5 gap-y-2 font-medium">
+              <a
+                href="https://wa.me/923263392082"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 transition-colors"
+              >
+                <Phone className="w-3.5 h-3.5" /> WhatsApp: <strong>0326-3392082</strong>
+              </a>
+              <span className="flex items-center gap-1.5 text-slate-400">
+                <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" /> Cloud &amp; Offline Ready
+              </span>
             </div>
           </div>
 
@@ -57,7 +63,7 @@ export default function PublicFooter() {
               </li>
               <li>
                 <Link href="/plan" className="hover:text-white transition-colors">
-                  Subscription Plans (PKR 3,000/mo)
+                  Subscription Plans
                 </Link>
               </li>
               <li>

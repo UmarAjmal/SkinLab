@@ -31,26 +31,17 @@ export default function PublicNavbar() {
     <header className="sticky top-0 z-40 w-full backdrop-blur-md bg-white/90 border-b border-slate-200/80 transition-all font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
         {/* Brand Logo & Name */}
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div
-            style={{
-              background: `linear-gradient(135deg, var(--color-primary, #4f46e5), var(--color-accent, #06b6d4))`,
-            }}
-            className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center text-white shadow-md shadow-black/5 shrink-0 overflow-hidden group-hover:scale-105 transition-transform"
-          >
-            {clinicLogo ? (
-              <img
-                src={clinicLogo}
-                alt={clinicName}
-                className="w-full h-full object-contain p-1 bg-white/10"
-              />
-            ) : (
-              <FlaskConical className="w-5 h-5 text-white" strokeWidth={2.5} />
-            )}
+        <Link href="/" className="flex items-center gap-3 group">
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white border border-slate-200/80 flex items-center justify-center p-1.5 shadow-xs shrink-0 overflow-hidden group-hover:scale-105 transition-transform">
+            <img
+              src="/logo.png"
+              alt="Falcon Swift"
+              className="w-full h-full object-contain"
+            />
           </div>
           <div>
             <span className="text-lg sm:text-xl font-black text-slate-900 tracking-tight flex items-center gap-1.5">
-              {clinicName}
+              Falcon Swift
               <span
                 style={{
                   backgroundColor: "var(--color-primary, #4f46e5)",
@@ -58,11 +49,11 @@ export default function PublicNavbar() {
                 }}
                 className="text-[9px] uppercase px-2 py-0.5 rounded-md font-extrabold tracking-wider"
               >
-                POS
+                PVT. LTD.
               </span>
             </span>
-            <p className="text-[10px] text-slate-400 font-medium leading-none hidden sm:block">
-              by Falcon Swift PVT. LTD.
+            <p className="text-[10px] text-slate-400 font-semibold leading-none hidden sm:block">
+              Clinic &amp; Healthcare POS
             </p>
           </div>
         </Link>
@@ -111,7 +102,7 @@ export default function PublicNavbar() {
             }}
             className="px-5 py-2.5 text-sm font-bold rounded-xl shadow-md hover:brightness-110 hover:shadow-lg transition-all flex items-center gap-2 active:scale-98"
           >
-            <span>Get Started</span>
+            <span>Sign Up</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
@@ -172,7 +163,7 @@ export default function PublicNavbar() {
               }}
               className="w-full text-center py-3 text-sm font-bold rounded-xl shadow-md text-white flex items-center justify-center gap-2"
             >
-              <span>Get Started Now</span>
+              <span>Sign Up</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>

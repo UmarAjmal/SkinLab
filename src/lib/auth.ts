@@ -57,7 +57,6 @@ export const authOptions: NextAuthOptions = {
             role_id: user.role_id,
             company_id: user.company_id || user.company?.id || null,
             company_name: user.company?.name || "Skin-Lab Clinic",
-            company_logo: user.company?.logo || null,
             is_first_login: user.is_first_login ?? false,
             permissions: (user.role?.permissions || []).map((p: any) => ({
               module: p.module,
@@ -83,14 +82,12 @@ export const authOptions: NextAuthOptions = {
         token.full_name = (user as any).full_name;
         token.company_id = (user as any).company_id;
         token.company_name = (user as any).company_name;
-        token.company_logo = (user as any).company_logo;
         token.is_first_login = (user as any).is_first_login;
         token.permissions = (user as any).permissions;
       }
       if (trigger === "update" && session) {
         if (session.is_first_login !== undefined) token.is_first_login = session.is_first_login;
         if (session.company_name) token.company_name = session.company_name;
-        if (session.company_logo !== undefined) token.company_logo = session.company_logo;
       }
       return token;
     },
@@ -102,7 +99,6 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).full_name = token.full_name;
         (session.user as any).company_id = token.company_id;
         (session.user as any).company_name = token.company_name;
-        (session.user as any).company_logo = token.company_logo;
         (session.user as any).is_first_login = token.is_first_login;
         (session.user as any).permissions = token.permissions || [];
       }

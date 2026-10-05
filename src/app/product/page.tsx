@@ -150,10 +150,6 @@ export default function ProductPage() {
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-b from-white to-slate-50 py-16 sm:py-24 border-b border-slate-200/70">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs sm:text-sm font-bold shadow-2xs">
-            <Sparkles className="w-4 h-4 text-indigo-600" />
-            <span>Complete Clinical Operating System</span>
-          </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight max-w-4xl mx-auto leading-[1.15]">
             Everything your aesthetic clinic needs to{" "}
@@ -179,19 +175,9 @@ export default function ProductPage() {
               }}
               className="px-8 py-3.5 rounded-2xl font-bold text-base shadow-lg hover:brightness-110 transition-all flex items-center gap-2.5 active:scale-98"
             >
-              <span>Start Monthly Plan (PKR 3,000)</span>
+              <span>Start Monthly Plan</span>
               <ArrowRight className="w-5 h-5" />
             </Link>
-
-            <a
-              href="https://wa.me/923263392082?text=Hello%20Falcon%20Swift%2C%20I%20want%20a%20live%20demo%20of%20SkinLab%20POS."
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-6 py-3.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-2xl font-bold text-base hover:bg-emerald-100 transition-all flex items-center gap-2"
-            >
-              <Phone className="w-4 h-4 text-emerald-600" />
-              <span>Get WhatsApp Demo (0326-3392082)</span>
-            </a>
           </div>
         </div>
       </section>
@@ -270,22 +256,7 @@ export default function ProductPage() {
             Join clinics powered by Falcon Swift PVT. LTD. Set up your workspace in under 2 minutes.
           </p>
 
-          <div className="pt-2 flex flex-wrap items-center justify-center gap-4">
-            <Link
-              href="/signup"
-              className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-bold shadow-lg transition-all flex items-center gap-2"
-            >
-              <span>Get Started Now</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
 
-            <Link
-              href="/plan"
-              className="px-6 py-3.5 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-bold transition-all border border-white/20"
-            >
-              View Pricing (PKR 3,000/mo)
-            </Link>
-          </div>
         </div>
       </section>
 

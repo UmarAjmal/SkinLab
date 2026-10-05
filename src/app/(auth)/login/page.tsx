@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { FlaskConical, Mail, Lock, Eye, EyeOff, ArrowRight, ShieldCheck } from "lucide-react";
+import { FlaskConical, Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 
 const loginSchema = z.object({
@@ -67,7 +67,7 @@ function LoginContent() {
         callbackUrl,
       });
 
-      if (!res?.error) {
+      if (res?.ok && !res?.error) {
         // Fetch session to check if first login
         try {
           const sessRes = await fetch("/api/auth/session");
@@ -81,15 +81,27 @@ function LoginContent() {
         }
         window.location.href = res?.url || callbackUrl;
       } else {
-        setError("Invalid email or password");
+        setError(res?.error === "CredentialsSignin" ? "Invalid email or password" : (res?.error || "Invalid email or password"));
       }
-    } catch (err) {
-      setError("An unexpected error occurred");
+    } catch (err: any) {
+      console.error("Login submission error:", err);
+      setError(err?.message || "An unexpected error occurred");
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans selection:bg-indigo-100">
+    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans selection:bg-indigo-100 relative">
+      {/* Back to Website Button */}
+      <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-10">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-200 shadow-2xs transition-all"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to Website</span>
+        </Link>
+      </div>
+
       <div className="sm:mx-auto sm:w-full max-w-[420px]">
         {/* Card Container */}
         <div className="bg-white py-8 px-6 sm:px-8 shadow-xl rounded-3xl border border-slate-200/80">
@@ -254,7 +266,7 @@ function LoginContent() {
               href="/signup"
               className="inline-flex items-center justify-center gap-1.5 w-full py-2.5 px-4 bg-slate-50 hover:bg-indigo-50 border border-slate-200 text-slate-800 hover:text-indigo-700 text-xs font-bold rounded-xl transition-all"
             >
-              <span>Create Clinic Workspace (PKR 3,000/mo)</span>
+              <span>Create Clinic Workspace</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>

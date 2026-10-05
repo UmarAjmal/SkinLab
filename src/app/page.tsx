@@ -49,10 +49,6 @@ export default async function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-16">
           {/* Left Column */}
           <div className="flex-1 w-full max-w-xl text-left space-y-6">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs sm:text-sm font-bold shadow-2xs">
-              <Sparkles className="w-4 h-4 text-indigo-600" />
-              <span>Developed &amp; Powered by Falcon Swift PVT. LTD.</span>
-            </div>
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.12]">
               Elevate Your <br />
@@ -79,7 +75,7 @@ export default async function Home() {
                 }}
                 className="px-7 py-3.5 rounded-2xl font-bold text-sm sm:text-base shadow-lg hover:brightness-110 transition-all flex items-center gap-2 active:scale-98 cursor-pointer"
               >
-                <span>Get Started (PKR 3,000/mo)</span>
+                <span>Get Started</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
 
@@ -197,18 +193,9 @@ export default async function Home() {
       {/* Pricing Teaser */}
       <section className="bg-slate-900 text-white py-16 sm:py-20 border-t border-slate-800">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-bold border border-indigo-500/30">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Monthly Subscription</span>
-          </div>
-
           <h2 className="text-3xl sm:text-4xl font-black tracking-tight">
             One simple plan for your entire clinic.
           </h2>
-
-          <div className="text-4xl sm:text-5xl font-black text-indigo-400">
-            PKR 3,000 <span className="text-slate-400 text-base font-semibold">/ month</span>
-          </div>
 
           <p className="text-slate-400 max-w-xl mx-auto text-sm sm:text-base font-medium">
             Includes all modules, unlimited invoices, multi-user accounts, thermal printer integration, and continuous cloud backup.
