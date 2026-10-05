@@ -21,6 +21,7 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
   const registered = searchParams.get("registered") === "true";
+  const newUser = searchParams.get("new_user") === "true";
   const prefilledEmail = searchParams.get("email") || "";
   
   const [error, setError] = useState("");
@@ -139,13 +140,13 @@ function LoginContent() {
           </div>
 
           {/* Registered Success Notice */}
-          {registered && (
+          {(registered || newUser) && (
             <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-semibold rounded-2xl flex items-start gap-2.5">
               <span className="text-base">🎉</span>
               <div>
-                <p className="font-bold">Account created successfully!</p>
+                <p className="font-bold">Account &amp; Business Created Successfully!</p>
                 <p className="text-xs text-emerald-700 font-medium mt-0.5">
-                  Sign in with your email and password to access your clinic workspace.
+                  Please login with your credentials to access your store.
                 </p>
               </div>
             </div>

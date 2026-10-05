@@ -10,6 +10,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
   try {
     const saleId = params.id;
+    const companyId = (session.user as any)?.company_id;
     const sale = await prisma.sale.findUnique({
       where: { id: saleId },
       include: {
@@ -25,7 +26,9 @@ export async function GET(request: Request, { params }: { params: { id: string }
       },
     });
 
-    if (!sale) return NextResponse.json({ error: "Sale not found" }, { status: 404 });
+    if (!sale || (companyId && sale.company_id && sale.company_id !== companyId)) {
+      return NextResponse.json({ error: "Sale not found" }, { status: 404 });
+    }
 
     return NextResponse.json(sale);
   } catch (error: any) {
@@ -45,6 +48,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
   try {
     const saleId = params.id;
+    const companyId = (session.user as any)?.company_id;
     const data = await request.json();
 
     const existingSale = await prisma.sale.findUnique({
@@ -52,7 +56,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       include: { customer: true, items: true },
     });
 
-    if (!existingSale) {
+    if (!existingSale || (companyId && existingSale.company_id && existingSale.company_id !== companyId)) {
       return NextResponse.json({ error: "Sale not found" }, { status: 404 });
     }
 
@@ -148,6 +152,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       severity: "WARNING",
       targetRole: "Admin",
       linkUrl: `/dashboard/sales?search=${existingSale.invoice_number}`,
+      companyId: companyId || undefined,
     }).catch(console.error);
 
     return NextResponse.json(updatedSale, { status: 200 });

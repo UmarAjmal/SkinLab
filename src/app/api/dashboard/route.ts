@@ -7,7 +7,9 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    await requireRole(["Admin", "Manager", "Doctor"]);
+    const session = await requireRole(["Admin", "Manager", "Doctor"]);
+    const companyId = (session.user as any)?.company_id;
+    const companyWhere = companyId ? { company_id: companyId } : {};
 
     const todayStart = dayjs().startOf("day").toDate();
     const todayEnd = dayjs().endOf("day").toDate();
@@ -27,6 +29,7 @@ export async function GET() {
       prisma.sale.aggregate({
         _sum: { grand_total: true },
         where: {
+          ...companyWhere,
           date: {
             gte: todayStart,
             lte: todayEnd,
@@ -38,6 +41,7 @@ export async function GET() {
       (prisma as any).payment.aggregate({
         _sum: { amount: true },
         where: {
+          ...companyWhere,
           payment_date: {
             gte: todayStart,
             lte: todayEnd,
@@ -48,6 +52,7 @@ export async function GET() {
       // 2. Patients Treated Today
       prisma.sale.findMany({
         where: {
+          ...companyWhere,
           date: {
             gte: todayStart,
             lte: todayEnd,
@@ -60,6 +65,7 @@ export async function GET() {
       // 3. Active/Pending Dues
       prisma.sale.findMany({
         where: {
+          ...companyWhere,
           payment_status: { in: ["DUE", "PARTIAL"] },
         },
         select: { grand_total: true, paid_amount: true },
@@ -68,6 +74,7 @@ export async function GET() {
       // 4. Revenue Trend (last 30 days)
       prisma.sale.findMany({
         where: {
+          ...companyWhere,
           date: { gte: thirtyDaysAgo },
         },
         select: { date: true, grand_total: true },
@@ -77,6 +84,7 @@ export async function GET() {
       prisma.saleItem.findMany({
         where: {
           sale: {
+            ...companyWhere,
             date: { gte: thirtyDaysAgo },
           },
         },
@@ -92,6 +100,7 @@ export async function GET() {
 
       // 6. Recent Transactions (last 10)
       prisma.sale.findMany({
+        where: companyWhere,
         take: 10,
         orderBy: { date: "desc" },
         include: {

@@ -19,10 +19,13 @@ export async function GET(request: Request) {
       };
     }
 
+    const companyId = (session.user as any)?.company_id;
+
     // Fetch sale items within date range
     const saleItems = await prisma.saleItem.findMany({
       where: {
         sale: {
+          ...(companyId ? { company_id: companyId } : {}),
           date: Object.keys(dateFilter).length > 0 ? dateFilter : undefined
         }
       },

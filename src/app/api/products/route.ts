@@ -7,11 +7,15 @@ export async function GET(request: Request) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
-  const categoryId = searchParams.get("category_id");
+  const categoryId = searchParams.get("categoryId") || searchParams.get("category_id");
+  const companyId = (session.user as any)?.company_id;
 
   try {
     const products = await prisma.product.findMany({
-      where: categoryId ? { category_id: categoryId } : undefined,
+      where: {
+        ...(companyId ? { company_id: companyId } : {}),
+        ...(categoryId ? { category_id: categoryId } : {}),
+      },
       include: { category: true },
       orderBy: { name: 'asc' },
     });
@@ -52,6 +56,7 @@ export async function POST(request: Request) {
 
   try {
     const data = await request.json();
+    const companyId = (session.user as any)?.company_id;
 
     if (!data.name || !data.category_id) {
       return NextResponse.json({ error: "Name and Category are required" }, { status: 400 });
@@ -60,6 +65,7 @@ export async function POST(request: Request) {
     // Auto-heal any existing product with corrupt SKU to avoid uniqueness collision
     const corruptProducts = await prisma.product.findMany({
       where: {
+        ...(companyId ? { company_id: companyId } : {}),
         OR: [
           { sku: { contains: "{" } },
           { sku: { contains: "count" } },
@@ -85,16 +91,28 @@ export async function POST(request: Request) {
     // Auto-generate clean, unique SKU
     let sku = data.sku ? String(data.sku).trim() : "";
     if (!sku) {
-      const totalCount = await prisma.product.count();
+      const totalCount = await prisma.product.count({
+        where: companyId ? { company_id: companyId } : {},
+      });
       let skuNum = totalCount + 1;
       sku = `SRV-${String(skuNum).padStart(4, '0')}`;
 
-      while (await prisma.product.findUnique({ where: { sku } })) {
+      while (await prisma.product.findFirst({
+        where: {
+          sku,
+          ...(companyId ? { company_id: companyId } : {}),
+        }
+      })) {
         skuNum++;
         sku = `SRV-${String(skuNum).padStart(4, '0')}`;
       }
     } else {
-      const existing = await prisma.product.findUnique({ where: { sku } });
+      const existing = await prisma.product.findFirst({
+        where: {
+          sku,
+          ...(companyId ? { company_id: companyId } : {}),
+        }
+      });
       if (existing) {
         return NextResponse.json({ error: "A service or product with this SKU already exists" }, { status: 400 });
       }
@@ -121,6 +139,7 @@ export async function POST(request: Request) {
         selling_price: sellingPrice,
         tax_class: data.tax_class || "Standard",
         stock_quantity: stockQuantity,
+        company_id: companyId,
       },
       include: {
         category: true

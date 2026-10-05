@@ -23,6 +23,14 @@ export default function WelcomePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.replace("/login");
+    } else if (status === "authenticated" && (session?.user as any)?.is_first_login === false) {
+      router.replace("/dashboard");
+    }
+  }, [status, session, router]);
+
   const clinicName = (session?.user as any)?.company_name || "SkinLab Aesthetic Clinic";
   const userFullName = (session?.user as any)?.full_name || session?.user?.email?.split("@")[0] || "Admin";
   const userEmail = session?.user?.email;
@@ -35,7 +43,7 @@ export default function WelcomePage() {
     } catch (e) {
       console.error(e);
     } finally {
-      router.push(targetUrl);
+      window.location.href = targetUrl;
     }
   };
 
@@ -94,10 +102,16 @@ export default function WelcomePage() {
                 </div>
               </div>
 
-              <span className="px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold flex items-center gap-1.5 shadow-2xs">
-                <Sparkles className="w-4 h-4 text-emerald-600" />
-                <span>Monthly Plan Active (PKR 3,000/mo)</span>
-              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold flex items-center gap-1.5 shadow-2xs">
+                  <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Isolated Business Profile 🛡️</span>
+                </span>
+                <span className="px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold flex items-center gap-1.5 shadow-2xs">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Monthly Plan Active (PKR 3,000/mo)</span>
+                </span>
+              </div>
             </div>
 
             <div className="space-y-2 pt-2">
@@ -150,7 +164,7 @@ export default function WelcomePage() {
                 disabled={loading}
                 className="w-full sm:w-auto px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer"
               >
-                <span>{loading ? "Entering Dashboard..." : "Launch Clinic Dashboard"}</span>
+                <span>{loading ? "Entering Dashboard..." : "Launch My Dashboard 🚀"}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>

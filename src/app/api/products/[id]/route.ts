@@ -7,11 +7,14 @@ export async function GET(request: Request, { params }: { params: { id: string }
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
+    const companyId = (session.user as any)?.company_id;
     const product = await prisma.product.findUnique({
       where: { id: params.id },
       include: { category: true },
     });
-    if (!product) return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    if (!product || (companyId && product.company_id && product.company_id !== companyId)) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
     return NextResponse.json(product);
   } catch (error) {
     console.error("GET /api/products/[id] error:", error);
@@ -29,6 +32,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 
   try {
+    const companyId = (session.user as any)?.company_id;
     const data = await request.json();
     
     if (!data.name || !data.category_id) {
@@ -48,7 +52,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       : 0;
 
     const currentProduct = await prisma.product.findUnique({ where: { id: params.id } });
-    if (!currentProduct) {
+    if (!currentProduct || (companyId && currentProduct.company_id && currentProduct.company_id !== companyId)) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
@@ -56,7 +60,11 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     if (data.sku && data.sku.trim() !== "") {
       const trimmedSku = data.sku.trim();
       const existing = await prisma.product.findFirst({
-        where: { sku: trimmedSku, NOT: { id: params.id } }
+        where: {
+          sku: trimmedSku,
+          NOT: { id: params.id },
+          ...(companyId ? { company_id: companyId } : {}),
+        }
       });
       if (existing) {
         return NextResponse.json({ error: "Another product already uses this SKU" }, { status: 400 });
@@ -64,10 +72,18 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       finalSku = trimmedSku;
     } else if (!finalSku || finalSku.includes("{") || finalSku.includes("count") || finalSku.includes("padStart")) {
       // Auto-heal corrupt or missing SKU
-      const totalCount = await prisma.product.count();
+      const totalCount = await prisma.product.count({
+        where: companyId ? { company_id: companyId } : {},
+      });
       let skuNum = totalCount + 1;
       let candidateSku = `SRV-${String(skuNum).padStart(4, '0')}`;
-      while (await prisma.product.findFirst({ where: { sku: candidateSku, NOT: { id: params.id } } })) {
+      while (await prisma.product.findFirst({
+        where: {
+          sku: candidateSku,
+          NOT: { id: params.id },
+          ...(companyId ? { company_id: companyId } : {}),
+        }
+      })) {
         skuNum++;
         candidateSku = `SRV-${String(skuNum).padStart(4, '0')}`;
       }
@@ -104,6 +120,12 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
   }
 
   try {
+    const companyId = (session.user as any)?.company_id;
+    const currentProduct = await prisma.product.findUnique({ where: { id: params.id } });
+    if (!currentProduct || (companyId && currentProduct.company_id && currentProduct.company_id !== companyId)) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+
     await prisma.product.delete({
       where: { id: params.id }
     });

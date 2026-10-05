@@ -8,10 +8,12 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const search = searchParams.get("search");
+  const companyId = (session.user as any)?.company_id;
 
-  let where = {};
+  let where: any = companyId ? { company_id: companyId } : {};
   if (search) {
     where = {
+      ...where,
       OR: [
         { name: { contains: search, mode: 'insensitive' } },
         { phone: { contains: search, mode: 'insensitive' } },
@@ -50,9 +52,12 @@ export async function POST(request: Request) {
     const year = now.getFullYear();
     const suffix = `${month}-${year}`;
 
-    // Find the latest patient for this month/year
+    const companyId = (session.user as any)?.company_id;
+
+    // Find the latest patient for this company & month/year
     const latestPatient = await prisma.customer.findFirst({
       where: {
+        ...(companyId ? { company_id: companyId } : {}),
         medical_id: {
           endsWith: suffix,
         }
@@ -82,6 +87,7 @@ export async function POST(request: Request) {
         phone: data.phone?.trim() || null,
         email: data.email?.trim() || null,
         address: data.address?.trim() || null,
+        company_id: companyId,
       }
     });
 

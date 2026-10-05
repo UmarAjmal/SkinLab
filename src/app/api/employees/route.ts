@@ -8,10 +8,15 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const isDoctorParam = searchParams.get("is_doctor");
+  const companyId = (session.user as any)?.company_id;
 
   try {
+    const whereClause: any = {};
+    if (companyId) whereClause.company_id = companyId;
+    if (isDoctorParam === "true") whereClause.is_doctor = true;
+
     const employees = await prisma.employee.findMany({
-      where: isDoctorParam === "true" ? { is_doctor: true } : undefined,
+      where: Object.keys(whereClause).length > 0 ? whereClause : undefined,
       include: { department: true },
       orderBy: { name: 'asc' },
     });
@@ -28,6 +33,7 @@ export async function POST(request: Request) {
 
   try {
     const data = await request.json();
+    const companyId = (session.user as any)?.company_id;
     if (!data.name) return NextResponse.json({ error: "Name is required" }, { status: 400 });
 
     const newEmployee = await prisma.employee.create({
@@ -35,6 +41,7 @@ export async function POST(request: Request) {
         name: data.name,
         is_doctor: data.is_doctor || false,
         department_id: data.department_id || null,
+        ...(companyId ? { company_id: companyId } : {}),
       }
     });
 

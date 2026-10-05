@@ -19,7 +19,11 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
+    const companyId = (session.user as any)?.company_id;
+    const whereScope = companyId ? { company_id: companyId } : {};
+
     let categories = await prisma.expenseCategory.findMany({
+      where: whereScope,
       orderBy: { name: "asc" },
       include: {
         _count: {
@@ -31,11 +35,15 @@ export async function GET() {
     // Auto seed if empty
     if (categories.length === 0) {
       await prisma.expenseCategory.createMany({
-        data: DEFAULT_CATEGORIES,
+        data: DEFAULT_CATEGORIES.map((c) => ({
+          ...c,
+          ...(companyId ? { company_id: companyId } : {}),
+        })),
         skipDuplicates: true,
       });
 
       categories = await prisma.expenseCategory.findMany({
+        where: whereScope,
         orderBy: { name: "asc" },
         include: {
           _count: {
@@ -63,6 +71,7 @@ export async function POST(request: Request) {
 
   try {
     const data = await request.json();
+    const companyId = (session.user as any)?.company_id;
     const name = data.name ? String(data.name).trim() : "";
     const description = data.description ? String(data.description).trim() : null;
 
@@ -71,7 +80,10 @@ export async function POST(request: Request) {
     }
 
     const existing = await prisma.expenseCategory.findFirst({
-      where: { name: { equals: name, mode: "insensitive" } },
+      where: {
+        name: { equals: name, mode: "insensitive" },
+        ...(companyId ? { company_id: companyId } : {}),
+      },
     });
 
     if (existing) {
@@ -82,6 +94,7 @@ export async function POST(request: Request) {
       data: {
         name,
         description,
+        ...(companyId ? { company_id: companyId } : {}),
       },
     });
 

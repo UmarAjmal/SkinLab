@@ -23,6 +23,7 @@ export interface CreateNotificationParams {
   severity?: NotificationSeverity;
   targetRole?: string | null; // "Admin" | "Manager" | "Doctor" | "Cashier" | null
   userId?: string | null;
+  companyId?: string | null;
   linkUrl?: string | null;
   metadata?: any;
 }
@@ -40,6 +41,7 @@ export async function createNotification(params: CreateNotificationParams) {
         severity: params.severity || "INFO",
         target_role: params.targetRole || null,
         user_id: params.userId || null,
+        company_id: params.companyId || null,
         link_url: params.linkUrl || null,
         metadata: params.metadata ? JSON.stringify(params.metadata) : undefined,
       },

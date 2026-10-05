@@ -19,6 +19,7 @@ export async function POST(request: Request) {
     const data = await request.json();
     const sessionUserId = (session.user as any).id;
     const sessionUserEmail = (session.user as any).email || (session.user as any).name || sessionUserId;
+    const sessionCompanyId = (session.user as any).company_id;
 
     // 1. Basic validation
     if (!data.customer_id) {
@@ -303,7 +304,14 @@ export async function POST(request: Request) {
     let count = totalSales + 1;
     let invoiceNumber = `INV-${count.toString().padStart(4, "0")}`;
 
-    while (await prisma.sale.findUnique({ where: { invoice_number: invoiceNumber } })) {
+    while (
+      await prisma.sale.findFirst({
+        where: {
+          invoice_number: invoiceNumber,
+          ...(sessionCompanyId ? { company_id: sessionCompanyId } : {}),
+        },
+      })
+    ) {
       count++;
       invoiceNumber = `INV-${count.toString().padStart(4, "0")}`;
     }
@@ -321,6 +329,7 @@ export async function POST(request: Request) {
         payment_status: paymentStatus,
         payment_method: data.payment_method || "Cash",
         session_remarks: data.session_remarks || null,
+        company_id: sessionCompanyId,
         items: {
           create: sanitizedItems,
         },
@@ -348,6 +357,7 @@ export async function POST(request: Request) {
           payment_date: sale.date,
           received_by: sessionUserEmail,
           notes: `Initial payment on Invoice ${sale.invoice_number}`,
+          company_id: sessionCompanyId,
         },
       });
     }
@@ -436,8 +446,8 @@ export async function GET(request: Request) {
     const endDate = searchParams.get("endDate");
     const limitParam = searchParams.get("limit");
     const take = limitParam ? Math.min(500, Math.max(1, parseInt(limitParam) || 100)) : 100;
-
-    let whereClause: any = {};
+    const sessionCompanyId = (session.user as any)?.company_id;
+    let whereClause: any = sessionCompanyId ? { company_id: sessionCompanyId } : {};
 
     if (status && status !== "ALL") {
       whereClause.payment_status = status;

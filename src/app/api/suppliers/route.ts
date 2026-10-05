@@ -4,8 +4,11 @@ import { requireRole } from "@/lib/auth";
 
 export async function GET() {
   try {
-    await requireRole(["Admin", "Manager"]);
+    const session = await requireRole(["Admin", "Manager"]);
+    const companyId = (session.user as any)?.company_id;
+
     const suppliers = await prisma.supplier.findMany({
+      where: companyId ? { company_id: companyId } : {},
       orderBy: { name: "asc" },
     });
     return NextResponse.json(suppliers);
@@ -16,8 +19,10 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    await requireRole(["Admin", "Manager"]);
+    const session = await requireRole(["Admin", "Manager"]);
+    const companyId = (session.user as any)?.company_id;
     const body = await req.json();
+
     const supplier = await prisma.supplier.create({
       data: {
         name: body.name,
@@ -26,6 +31,7 @@ export async function POST(req: Request) {
         address: body.address,
         tax_number: body.tax_number,
         balance: body.balance || 0,
+        ...(companyId ? { company_id: companyId } : {}),
       },
     });
     return NextResponse.json(supplier, { status: 201 });

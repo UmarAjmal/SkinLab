@@ -6,8 +6,11 @@ export async function GET(request: Request) {
   const session = await getServerSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const companyId = (session.user as any)?.company_id;
+
   try {
     const deals = await prisma.deal.findMany({
+      where: companyId ? { company_id: companyId } : {},
       include: {
         items: {
           include: {
@@ -43,10 +46,13 @@ export async function POST(request: Request) {
       ? Number(data.price) 
       : 0;
 
+    const companyId = (session.user as any)?.company_id;
+
     const newDeal = await prisma.deal.create({
       data: {
         name: data.name,
         total_price: totalPrice,
+        company_id: companyId,
         items: {
           create: data.items.map((item: any) => ({
             product_id: item.product_id,

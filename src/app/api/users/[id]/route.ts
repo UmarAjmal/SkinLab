@@ -12,6 +12,12 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   }
 
   try {
+    const companyId = (session.user as any)?.company_id;
+    const existing = await prisma.user.findUnique({ where: { id: params.id } });
+    if (!existing || (companyId && existing.company_id && existing.company_id !== companyId)) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
     const data = await request.json();
     const updateData: any = {};
 
@@ -61,8 +67,15 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
 
   try {
     const currentUserId = (session.user as any).id;
+    const companyId = (session.user as any)?.company_id;
+
     if (params.id === currentUserId) {
       return NextResponse.json({ error: "You cannot delete your own user account" }, { status: 400 });
+    }
+
+    const existing = await prisma.user.findUnique({ where: { id: params.id } });
+    if (!existing || (companyId && existing.company_id && existing.company_id !== companyId)) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     await prisma.user.delete({

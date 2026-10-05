@@ -19,8 +19,11 @@ export async function GET(request: Request) {
       };
     }
 
+    const companyId = (session.user as any)?.company_id;
+
     const payments = await prisma.payment.findMany({
       where: {
+        ...(companyId ? { company_id: companyId } : {}),
         payment_date: Object.keys(dateFilter).length > 0 ? dateFilter : undefined,
         amount: { gt: 0 },
       },

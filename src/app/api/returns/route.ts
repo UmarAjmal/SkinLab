@@ -4,8 +4,11 @@ import { requireRole } from "@/lib/auth";
 
 export async function GET() {
   try {
-    await requireRole(["Admin", "Manager"]);
+    const session = await requireRole(["Admin", "Manager"]);
+    const companyId = (session.user as any)?.company_id;
+
     const returns = await prisma.returnSale.findMany({
+      where: companyId ? { sale: { company_id: companyId } } : undefined,
       take: 100,
       orderBy: { date: "desc" },
       include: {

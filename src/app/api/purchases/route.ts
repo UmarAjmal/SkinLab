@@ -4,8 +4,11 @@ import { requireRole } from "@/lib/auth";
 
 export async function GET() {
   try {
-    await requireRole(["Admin", "Manager"]);
+    const session = await requireRole(["Admin", "Manager"]);
+    const companyId = (session.user as any)?.company_id;
+
     const purchases = await prisma.purchase.findMany({
+      where: companyId ? { company_id: companyId } : {},
       orderBy: { date: "desc" },
       include: {
         supplier: true,
@@ -24,7 +27,8 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    await requireRole(["Admin", "Manager"]);
+    const session = await requireRole(["Admin", "Manager"]);
+    const companyId = (session.user as any)?.company_id;
     const body = await req.json();
     const { supplier_id, invoice_number, date, subtotal, delivery_charges, tax, grand_total, status, items } = body;
 
@@ -39,6 +43,7 @@ export async function POST(req: Request) {
         tax: tax || 0,
         grand_total,
         status: status || "RECEIVED",
+        ...(companyId ? { company_id: companyId } : {}),
         items: {
           create: items.map((item: any) => ({
             product_id: item.product_id,

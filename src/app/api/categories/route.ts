@@ -6,8 +6,11 @@ export async function GET(request: Request) {
   const session = await getServerSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const companyId = (session.user as any)?.company_id;
+
   try {
     const categories = await prisma.category.findMany({
+      where: companyId ? { company_id: companyId } : {},
       orderBy: { name: 'asc' },
     });
     return NextResponse.json(categories);
@@ -30,9 +33,12 @@ export async function POST(request: Request) {
     const data = await request.json();
     if (!data.name) return NextResponse.json({ error: "Name is required" }, { status: 400 });
 
+    const companyId = (session.user as any)?.company_id;
+
     const newCategory = await prisma.category.create({
       data: {
         name: data.name,
+        company_id: companyId,
       }
     });
     return NextResponse.json(newCategory, { status: 201 });

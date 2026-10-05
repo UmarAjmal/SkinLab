@@ -14,24 +14,34 @@ export async function GET() {
       settings = await prisma.companySetting.findUnique({
         where: { id: userCompanyId },
       });
-    }
 
-    if (!settings) {
+      if (!settings) {
+        settings = await prisma.companySetting.create({
+          data: {
+            id: userCompanyId,
+            name: (session.user as any)?.company_name || "Aesthetic Clinic",
+            phone: "",
+            logo: "",
+            address: "",
+            tax_number: "",
+            footer_note: "Thank you for visiting! Powered by Falcon Swift PVT. LTD."
+          }
+        });
+      }
+    } else {
       settings = await prisma.companySetting.findFirst();
-    }
-    
-    // Auto-create default settings if none exist
-    if (!settings) {
-      settings = await prisma.companySetting.create({
-        data: {
-          name: "Skin-Lab Clinic",
-          phone: "",
-          logo: "",
-          address: "",
-          tax_number: "",
-          footer_note: "Thank you for visiting Skin-Lab Clinic! Powered by Falcon Swift PVT. LTD."
-        }
-      });
+      if (!settings) {
+        settings = await prisma.companySetting.create({
+          data: {
+            name: "Skin-Lab Clinic",
+            phone: "",
+            logo: "",
+            address: "",
+            tax_number: "",
+            footer_note: "Thank you for visiting Skin-Lab Clinic! Powered by Falcon Swift PVT. LTD."
+          }
+        });
+      }
     }
 
     return NextResponse.json(settings);
@@ -49,15 +59,11 @@ export async function PUT(request: Request) {
     const data = await request.json();
     const userCompanyId = (session.user as any)?.company_id;
     
-    let settings = null;
-    if (userCompanyId) {
-      settings = await prisma.companySetting.findUnique({
-        where: { id: userCompanyId },
-      });
-    }
+    let targetSettingId = userCompanyId;
 
-    if (!settings) {
-      settings = await prisma.companySetting.findFirst();
+    if (!targetSettingId) {
+      const first = await prisma.companySetting.findFirst();
+      targetSettingId = first?.id;
     }
     
     const updateData: any = {};
@@ -71,7 +77,23 @@ export async function PUT(request: Request) {
       updateData.theme_config = typeof data.theme_config === "object" ? JSON.stringify(data.theme_config) : data.theme_config || null;
     }
 
-    if (!settings) {
+    let settings;
+    if (targetSettingId) {
+      settings = await prisma.companySetting.upsert({
+        where: { id: targetSettingId },
+        update: updateData,
+        create: {
+          id: targetSettingId,
+          name: data.name || "Aesthetic Clinic",
+          phone: data.phone || "",
+          logo: data.logo || "",
+          address: data.address || "",
+          tax_number: data.tax_number || "",
+          footer_note: data.footer_note || "",
+          theme_config: typeof data.theme_config === "object" ? JSON.stringify(data.theme_config) : data.theme_config || null,
+        },
+      });
+    } else {
       settings = await prisma.companySetting.create({
         data: {
           name: data.name || "Skin-Lab Clinic",
@@ -82,11 +104,6 @@ export async function PUT(request: Request) {
           footer_note: data.footer_note || "",
           theme_config: typeof data.theme_config === "object" ? JSON.stringify(data.theme_config) : data.theme_config || null,
         }
-      });
-    } else {
-      settings = await prisma.companySetting.update({
-        where: { id: settings.id },
-        data: updateData,
       });
     }
 

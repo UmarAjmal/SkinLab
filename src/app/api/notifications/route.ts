@@ -14,18 +14,19 @@ export async function GET(request: Request) {
   try {
     const userRole = (session.user as any).role || "";
     const userId = (session.user as any).id;
+    const companyId = (session.user as any)?.company_id;
 
     // Trigger automated background scans (closing summaries, overdue dues, low stock)
     runAutomatedClinicScanners().catch((err) => console.error("Error in clinic background scans:", err));
 
     // Build RBAC Notification where condition
-    let whereCondition: any = {};
+    let whereCondition: any = companyId ? { company_id: companyId } : {};
 
     if (userRole === "Admin") {
-      // Admin sees everything
-      whereCondition = {};
+      // Admin sees everything within their company
     } else if (userRole === "Manager") {
       whereCondition = {
+        ...whereCondition,
         OR: [
           { target_role: null },
           { target_role: "Manager" },
@@ -35,6 +36,7 @@ export async function GET(request: Request) {
       };
     } else if (userRole === "Doctor") {
       whereCondition = {
+        ...whereCondition,
         OR: [
           { target_role: null },
           { target_role: "Doctor" },
@@ -43,6 +45,7 @@ export async function GET(request: Request) {
       };
     } else if (userRole === "Cashier") {
       whereCondition = {
+        ...whereCondition,
         OR: [
           { target_role: null },
           { target_role: "Cashier" },
@@ -51,6 +54,7 @@ export async function GET(request: Request) {
       };
     } else {
       whereCondition = {
+        ...whereCondition,
         OR: [{ target_role: null }, { user_id: userId }],
       };
     }

@@ -12,6 +12,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
       return NextResponse.json({ error: "Invalid patient ID" }, { status: 400 });
     }
 
+    const companyId = (session.user as any)?.company_id;
     const patient = await prisma.customer.findUnique({
       where: { id: rawId },
       include: {
@@ -44,7 +45,9 @@ export async function GET(request: Request, { params }: { params: { id: string }
       }
     });
 
-    if (!patient) return NextResponse.json({ error: "Patient not found" }, { status: 404 });
+    if (!patient || (companyId && patient.company_id && patient.company_id !== companyId)) {
+      return NextResponse.json({ error: "Patient not found" }, { status: 404 });
+    }
 
     return NextResponse.json(patient);
   } catch (error: any) {
@@ -66,6 +69,12 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     const rawId = params?.id ? decodeURIComponent(params.id).trim() : "";
     if (!rawId) {
       return NextResponse.json({ error: "Invalid patient ID" }, { status: 400 });
+    }
+
+    const companyId = (session.user as any)?.company_id;
+    const existing = await prisma.customer.findUnique({ where: { id: rawId } });
+    if (!existing || (companyId && existing.company_id && existing.company_id !== companyId)) {
+      return NextResponse.json({ error: "Patient not found" }, { status: 404 });
     }
 
     const data = await request.json();

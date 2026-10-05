@@ -20,11 +20,14 @@ export async function GET(request: Request) {
       ? new Date(endDateParam)
       : dayjs().endOf("month").toDate();
 
+    const companyId = (session.user as any)?.company_id;
+
     let whereClause: any = {
       date: {
         gte: startDate,
         lte: endDate,
       },
+      ...(companyId ? { company_id: companyId } : {}),
     };
 
     if (categoryId && categoryId !== "ALL") {
@@ -50,6 +53,7 @@ export async function GET(request: Request) {
             gte: startDate,
             lte: endDate,
           },
+          ...(companyId ? { company_id: companyId } : {}),
         },
         _sum: { amount: true },
       }),
@@ -60,10 +64,12 @@ export async function GET(request: Request) {
             gte: startDate,
             lte: endDate,
           },
+          ...(companyId ? { company_id: companyId } : {}),
         },
         _sum: { grand_total: true, paid_amount: true },
       }),
       prisma.expenseCategory.findMany({
+        where: companyId ? { company_id: companyId } : {},
         orderBy: { name: "asc" },
       }),
     ]);

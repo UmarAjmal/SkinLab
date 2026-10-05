@@ -18,12 +18,13 @@ export async function POST(request: Request, { params }: { params: { id: string 
       return NextResponse.json({ error: "Missing sale_item_id" }, { status: 400 });
     }
 
+    const companyId = (session.user as any)?.company_id;
     const item = await prisma.saleItem.findUnique({
       where: { id: sale_item_id },
       include: { sale: true, product: true },
     });
 
-    if (!item) {
+    if (!item || (companyId && item.sale.company_id && item.sale.company_id !== companyId)) {
       return NextResponse.json({ error: "Treatment session item not found" }, { status: 404 });
     }
 

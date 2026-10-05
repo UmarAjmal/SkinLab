@@ -19,7 +19,11 @@ export async function GET(request: Request) {
     const month = searchParams.get("month"); // Format: YYYY-MM
     const limit = searchParams.get("limit") ? parseInt(searchParams.get("limit")!) : 200;
 
+    const companyId = (session.user as any)?.company_id;
     let whereClause: any = {};
+    if (companyId) {
+      whereClause.company_id = companyId;
+    }
 
     // Date range filter
     if (month) {
@@ -88,17 +92,20 @@ export async function GET(request: Request) {
       }),
       prisma.expense.aggregate({
         where: {
+          ...(companyId ? { company_id: companyId } : {}),
           date: { gte: todayStart, lte: todayEnd },
         },
         _sum: { amount: true },
       }),
       prisma.expense.aggregate({
         where: {
+          ...(companyId ? { company_id: companyId } : {}),
           date: { gte: currentMonthStart, lte: currentMonthEnd },
         },
         _sum: { amount: true },
       }),
       prisma.expenseCategory.findMany({
+        where: companyId ? { company_id: companyId } : {},
         select: { id: true, name: true },
         orderBy: { name: "asc" },
       }),
@@ -191,6 +198,8 @@ export async function POST(request: Request) {
       if (fallbackUser) validUserId = fallbackUser.id;
     }
 
+    const companyId = (session.user as any)?.company_id;
+
     const created = await prisma.expense.create({
       data: {
         title,
@@ -203,6 +212,7 @@ export async function POST(request: Request) {
         reference_no: referenceNo,
         receipt_url: receiptUrl,
         created_by_id: validUserId,
+        ...(companyId ? { company_id: companyId } : {}),
       },
       include: {
         category: true,
@@ -220,6 +230,7 @@ export async function POST(request: Request) {
       severity: "INFO",
       targetRole: "Admin",
       linkUrl: `/dashboard/expenses`,
+      companyId: companyId || undefined,
     }).catch(console.error);
 
     return NextResponse.json(created, { status: 201 });

@@ -13,6 +13,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
   try {
     const { id } = params;
+    const companyId = (session.user as any)?.company_id;
     const data = await request.json();
     const name = data.name ? String(data.name).trim() : "";
     const description = data.description !== undefined ? String(data.description).trim() : undefined;
@@ -22,7 +23,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     }
 
     const existing = await prisma.expenseCategory.findUnique({ where: { id } });
-    if (!existing) {
+    if (!existing || (companyId && existing.company_id && existing.company_id !== companyId)) {
       return NextResponse.json({ error: "Category not found" }, { status: 404 });
     }
 
@@ -31,6 +32,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       where: {
         name: { equals: name, mode: "insensitive" },
         id: { not: id },
+        ...(companyId ? { company_id: companyId } : {}),
       },
     });
 
@@ -64,6 +66,12 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
 
   try {
     const { id } = params;
+    const companyId = (session.user as any)?.company_id;
+
+    const existing = await prisma.expenseCategory.findUnique({ where: { id } });
+    if (!existing || (companyId && existing.company_id && existing.company_id !== companyId)) {
+      return NextResponse.json({ error: "Category not found" }, { status: 404 });
+    }
 
     const expenseCount = await prisma.expense.count({ where: { category_id: id } });
     if (expenseCount > 0) {

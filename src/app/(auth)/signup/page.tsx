@@ -140,7 +140,7 @@ export default function SignUpPage() {
       }
 
       // Success -> Redirect to login with created banner & auto-fill
-      router.push(`/login?registered=true&email=${encodeURIComponent(email)}`);
+      router.push(`/login?registered=true&new_user=true&email=${encodeURIComponent(email)}`);
     } catch (err: any) {
       setError(err.message || "Something went wrong. Please try again.");
     } finally {

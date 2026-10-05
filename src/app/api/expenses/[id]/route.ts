@@ -8,6 +8,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
 
   try {
     const { id } = params;
+    const companyId = (session.user as any)?.company_id;
     const expense = await prisma.expense.findUnique({
       where: { id },
       include: {
@@ -18,7 +19,9 @@ export async function GET(request: Request, { params }: { params: { id: string }
       },
     });
 
-    if (!expense) return NextResponse.json({ error: "Expense record not found" }, { status: 404 });
+    if (!expense || (companyId && expense.company_id && expense.company_id !== companyId)) {
+      return NextResponse.json({ error: "Expense record not found" }, { status: 404 });
+    }
 
     return NextResponse.json(expense);
   } catch (error: any) {
@@ -38,10 +41,13 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 
   try {
     const { id } = params;
+    const companyId = (session.user as any)?.company_id;
     const data = await request.json();
 
     const existing = await prisma.expense.findUnique({ where: { id } });
-    if (!existing) return NextResponse.json({ error: "Expense not found" }, { status: 404 });
+    if (!existing || (companyId && existing.company_id && existing.company_id !== companyId)) {
+      return NextResponse.json({ error: "Expense not found" }, { status: 404 });
+    }
 
     const title = data.title !== undefined ? String(data.title).trim() : existing.title;
     const amount = data.amount !== undefined ? Number(data.amount) : existing.amount;
@@ -100,9 +106,12 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
 
   try {
     const { id } = params;
+    const companyId = (session.user as any)?.company_id;
 
     const existing = await prisma.expense.findUnique({ where: { id } });
-    if (!existing) return NextResponse.json({ error: "Expense not found" }, { status: 404 });
+    if (!existing || (companyId && existing.company_id && existing.company_id !== companyId)) {
+      return NextResponse.json({ error: "Expense not found" }, { status: 404 });
+    }
 
     await prisma.expense.delete({ where: { id } });
 

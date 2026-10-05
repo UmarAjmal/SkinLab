@@ -7,6 +7,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
+    const companyId = (session.user as any)?.company_id;
     const deal = await prisma.deal.findUnique({
       where: { id: params.id },
       include: {
@@ -15,7 +16,9 @@ export async function GET(request: Request, { params }: { params: { id: string }
         }
       }
     });
-    if (!deal) return NextResponse.json({ error: "Deal not found" }, { status: 404 });
+    if (!deal || (companyId && deal.company_id && deal.company_id !== companyId)) {
+      return NextResponse.json({ error: "Deal not found" }, { status: 404 });
+    }
     return NextResponse.json(deal);
   } catch (error) {
     console.error("GET /api/deals/[id] error:", error);
@@ -28,6 +31,12 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
+    const companyId = (session.user as any)?.company_id;
+    const existing = await prisma.deal.findUnique({ where: { id: params.id } });
+    if (!existing || (companyId && existing.company_id && existing.company_id !== companyId)) {
+      return NextResponse.json({ error: "Deal not found" }, { status: 404 });
+    }
+
     const data = await request.json();
     
     // First, delete existing items to replace them
@@ -70,8 +79,12 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
-    // DealItem rows will be deleted if there is a onDelete: Cascade in prisma schema. 
-    // If not, we should delete them manually first.
+    const companyId = (session.user as any)?.company_id;
+    const existing = await prisma.deal.findUnique({ where: { id: params.id } });
+    if (!existing || (companyId && existing.company_id && existing.company_id !== companyId)) {
+      return NextResponse.json({ error: "Deal not found" }, { status: 404 });
+    }
+
     await prisma.dealItem.deleteMany({
       where: { deal_id: params.id }
     });

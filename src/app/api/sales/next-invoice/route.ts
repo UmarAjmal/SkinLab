@@ -7,8 +7,11 @@ export async function GET(request: Request) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
-    // Generate Invoice Number based on total count
-    const totalSales = await prisma.sale.count();
+    const companyId = (session.user as any)?.company_id;
+    const companyWhere = companyId ? { company_id: companyId } : {};
+
+    // Generate Invoice Number based on company sales count
+    const totalSales = await prisma.sale.count({ where: companyWhere });
     const nextInvoiceNumber = `INV-${(totalSales + 1).toString().padStart(4, "0")}`;
 
     // Generate Token based on today's sales
@@ -20,6 +23,7 @@ export async function GET(request: Request) {
 
     const salesToday = await prisma.sale.count({
       where: {
+        ...companyWhere,
         date: {
           gte: startOfDay,
           lte: endOfDay,

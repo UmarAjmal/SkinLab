@@ -133,15 +133,81 @@ export async function POST(req: Request) {
       data: { owner_id: user.id },
     });
 
-    // Create initial welcome notification
+    // 1. Seed Default Department for this company
+    try {
+      const defaultDept = await prisma.department.create({
+        data: {
+          name: "General Aesthetics & Dermatology",
+          company_id: company.id,
+        },
+      });
+
+      // 2. Seed default Employee for owner / administrator
+      await prisma.employee.create({
+        data: {
+          name: fullName.trim(),
+          is_doctor: true,
+          department_id: defaultDept.id,
+          company_id: company.id,
+        },
+      });
+    } catch (deptErr) {
+      console.warn("Could not create initial department/employee:", deptErr);
+    }
+
+    // 3. Seed Default Categories for this company
+    try {
+      const defaultCategories = [
+        "Consultation & Assessment",
+        "Aesthetic Procedures",
+        "Laser & Device Treatments",
+        "Skincare & Consumables",
+      ];
+      for (const catName of defaultCategories) {
+        await prisma.category.create({
+          data: {
+            name: catName,
+            company_id: company.id,
+          },
+        });
+      }
+    } catch (catErr) {
+      console.warn("Could not seed categories:", catErr);
+    }
+
+    // 4. Seed Default Expense Categories for this company
+    try {
+      const defaultExpCategories = [
+        "Clinic Rent & Property",
+        "Utilities & Bills",
+        "Consumables & Medical Supplies",
+        "Staff Salaries & Doctor Payouts",
+        "Equipment & Maintenance",
+        "Marketing & Refreshments",
+      ];
+      for (const expCat of defaultExpCategories) {
+        await prisma.expenseCategory.create({
+          data: {
+            name: expCat,
+            description: "Default clinic expense category",
+            company_id: company.id,
+          },
+        });
+      }
+    } catch (expErr) {
+      console.warn("Could not seed expense categories:", expErr);
+    }
+
+    // 5. Create initial welcome notification
     try {
       await prisma.notification.create({
         data: {
           title: `Welcome to ${company.name}! 🎉`,
-          message: `Your clinic management account has been created with the ${company.plan} (PKR 3,000/mo). Get started by registering patients or adding services.`,
+          message: `Your clinic workspace has been created with isolated database security. Start by adding your team, procedures, or registering your first patient.`,
           type: "SYSTEM_ALERT",
           severity: "SUCCESS",
           user_id: user.id,
+          company_id: company.id,
           link_url: "/dashboard",
         },
       });

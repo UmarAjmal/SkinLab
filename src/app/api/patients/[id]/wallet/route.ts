@@ -25,8 +25,11 @@ export async function POST(request: Request, { params }: { params: { id: string 
       return NextResponse.json({ error: "Invalid advance deposit amount" }, { status: 400 });
     }
 
+    const companyId = (session.user as any)?.company_id;
     const patient = await prisma.customer.findUnique({ where: { id: rawId } });
-    if (!patient) return NextResponse.json({ error: "Patient not found" }, { status: 404 });
+    if (!patient || (companyId && patient.company_id && patient.company_id !== companyId)) {
+      return NextResponse.json({ error: "Patient not found" }, { status: 404 });
+    }
 
     const sessionUserEmail = (session.user as any)?.email || (session.user as any)?.name || (session.user as any)?.id;
 
@@ -40,6 +43,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
         payment_date: new Date(),
         received_by: sessionUserEmail,
         notes: data.notes || "Advance deposit into patient wallet",
+        ...(companyId ? { company_id: companyId } : {}),
       },
     });
 

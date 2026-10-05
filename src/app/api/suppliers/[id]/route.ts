@@ -4,11 +4,14 @@ import { requireRole } from "@/lib/auth";
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
-    await requireRole(["Admin", "Manager"]);
+    const session = await requireRole(["Admin", "Manager"]);
+    const companyId = (session.user as any)?.company_id;
     const supplier = await prisma.supplier.findUnique({
       where: { id: params.id },
     });
-    if (!supplier) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (!supplier || (companyId && supplier.company_id && supplier.company_id !== companyId)) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
     return NextResponse.json(supplier);
   } catch (error) {
     return NextResponse.json({ error: "Failed to fetch supplier" }, { status: 500 });
@@ -17,7 +20,13 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   try {
-    await requireRole(["Admin", "Manager"]);
+    const session = await requireRole(["Admin", "Manager"]);
+    const companyId = (session.user as any)?.company_id;
+    const existing = await prisma.supplier.findUnique({ where: { id: params.id } });
+    if (!existing || (companyId && existing.company_id && existing.company_id !== companyId)) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
     const body = await req.json();
     const supplier = await prisma.supplier.update({
       where: { id: params.id },
@@ -38,7 +47,13 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
   try {
-    await requireRole(["Admin", "Manager"]);
+    const session = await requireRole(["Admin", "Manager"]);
+    const companyId = (session.user as any)?.company_id;
+    const existing = await prisma.supplier.findUnique({ where: { id: params.id } });
+    if (!existing || (companyId && existing.company_id && existing.company_id !== companyId)) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
     await prisma.supplier.delete({
       where: { id: params.id },
     });

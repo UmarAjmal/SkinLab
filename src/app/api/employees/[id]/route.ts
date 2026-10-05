@@ -7,11 +7,14 @@ export async function GET(request: Request, { params }: { params: { id: string }
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
+    const companyId = (session.user as any)?.company_id;
     const employee = await prisma.employee.findUnique({
       where: { id: params.id },
       include: { department: true },
     });
-    if (!employee) return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+    if (!employee || (companyId && employee.company_id && employee.company_id !== companyId)) {
+      return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+    }
     return NextResponse.json(employee);
   } catch (error) {
     console.error("GET /api/employees/[id] error:", error);
@@ -24,6 +27,12 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
+    const companyId = (session.user as any)?.company_id;
+    const existing = await prisma.employee.findUnique({ where: { id: params.id } });
+    if (!existing || (companyId && existing.company_id && existing.company_id !== companyId)) {
+      return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+    }
+
     const data = await request.json();
     
     if (!data.name) {
@@ -50,6 +59,12 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
+    const companyId = (session.user as any)?.company_id;
+    const existing = await prisma.employee.findUnique({ where: { id: params.id } });
+    if (!existing || (companyId && existing.company_id && existing.company_id !== companyId)) {
+      return NextResponse.json({ error: "Employee not found" }, { status: 404 });
+    }
+
     await prisma.employee.delete({
       where: { id: params.id }
     });

@@ -13,7 +13,9 @@ export async function GET() {
   }
 
   try {
+    const companyId = (session.user as any)?.company_id;
     const users = await prisma.user.findMany({
+      where: companyId ? { company_id: companyId } : {},
       include: { role: true, employee: true },
       orderBy: { email: "asc" }
     });
@@ -45,6 +47,7 @@ export async function POST(request: Request) {
 
   try {
     const data = await request.json();
+    const companyId = (session.user as any)?.company_id;
 
     if (!data.email || !data.password || !data.role_id) {
       return NextResponse.json({ error: "Email, password, and role are required" }, { status: 400 });
@@ -64,6 +67,7 @@ export async function POST(request: Request) {
         password: hashedPassword,
         role_id: data.role_id,
         employee_id: data.employee_id || null,
+        ...(companyId ? { company_id: companyId } : {}),
       },
       include: { role: true, employee: true }
     });

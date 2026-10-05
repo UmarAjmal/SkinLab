@@ -8,11 +8,14 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
+    const companyId = (session.user as any)?.company_id;
     const roles = await prisma.role.findMany({
       include: {
         permissions: true,
         _count: {
-          select: { users: true },
+          select: {
+            users: companyId ? { where: { company_id: companyId } } : true,
+          },
         },
       },
       orderBy: { createdAt: "asc" },

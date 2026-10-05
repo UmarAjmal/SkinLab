@@ -12,7 +12,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
     if (!session || !session.user) {
       redirect("/login");
     }
-  } catch (error) {
+    if ((session.user as any)?.is_first_login) {
+      redirect("/welcome");
+    }
+  } catch (error: any) {
+    if (error?.message === "NEXT_REDIRECT") throw error;
     redirect("/login");
   }
 
