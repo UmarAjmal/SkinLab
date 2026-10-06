@@ -165,6 +165,8 @@ export default function InvoiceModal({
           name: selectedSale.customer?.name || "Walk-in Patient",
           phone: selectedSale.customer?.phone || "",
           medical_id: selectedSale.customer?.medical_id || "",
+          current_balance: selectedSale.customer?.current_balance ?? 0,
+          advance_balance: selectedSale.customer?.advance_balance ?? 0,
         },
         doctor: selectedSale.doctor ? { name: selectedSale.doctor.name } : null,
         clinic: {
@@ -182,7 +184,7 @@ export default function InvoiceModal({
           unit_price: it.unit_price,
           total_price: it.total_price,
           sessions_allowed: it.sessions_allowed || 1,
-          sessions_consumed: it.sessions_consumed || 0,
+          sessions_consumed: it.sessions_consumed ?? 0,
           is_prepaid: it.unit_price === 0 && (it.sessions_allowed || 1) > 1,
         })),
         subtotal: selectedSale.subtotal || selectedSale.grand_total,

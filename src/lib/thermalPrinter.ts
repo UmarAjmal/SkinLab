@@ -1,5 +1,28 @@
 import dayjs from "dayjs";
 
+export interface ThermalReceiptItem {
+  name?: string;
+  product_name?: string;
+  item_group_name?: string | null;
+  quantity?: number;
+  unit_price?: number;
+  total_price?: number;
+  price?: number;
+  sessions_allowed?: number;
+  sessions_consumed?: number;
+  is_deal?: boolean;
+  note?: string;
+  children?: Array<{
+    name: string;
+    bundled: number;
+    consumed: number;
+    left: number;
+    session?: number;
+    session_no?: number;
+  }>;
+  sub_items?: any[];
+}
+
 export interface ThermalReceiptData {
   clinic?: {
     name?: string | null;
@@ -8,6 +31,7 @@ export interface ThermalReceiptData {
     logo?: string | null;
     tax_number?: string | null;
     footer_note?: string | null;
+    thanks?: string | null;
   };
   invoiceNumber: string;
   date?: string | Date;
@@ -23,17 +47,7 @@ export interface ThermalReceiptData {
   } | null;
   visitNo?: number | string;
   tokenNumber: string;
-  items: Array<{
-    name?: string;
-    product_name?: string;
-    item_group_name?: string | null;
-    quantity: number;
-    unit_price: number;
-    total_price: number;
-    sessions_allowed?: number;
-    sessions_consumed?: number;
-    sub_items?: string[];
-  }>;
+  items: ThermalReceiptItem[];
   subtotal?: number;
   discount?: number;
   discountAmount?: number;
@@ -44,450 +58,417 @@ export interface ThermalReceiptData {
   paymentMethod?: string;
 }
 
+function money(val: number | string | undefined | null): string {
+  const n = Number(String(val ?? 0).replace(/,/g, "")) || 0;
+  return n.toFixed(2);
+}
+
+function escapeHtml(str: string | undefined | null): string {
+  if (!str) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+interface ProcessedDealChild {
+  name: string;
+  bundled: number;
+  consumed: number;
+  left: number;
+  session: number;
+}
+
+interface ProcessedDeal {
+  type: "deal";
+  name: string;
+  price: number;
+  children: ProcessedDealChild[];
+}
+
+interface ProcessedStandalone {
+  type: "standalone";
+  name: string;
+  qty: number;
+  unit_price: number;
+  total_price: number;
+  note?: string;
+  sessions_allowed?: number;
+  sessions_consumed?: number;
+}
+
 export function generateThermalReceiptHtml(data: ThermalReceiptData): string {
-  const clinicName = data.clinic?.name || "BEYOND BEAUTY CLINIC";
-  const clinicAddress = data.clinic?.address || "Clinic Address Not Configured";
-  const clinicPhone = data.clinic?.phone || "";
+  const clinicName = escapeHtml(data.clinic?.name || "Skin-Lab Clinic");
+  const clinicAddress = escapeHtml(data.clinic?.address || "");
+  const clinicPhone = escapeHtml(data.clinic?.phone || "");
   const clinicLogo = data.clinic?.logo || "";
-  const footerNote = data.clinic?.footer_note || "Divine Glow You Need";
+  const clinicLine = [clinicAddress, clinicPhone].filter(Boolean).join("  |  ");
+  const clinicThanks = escapeHtml(
+    data.clinic?.footer_note || data.clinic?.thanks || "Thank you for choosing our clinic!"
+  );
 
   const formattedDate = dayjs(data.date || new Date()).format("DD-MMM-YYYY hh:mm A");
-  const doctorName = data.doctor?.name ? `Dr ${data.doctor.name}` : "General / Self";
 
-  // Group items by deal/package if item_group_name exists, or list individually
-  const groupedItems: {
-    [key: string]: {
-      isGroup: boolean;
-      name: string;
-      total_price: number;
-      sub_items: Array<{
-        name: string;
-        sessions: number;
-        sessions_allowed?: number;
-        sessions_consumed?: number;
-        unit_price?: number;
-        total_price?: number;
-      }>;
-      single_items: Array<any>;
-    };
-  } = {};
+  const patientName = escapeHtml(data.customer.name || "Walk-in Patient");
+  const patientPhone = escapeHtml(data.customer.phone || "");
+  const mrNo = escapeHtml(data.customer.medical_id || "");
+  const visitNo = escapeHtml(String(data.visitNo || 1));
+  const tokenNumber = escapeHtml(String(data.tokenNumber || "P-01"));
 
-  const standaloneItems: any[] = [];
+  let refBy = "";
+  if (data.doctor?.name) {
+    const rawDoc = data.doctor.name.trim();
+    refBy = escapeHtml(/^dr/i.test(rawDoc) ? rawDoc : `Dr. ${rawDoc}`);
+  }
 
-  data.items.forEach((item) => {
-    const itemName = item.name || item.product_name || "Service";
-    if (item.item_group_name) {
-      const groupKey = item.item_group_name;
-      if (!groupedItems[groupKey]) {
-        groupedItems[groupKey] = {
-          isGroup: true,
-          name: `${groupKey} (Deal)`,
-          total_price: 0,
-          sub_items: [],
-          single_items: [],
-        };
-      }
-      groupedItems[groupKey].total_price += Number(item.total_price) || 0;
-      groupedItems[groupKey].sub_items.push({
-        name: itemName.replace(new RegExp(`^${groupKey}\\s*-\\s*`, "i"), ""),
-        sessions: item.sessions_allowed || item.quantity || 1,
-        sessions_allowed: item.sessions_allowed || item.quantity || 1,
-        sessions_consumed: item.sessions_consumed || 1,
-        unit_price: Number(item.unit_price) || 0,
-        total_price: Number(item.total_price) || 0,
+  // Process items into deals vs standalone services
+  const processedItems: (ProcessedDeal | ProcessedStandalone)[] = [];
+  const dealMap = new Map<string, ProcessedDeal>();
+
+  (data.items || []).forEach((item) => {
+    const rawChildren = item.children || item.sub_items;
+    const isExplicitDeal = item.is_deal || (Array.isArray(rawChildren) && rawChildren.length > 0);
+
+    if (isExplicitDeal && Array.isArray(rawChildren) && rawChildren.length > 0) {
+      const dealName = item.name || item.product_name || "Package Deal";
+      const dealPrice = Number(
+        item.total_price !== undefined ? item.total_price : item.price || item.unit_price || 0
+      );
+      const kids: ProcessedDealChild[] = rawChildren.map((k: any) => {
+        const name = k.name || k.title || k.product_name || "Service";
+        const bundled = Number(k.bundled ?? k.total_sessions ?? k.sessions_allowed ?? 1);
+        const consumed = Number(k.consumed ?? k.sessions_consumed ?? k.used ?? 1);
+        const left = k.left !== undefined ? Number(k.left) : Math.max(0, bundled - consumed);
+        const session = Number(k.session ?? k.session_no ?? consumed);
+        return { name, bundled, consumed, left, session };
       });
+
+      processedItems.push({
+        type: "deal",
+        name: dealName,
+        price: dealPrice,
+        children: kids,
+      });
+    } else if (item.item_group_name && item.item_group_name.trim()) {
+      const groupKey = item.item_group_name.trim();
+      const cleanItemName = (item.name || item.product_name || "Service")
+        .replace(new RegExp(`^${groupKey}\\s*-\\s*`, "i"), "")
+        .trim();
+      const itemTotal = Number(
+        item.total_price !== undefined
+          ? item.total_price
+          : Number(item.unit_price || 0) * (item.quantity || 1)
+      );
+      const bundled = Number(item.sessions_allowed || item.quantity || 1);
+      const consumed = Number(item.sessions_consumed || 1);
+      const left = Math.max(0, bundled - consumed);
+
+      if (dealMap.has(groupKey)) {
+        const existingDeal = dealMap.get(groupKey)!;
+        existingDeal.price += itemTotal;
+        existingDeal.children.push({
+          name: cleanItemName,
+          bundled,
+          consumed,
+          left,
+          session: consumed,
+        });
+      } else {
+        const newDeal: ProcessedDeal = {
+          type: "deal",
+          name: groupKey,
+          price: itemTotal,
+          children: [
+            {
+              name: cleanItemName,
+              bundled,
+              consumed,
+              left,
+              session: consumed,
+            },
+          ],
+        };
+        dealMap.set(groupKey, newDeal);
+        processedItems.push(newDeal);
+      }
     } else {
-      standaloneItems.push(item);
+      const itemName = item.name || item.product_name || "Service";
+      const qty = Number(item.quantity) || 1;
+      const unitPrice = Number(item.unit_price !== undefined ? item.unit_price : item.price || 0);
+      const totalPrice = Number(item.total_price !== undefined ? item.total_price : unitPrice * qty);
+      const allowed = Number(item.sessions_allowed) || 1;
+      const consumed = Number(item.sessions_consumed) || 1;
+
+      processedItems.push({
+        type: "standalone",
+        name: itemName,
+        qty,
+        unit_price: unitPrice,
+        total_price: totalPrice,
+        note: item.note,
+        sessions_allowed: allowed,
+        sessions_consumed: consumed,
+      });
     }
   });
 
-  // Calculate totals
-  const grossTotal = Number(data.subtotal || 0);
-  const discountAmount = Number(data.discount || 0);
-  const grandTotal = Number(data.grandTotal || 0);
-  const paidAmount = Number(data.paidAmount || 0);
-  const balanceDue = Number(
-    data.balanceDue !== undefined
-      ? data.balanceDue
-      : Math.max(0, grandTotal - paidAmount)
+  // Calculate financial totals
+  const calculatedGross = processedItems.reduce((acc, it) => {
+    return acc + (it.type === "deal" ? it.price : it.total_price);
+  }, 0);
+
+  const grossTotal = Number(data.subtotal !== undefined ? data.subtotal : calculatedGross);
+  const discount = Number(
+    data.discount !== undefined ? data.discount : data.discountAmount || 0
   );
-  const previousOrRemaining = Number(
+  const payable = Number(
+    data.grandTotal !== undefined ? data.grandTotal : Math.max(0, grossTotal - discount)
+  );
+  const paid = Number(data.paidAmount || 0);
+  const balanceDue = Number(
+    data.balanceDue !== undefined ? data.balanceDue : Math.max(0, payable - paid)
+  );
+
+  const remainingDebt = Number(
     data.remainingDue !== undefined
       ? data.remainingDue
       : data.customer?.current_balance !== undefined
         ? data.customer.current_balance
-        : balanceDue
+        : 0
   );
 
+  const statusText =
+    balanceDue <= 0 ? "Fully paid" : paid > 0 ? "Partially paid" : "Unpaid";
+
   return `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Receipt - ${data.invoiceNumber}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    @page {
-      size: 80mm auto;
-      margin: 0;
-    }
-    @media print {
-      html, body {
-        width: 80mm !important;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
-      body {
-        padding: 3mm 2mm !important;
-      }
-      .no-print {
-        display: none !important;
-      }
-    }
-    * {
-      box-sizing: border-box;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
-    body {
-      width: 75mm;
-      max-width: 75mm;
-      margin: 0 auto;
-      padding: 10px 4px;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      font-size: 11px;
-      line-height: 1.25;
-      color: #000;
-      background: #fff;
-    }
-    .text-center { text-align: center; }
-    .text-right { text-align: right; }
-    .text-left { text-align: left; }
-    .font-bold { font-weight: 700; }
-    .font-black { font-weight: 900; }
-    .uppercase { text-transform: uppercase; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Invoice - ${escapeHtml(data.invoiceNumber)}</title>
+<style>
+  @page { size: 80mm auto; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { margin: 0; padding: 0; height: auto; }
+  body { background: #dcdcdc; font-family: "Segoe UI", Tahoma, Arial, sans-serif; color: #000;
+         -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 
-    .btn-print {
-      display: block;
-      width: 100%;
-      padding: 8px;
-      background: #4f46e5;
-      color: white;
-      text-align: center;
-      font-weight: bold;
-      border-radius: 6px;
-      margin-bottom: 12px;
-      cursor: pointer;
-      border: none;
-      font-size: 12px;
-    }
-    .btn-print:hover {
-      background: #4338ca;
-    }
+  .receipt { width: 80mm; margin: 0 auto; padding: 2mm 3.5mm; background: #fff; font-size: 12px; line-height: 1.3; }
+  .hide { display: none !important; }
 
-    .logo-container {
-      text-align: center;
-      margin-bottom: 4px;
-    }
-    .logo-img {
-      max-height: 52px;
-      max-width: 130px;
-      margin: 0 auto;
-      display: block;
-      object-fit: contain;
-    }
+  /* ---------- Header ---------- */
+  .head { text-align: center; }
+  .head img { width: 22mm; height: auto; display: block; margin: 0 auto; object-fit: contain; }
+  .head h1 { font-size: 18px; font-weight: 800; line-height: 1.15; margin-top: 1.2mm; text-transform: uppercase; letter-spacing: .3px; }
+  .head p { font-size: 11px; margin-top: .8mm; color: #222; }
 
-    .clinic-title {
-      font-size: 14px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin: 2px 0;
-      text-align: center;
-    }
-    .clinic-info {
-      font-size: 9.5px;
-      color: #222;
-      text-align: center;
-      margin-bottom: 1px;
-      line-height: 1.2;
-    }
+  /* ---------- Invoice bar (black strip) ---------- */
+  .bar { display: flex; justify-content: space-between; align-items: center; gap: 2mm;
+         margin-top: 3mm; padding: 1.6mm 2.5mm; background: #000; color: #fff; border-radius: 1.2mm; }
+  .bar b { font-size: 13px; font-weight: 800; }
+  .bar span { font-size: 10.5px; text-align: right; }
 
-    .meta-section {
-      margin-top: 6px;
-      font-size: 10px;
-      line-height: 1.35;
-    }
-    .meta-row {
-      display: flex;
-      justify-content: space-between;
-    }
+  /* ---------- Patient + token ---------- */
+  .who { display: flex; gap: 3mm; margin-top: 3mm; align-items: stretch; }
+  .who .left { flex: 1; min-width: 0; }
+  .who .name { font-size: 16px; font-weight: 800; line-height: 1.15; word-break: break-word; }
+  .kv { display: flex; gap: 2mm; font-size: 11.5px; margin-top: .7mm; }
+  .kv i { font-style: normal; color: #555; width: 14mm; flex: none; }
+  .kv span { font-weight: 600; min-width: 0; word-break: break-word; }
+  .tok { flex: none; width: 24mm; background: #000; color: #fff; border-radius: 1.5mm; text-align: center;
+         display: flex; flex-direction: column; justify-content: center; padding: 1.5mm 0; }
+  .tok small { font-size: 10px; letter-spacing: 1px; }
+  .tok strong { font-size: 26px; font-weight: 800; line-height: 1.05; }
 
-    .token-container {
-      text-align: center;
-      margin: 6px 0 4px 0;
-    }
-    .token-title {
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-    .token-value {
-      font-size: 26px;
-      font-weight: 900;
-      line-height: 1.1;
-      letter-spacing: 1px;
-    }
+  /* ---------- Dotted line (no border) ---------- */
+  .dots { height: 1px; margin: 3mm 0 1mm; background-image: repeating-linear-gradient(90deg,#000 0 1px,transparent 1px 4px); }
 
-    .divider-solid {
-      border-top: 1.5px solid #000;
-      margin: 5px 0;
-    }
-    .divider-dashed {
-      border-top: 1px dashed #666;
-      margin: 4px 0;
-    }
+  /* ---------- Items ---------- */
+  .items-title { display: flex; justify-content: space-between; font-size: 11px; color: #555; padding-bottom: 1mm; }
+  .item { padding: 1.4mm 0 1.6mm; background-image: repeating-linear-gradient(90deg,#000 0 1px,transparent 1px 4px);
+          background-repeat: no-repeat; background-size: 100% 1px; background-position: bottom; }
+  .item:last-child { background-image: none; }
+  .item .n { font-size: 13px; font-weight: 700; word-break: break-word; }
+  .item .note { font-size: 10.5px; color: #444; }
+  .item .m { display: flex; justify-content: space-between; font-size: 11.5px; margin-top: .4mm; }
+  .item .m em { font-style: normal; color: #444; }
+  .item .m b { font-weight: 800; }
 
-    .items-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 2px 0;
-    }
-    .items-table th {
-      font-size: 10.5px;
-      font-weight: 800;
-      padding-bottom: 3px;
-    }
-    .items-table td {
-      font-size: 10px;
-      vertical-align: top;
-      padding: 2px 0;
-    }
-    .item-sub-bullet {
-      font-size: 9px;
-      color: #222;
-      padding-left: 6px;
-      line-height: 1.2;
-    }
+  .item .dealrow { display: flex; justify-content: space-between; gap: 2mm; font-size: 13px; font-weight: 800; }
+  .item .dealrow span { min-width: 0; word-break: break-word; }
+  .sub { margin-top: 1.2mm; padding-left: 1.5mm; }
+  .sub .t { font-size: 11.5px; }
+  .sub .t b { font-weight: 800; }
+  .sub .s { font-size: 10px; color: #444; padding-left: 2.2mm; margin-bottom: .8mm; }
 
-    .totals-box {
-      margin-top: 4px;
-      font-size: 10.5px;
-      line-height: 1.35;
-    }
-    .totals-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 1px;
-    }
+  /* ---------- Totals ---------- */
+  .tot { margin-top: 1mm; }
+  .tot .r { display: flex; justify-content: space-between; padding: .6mm 0; font-size: 12px; }
+  .pay { display: flex; justify-content: space-between; align-items: center; margin: 1.5mm 0;
+         padding: 1.8mm 2.5mm; background: #000; color: #fff; border-radius: 1.2mm; font-size: 15px; font-weight: 800; }
+  .due { display: flex; justify-content: space-between; align-items: baseline; margin-top: .8mm; font-size: 15px; font-weight: 800; }
+  .status { text-align: right; font-size: 10.5px; color: #333; margin-top: .3mm; }
 
-    .payable-banner {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 13.5px;
-      font-weight: 900;
-      margin: 5px 0;
-      padding: 2px 0;
-    }
+  /* ---------- Footer ---------- */
+  .thanks { text-align: center; font-style: italic; font-weight: 700; font-size: 12.5px; margin: 4mm 0 2mm; }
+  .credit { text-align: center; font-size: 10px; line-height: 1.4; white-space: nowrap; }
+  .credit b { font-weight: 800; }
 
-    .footer-tagline {
-      font-style: italic;
-      font-weight: 700;
-      font-size: 10.5px;
-      margin: 10px 0 6px 0;
-      text-align: center;
-    }
-    .branding-box {
-      font-size: 8.5px;
-      line-height: 1.3;
-      color: #333;
-      text-align: center;
-      margin-top: 4px;
-    }
-  </style>
+  .no-print {
+    width: 80mm;
+    margin: 10px auto;
+    text-align: center;
+  }
+  .btn-print {
+    width: 100%;
+    padding: 9px 16px;
+    background: #000;
+    color: #fff;
+    font-weight: 700;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  }
+  .btn-print:hover {
+    background: #222;
+  }
+
+  @media print {
+    html, body { background: #fff !important; width: 80mm !important; margin: 0 !important; padding: 0 !important; }
+    .receipt { margin: 0 !important; width: 80mm !important; }
+    .no-print { display: none !important; }
+  }
+</style>
 </head>
 <body>
-  <div class="no-print">
-    <button class="btn-print" onclick="window.print()">🖨️ Click to Print Receipt</button>
+
+<div class="no-print">
+  <button class="btn-print" onclick="window.print()">🖨️ Click to Print Receipt</button>
+</div>
+
+<div class="receipt" id="receipt">
+
+  <div class="head">
+    ${clinicLogo ? `<img id="logo" src="${clinicLogo}" alt="Clinic Logo" />` : ""}
+    <h1 id="clinicName">${clinicName}</h1>
+    ${clinicLine ? `<p id="clinicLine">${clinicLine}</p>` : ""}
   </div>
 
-  <!-- CLINIC HEADER -->
-  ${clinicLogo
-      ? `<div class="logo-container"><img src="${clinicLogo}" class="logo-img" alt="Clinic Logo" /></div>`
-      : ""
-    }
-  <div class="clinic-title">${clinicName}</div>
-  ${clinicAddress ? `<div class="clinic-info">${clinicAddress}</div>` : ""}
-  ${clinicPhone ? `<div class="clinic-info">${clinicPhone}</div>` : ""}
-  ${data.clinic?.tax_number
-      ? `<div class="clinic-info">NTN: ${data.clinic.tax_number}</div>`
-      : ""
-    }
+  <div class="bar">
+    <b id="inv">Invoice ${escapeHtml(data.invoiceNumber)}</b>
+    <span id="date">${formattedDate}</span>
+  </div>
 
-  <!-- INVOICE & PATIENT META -->
-  <div class="meta-section">
-    <div class="meta-row">
-      <span class="font-bold">INV: ${data.invoiceNumber}</span>
-      <span class="font-bold">${formattedDate}</span>
+  <div class="who">
+    <div class="left">
+      <div class="name" id="patient">${patientName}</div>
+      ${patientPhone ? `<div class="kv" id="rPhone"><i>Phone</i><span id="pphone">${patientPhone}</span></div>` : ""}
+      ${mrNo ? `<div class="kv" id="rMr"><i>MR No</i><span id="mr">${mrNo}</span></div>` : ""}
+      <div class="kv" id="rVisit"><i>Visit No</i><span id="visit">${visitNo}</span></div>
+      ${refBy ? `<div class="kv" id="rRef"><i>Ref by</i><span id="ref">${refBy}</span></div>` : ""}
     </div>
-    <div><span class="font-bold">Patient:</span> ${data.customer.name || "Walk-in"}${data.customer.phone ? ` | ${data.customer.phone}` : ""
-    }</div>
-    <div><span class="font-bold">MR:</span> ${data.customer.medical_id || "N/A"}</div>
-    <div><span class="font-bold">Visit No:</span> ${data.visitNo || 1}</div>
-    <div><span class="font-bold">Ref By:</span> ${doctorName}</div>
+    <div class="tok" id="tokBox">
+      <small>Token</small>
+      <strong id="token">${tokenNumber}</strong>
+    </div>
   </div>
 
-  <!-- QUEUE TOKEN NUMBER -->
-  <div class="token-container">
-    <div class="token-title">TOKEN NUMBER</div>
-    <div class="token-value">${data.tokenNumber || "P-01"}</div>
-  </div>
-
-  <!-- DIVIDER -->
-  <div class="divider-solid"></div>
-
-  <!-- ITEMS TABLE -->
-  <table class="items-table">
-    <thead>
-      <tr>
-        <th class="text-left">Item</th>
-        <th class="text-right">Total</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- GROUPED DEALS / PACKAGES -->
-      ${Object.values(groupedItems)
-      .map(
-        (group) => `
-        <tr>
-          <td class="text-left font-bold" style="padding-top: 4px;">${group.name}</td>
-          <td class="text-right font-bold" style="padding-top: 4px;">${group.total_price > 0 ? group.total_price.toFixed(2) : "0.00"}</td>
-        </tr>
-        <tr>
-          <td colspan="2" style="padding-bottom: 4px;">
-            ${group.sub_items
-              .map((s) => {
-                const allowed = Number(s.sessions_allowed) || Number(s.sessions) || 1;
-                const consumed = Number(s.sessions_consumed) || 1;
-                const remaining = Math.max(0, allowed - consumed);
-                return `
-                  <div class="item-sub-bullet" style="margin-top: 1px;">
-                    <strong>• ${s.name}</strong>: 
-                    ${allowed > 1 
-                      ? `Session ${consumed} of ${allowed} (${remaining} Remaining)` 
-                      : `1 Session`
-                    }
-                  </div>
-                  ${allowed > 1 ? `
-                    <div class="item-sub-bullet" style="font-size: 8.5px; color: #555; padding-left: 14px;">
-                      Bundled: ${allowed} | Consumed: ${consumed} | Left: ${remaining}
-                    </div>
-                  ` : ""}
-                `;
-              })
-              .join("")}
-          </td>
-        </tr>
-      `
-      )
-      .join("")}
-
-      <!-- STANDALONE ITEMS -->
-      ${standaloneItems
-      .map(
-        (item) => {
-          const allowed = Number(item.sessions_allowed) || 1;
-          const consumed = Number(item.sessions_consumed) || 1;
-          const remaining = Math.max(0, allowed - consumed);
-          const isPrepaid = Number(item.total_price || 0) === 0 && allowed > 1;
-
+  <div class="dots"></div>
+  <div class="items-title"><span>Item</span><span>Amount</span></div>
+  <div id="items">
+    ${processedItems
+      .map((it) => {
+        if (it.type === "deal") {
+          const dealTitle = escapeHtml(
+            it.name + (/\(deal\)/i.test(it.name) ? "" : " (Deal)")
+          );
           return `
-          <tr>
-            <td class="text-left font-bold" style="padding-top: 3px;">
-              ${item.name || item.product_name || "Service"}
-            </td>
-            <td class="text-right font-bold" style="padding-top: 3px;">
-              ${Number(item.total_price || item.unit_price * item.quantity || 0).toFixed(2)}
-            </td>
-          </tr>
-          ${allowed > 1 ? `
-            <tr>
-              <td colspan="2" class="item-sub-bullet" style="font-weight: 600; color: #111;">
-                Session ${consumed} of ${allowed} (${remaining} Remaining)
-              </td>
-            </tr>
-            <tr>
-              <td colspan="2" class="item-sub-bullet" style="font-size: 8.5px; color: #555;">
-                Bundled: ${allowed} | Consumed: ${consumed} | Left: ${remaining}${isPrepaid ? " • [Pre-paid Package]" : ""}
-              </td>
-            </tr>
-          ` : (item.quantity > 1 ? `
-            <tr>
-              <td colspan="2" class="item-sub-bullet">
-                Qty: ${item.quantity} × ${Number(item.unit_price).toFixed(2)}
-              </td>
-            </tr>
-          ` : "")}
-        `;
+            <div class="item">
+              <div class="dealrow">
+                <span>${dealTitle}</span>
+                <span>${money(it.price)}</span>
+              </div>
+              ${it.children
+                .map((k) => `
+                  <div class="sub">
+                    <div class="t">• <b>${escapeHtml(k.name)}</b>: Session ${k.session} of ${k.bundled} (${k.left} Remaining)</div>
+                    <div class="s">Bundled: ${k.bundled} | Consumed: ${k.consumed} | Left: ${k.left}</div>
+                  </div>
+                `)
+                .join("")}
+            </div>
+          `;
+        } else {
+          return `
+            <div class="item">
+              <div class="n">
+                ${escapeHtml(it.name)}
+                ${it.note ? `<div class="note">${escapeHtml(it.note)}</div>` : ""}
+                ${
+                  it.sessions_allowed && it.sessions_allowed > 1
+                    ? `<div class="note">Session ${it.sessions_consumed || 1} of ${it.sessions_allowed} (${Math.max(0, it.sessions_allowed - (it.sessions_consumed || 1))} Remaining)</div>`
+                    : ""
+                }
+              </div>
+              <div class="m">
+                <em>${it.qty} x ${money(it.unit_price)}</em>
+                <b>${money(it.total_price)}</b>
+              </div>
+            </div>
+          `;
         }
-      )
+      })
       .join("")}
-    </tbody>
-  </table>
+  </div>
+  <div class="dots" style="margin-top:1mm"></div>
 
-  <!-- TOTALS SECTION -->
-  <div class="totals-box">
-    <div class="totals-row">
-      <span>Gross Total:</span>
-      <span>${grossTotal.toFixed(2)}</span>
-    </div>
-    <div class="totals-row">
-      <span>Discount:</span>
-      <span>(${discountAmount.toFixed(2)})</span>
-    </div>
-    ${previousOrRemaining > 0
-      ? `<div class="totals-row">
-            <span>Remaining:</span>
-            <span>PKR ${previousOrRemaining.toFixed(2)}</span>
-          </div>`
-      : ""
+  <div class="tot">
+    <div class="r"><span>Gross total</span><span id="gross">${money(grossTotal)}</span></div>
+    ${
+      discount > 0
+        ? `<div class="r" id="rDisc"><span>Discount</span><span id="discount">(${money(discount)})</span></div>`
+        : ""
     }
-
-    <!-- PAYABLE BANNER -->
-    <div class="payable-banner">
-      <span>PAYABLE: ${grandTotal.toFixed(2)}/-</span>
-      <span></span>
-    </div>
-
-    <div class="totals-row">
-      <span>Paid:</span>
-      <span>${paidAmount.toFixed(2)}</span>
-    </div>
-    <div class="totals-row font-bold">
-      <span>Balance Due:</span>
-      <span>${balanceDue.toFixed(2)}</span>
-    </div>
+    ${
+      remainingDebt > 0
+        ? `<div class="r" id="rRem"><span>Remaining</span><span id="remaining">PKR ${money(remainingDebt)}</span></div>`
+        : ""
+    }
+    <div class="pay"><span>Payable</span><span id="payable">${money(payable)}/-</span></div>
+    <div class="r"><span>Paid</span><span id="paid">${money(paid)}</span></div>
+    <div class="due"><span>Balance due</span><span id="balance">${money(Math.max(0, balanceDue))}</span></div>
+    <div class="status" id="status">${statusText}</div>
   </div>
 
-  <!-- FOOTER -->
-  <div class="footer-tagline">&ldquo;${footerNote}&rdquo;</div>
+  <div class="thanks" id="thanks">${clinicThanks}</div>
 
-  <div class="branding-box">
-    <div>Software Solution Provided By:</div>
-    <div class="font-bold">FALCON SWIFT PVT. LTD.</div>
-    <div>Website: www.falconswift.online</div>
-    <div>Support: +92 326-3392082</div>
+  <div class="credit">
+    Software Solution by <b>Falcon Swift Pvt. Ltd.</b><br>
+    www.falconswift.online &nbsp;|&nbsp; 0320-8024173
   </div>
 
-  <script>
-    window.addEventListener('load', function() {
-      setTimeout(function() {
-        window.focus();
-        window.print();
-      }, 250);
-    });
-  </script>
+</div>
+
+<script>
+  window.addEventListener('load', function() {
+    const img = document.getElementById("logo");
+    const doPrint = () => setTimeout(() => window.print(), 200);
+    if (img && img.src) {
+      if (img.complete) {
+        doPrint();
+      } else {
+        img.onload = img.onerror = doPrint;
+      }
+    } else {
+      doPrint();
+    }
+  });
+</script>
 </body>
 </html>`;
 }
@@ -497,7 +478,7 @@ export function printThermalReceipt(data: ThermalReceiptData) {
   const printWindow = window.open(
     "",
     "_blank",
-    "width=420,height=700,menubar=no,toolbar=no,location=no,status=no"
+    "width=420,height=750,menubar=no,toolbar=no,location=no,status=no"
   );
   if (!printWindow) {
     alert("Popup blocked! Please allow popups for this site to print thermal receipts.");

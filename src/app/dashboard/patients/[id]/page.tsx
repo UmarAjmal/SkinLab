@@ -221,7 +221,8 @@ export default function PatientDetailPage() {
         advance_balance: patient.advance_balance,
       },
       doctor: sale.doctor ? { name: sale.doctor.name } : null,
-      tokenNumber: "001",
+      visitNo: sale.visit_count || 1,
+      tokenNumber: sale.token_number || "001",
       items: (sale.items || []).map((it: any) => ({
         name: it.product?.name || "Procedure / Service",
         item_group_name: it.item_group_name,

@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Filter, Edit3, Eye, FileText } from "lucide-react";
+import { Search, Filter, Edit3, Eye, FileText, Printer } from "lucide-react";
 import dayjs from "dayjs";
 import { useSession } from "next-auth/react";
 import InvoiceModal, { StatusBadge } from "@/components/InvoiceModal";
 import EditInvoiceModal from "@/components/EditInvoiceModal";
+import { printThermalReceipt } from "@/lib/thermalPrinter";
 
 export default function SalesHistoryPage() {
   const { data: session } = useSession();
@@ -15,6 +16,7 @@ export default function SalesHistoryPage() {
   const [sales, setSales] = useState<any[]>([]);
   const [returns, setReturns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [clinicSettings, setClinicSettings] = useState<any>(null);
 
   // Filters
   const [search, setSearch] = useState("");
@@ -69,6 +71,57 @@ export default function SalesHistoryPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && !data.error) setClinicSettings(data);
+      })
+      .catch(() => {});
+  }, []);
+
+  const handlePrintThermalReceipt = (sale: any) => {
+    printThermalReceipt({
+      invoiceNumber: sale.invoice_number,
+      date: sale.date,
+      tokenNumber: sale.token_number || sale.tokenNumber || "P-01",
+      visitNo: sale.visit_count || sale.visitNo || 1,
+      customer: {
+        name: sale.customer?.name || "Walk-in Patient",
+        phone: sale.customer?.phone || "",
+        medical_id: sale.customer?.medical_id || "",
+        current_balance: sale.customer?.current_balance ?? 0,
+        advance_balance: sale.customer?.advance_balance ?? 0,
+      },
+      doctor: sale.doctor ? { name: sale.doctor.name } : null,
+      clinic: {
+        name: clinicSettings?.name || "Skin-Lab Clinic",
+        phone: clinicSettings?.phone || "",
+        logo: clinicSettings?.logo || "",
+        address: clinicSettings?.address || "",
+        tax_number: clinicSettings?.tax_number || "",
+        footer_note: clinicSettings?.footer_note || "Thank you for choosing Skin-Lab!",
+      },
+      items: (sale.items || []).map((it: any) => ({
+        name: it.product?.name || "Service",
+        item_group_name: it.item_group_name || null,
+        quantity: it.quantity,
+        unit_price: it.unit_price,
+        total_price: it.total_price,
+        sessions_allowed: it.sessions_allowed || 1,
+        sessions_consumed: it.sessions_consumed ?? 0,
+        is_prepaid: it.unit_price === 0 && (it.sessions_allowed || 1) > 1,
+      })),
+      subtotal: sale.subtotal || sale.grand_total,
+      discountAmount: sale.discount_amount || 0,
+      grandTotal: sale.grand_total,
+      paidAmount: sale.paid_amount || 0,
+      balanceDue: Math.max(0, sale.grand_total - (sale.paid_amount || 0)),
+      remainingDue: sale.customer?.current_balance,
+      paymentMethod: sale.payment_method || "Cash",
+    });
   };
 
   useEffect(() => {
@@ -231,6 +284,15 @@ export default function SalesHistoryPage() {
                       )}
                       <button
                         type="button"
+                        onClick={() => handlePrintThermalReceipt(sale)}
+                        title="Print 80mm Receipt"
+                        className="px-3 py-1.5 rounded-xl border border-slate-300 text-slate-800 bg-white hover:bg-slate-50 text-xs font-bold flex items-center gap-1 shadow-2xs"
+                      >
+                        <Printer className="w-3.5 h-3.5 text-slate-600" />
+                        <span>Slip</span>
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => setSelectedSale(sale)}
                         className="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-700 bg-slate-50 text-xs font-semibold flex items-center gap-1"
                       >
@@ -311,6 +373,16 @@ export default function SalesHistoryPage() {
                                   <Edit3 className="w-4 h-4" />
                                 </button>
                               )}
+
+                              {/* Print Thermal Receipt Button */}
+                              <button
+                                type="button"
+                                onClick={() => handlePrintThermalReceipt(sale)}
+                                title="Print 80mm Thermal Receipt"
+                                className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200 bg-white"
+                              >
+                                <Printer className="w-4 h-4" />
+                              </button>
 
                               {/* View Details Button */}
                               <button
