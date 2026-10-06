@@ -3,11 +3,11 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
-// Ensure NEXTAUTH_URL never points to stale onrender.com
-if (!process.env.NEXTAUTH_URL || process.env.NEXTAUTH_URL.includes("onrender.com")) {
-  if (process.env.VERCEL_URL || process.env.NODE_ENV === "production") {
-    process.env.NEXTAUTH_URL = "https://skinlabb.vercel.app";
-  }
+const VERCEL_APP_URL = "https://skinlabb.vercel.app";
+
+// Ensure NEXTAUTH_URL is always set to Vercel production URL in production, or localhost in dev
+if (process.env.NODE_ENV === "production" || !process.env.NEXTAUTH_URL) {
+  process.env.NEXTAUTH_URL = VERCEL_APP_URL;
 }
 
 export const authOptions: NextAuthOptions = {
@@ -82,20 +82,29 @@ export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
   callbacks: {
     async redirect({ url, baseUrl }) {
-      // Prevent any redirects to onrender.com
-      if (url.includes("onrender.com") || baseUrl.includes("onrender.com")) {
-        return "/login";
+      const siteUrl = process.env.NODE_ENV === "production"
+        ? VERCEL_APP_URL
+        : (baseUrl && baseUrl.startsWith("http") ? baseUrl : "http://localhost:3000");
+
+      // NextAuth client-side signIn/signOut requires an absolute URL for new URL(data.url)
+      if (url.startsWith("/")) {
+        return `${siteUrl}${url}`;
       }
-      if (url.startsWith("/")) return url;
+
       try {
-        const origin = new URL(url).origin;
-        if (origin === baseUrl || origin.includes("vercel.app") || origin.includes("localhost")) {
+        const parsed = new URL(url);
+        if (
+          parsed.origin === siteUrl ||
+          parsed.hostname.endsWith("vercel.app") ||
+          parsed.hostname === "localhost"
+        ) {
           return url;
         }
       } catch {
-        // ignore
+        // Fallback for malformed URLs
       }
-      return "/login";
+
+      return `${siteUrl}/dashboard`;
     },
     async jwt({ token, user, trigger, session }) {
       if (user) {

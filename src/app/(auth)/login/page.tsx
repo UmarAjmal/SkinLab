@@ -19,7 +19,22 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  const rawCallbackUrl = searchParams.get("callbackUrl");
+  let callbackUrl = "/dashboard";
+  if (rawCallbackUrl) {
+    if (rawCallbackUrl.startsWith("/")) {
+      callbackUrl = rawCallbackUrl;
+    } else {
+      try {
+        const parsed = new URL(rawCallbackUrl);
+        if (parsed.hostname.endsWith("vercel.app") || parsed.hostname === "localhost") {
+          callbackUrl = parsed.pathname + parsed.search;
+        }
+      } catch {
+        callbackUrl = "/dashboard";
+      }
+    }
+  }
   const registered = searchParams.get("registered") === "true";
   const newUser = searchParams.get("new_user") === "true";
   const prefilledEmail = searchParams.get("email") || "";
