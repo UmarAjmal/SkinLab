@@ -449,7 +449,7 @@ export function generateThermalReceiptHtml(data: ThermalReceiptData): string {
 
   <div class="credit">
     Software Solution by <b>Falcon Swift Pvt. Ltd.</b><br>
-    www.falconswift.online &nbsp;|&nbsp; 0320-8024173
+    www.falconswift.online &nbsp;|&nbsp; 0320-8624173
   </div>
 
 </div>
