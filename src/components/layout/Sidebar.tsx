@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import {
   Users,
   LayoutDashboard,
@@ -29,6 +30,10 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
   const [isHovered, setIsHovered] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const pathname = usePathname();
+
+  const handleSignOut = async () => {
+    await signOut({ callbackUrl: "/login" });
+  };
 
   // Load saved collapse preference from localStorage
   useEffect(() => {
@@ -190,13 +195,14 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
               </div>
             </div>
           </div>
-          <a
-            href="/api/auth/signout"
-            className="flex items-center justify-center w-full py-2.5 px-3 rounded-xl bg-white/10 hover:bg-rose-600 text-white transition-all text-sm font-medium group shadow-sm"
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="flex items-center justify-center w-full py-2.5 px-3 rounded-xl bg-white/10 hover:bg-rose-600 text-white transition-all text-sm font-medium group shadow-sm cursor-pointer border-0"
           >
             <LogOut className="mr-2 h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />
             <span>Sign out</span>
-          </a>
+          </button>
         </div>
       </aside>
 
@@ -339,12 +345,13 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
           </div>
 
           <div className="relative group">
-            <a
-              href="/api/auth/signout"
+            <button
+              type="button"
+              onClick={handleSignOut}
               title={!isDesktopExpanded ? "Sign out" : undefined}
               className={`
                 flex items-center justify-center h-10 rounded-xl bg-white/10 hover:bg-rose-600 
-                text-white transition-all duration-200 text-sm font-medium shadow-sm overflow-hidden
+                text-white transition-all duration-200 text-sm font-medium shadow-sm overflow-hidden cursor-pointer border-0
                 ${isDesktopExpanded ? "w-full px-3" : "w-full"}
               `}
             >
@@ -354,7 +361,7 @@ export default function Sidebar({ userEmail, userRole, userPermissions = [] }: S
               }`}>
                 Sign out
               </span>
-            </a>
+            </button>
 
             {!isDesktopExpanded && (
               <div

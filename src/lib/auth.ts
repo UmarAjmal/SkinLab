@@ -3,6 +3,13 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
+// Ensure NEXTAUTH_URL never points to stale onrender.com
+if (!process.env.NEXTAUTH_URL || process.env.NEXTAUTH_URL.includes("onrender.com")) {
+  if (process.env.VERCEL_URL || process.env.NODE_ENV === "production") {
+    process.env.NEXTAUTH_URL = "https://skinlabb.vercel.app";
+  }
+}
+
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET || "skinlab-super-secret-production-key-987654321",
   providers: [
@@ -74,6 +81,22 @@ export const authOptions: NextAuthOptions = {
   ],
   session: { strategy: "jwt" },
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      // Prevent any redirects to onrender.com
+      if (url.includes("onrender.com") || baseUrl.includes("onrender.com")) {
+        return "/login";
+      }
+      if (url.startsWith("/")) return url;
+      try {
+        const origin = new URL(url).origin;
+        if (origin === baseUrl || origin.includes("vercel.app") || origin.includes("localhost")) {
+          return url;
+        }
+      } catch {
+        // ignore
+      }
+      return "/login";
+    },
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
@@ -105,7 +128,10 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
-  pages: { signIn: "/login" },
+  pages: {
+    signIn: "/login",
+    signOut: "/login",
+  },
 };
 
 export function getServerSession() {
