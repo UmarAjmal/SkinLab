@@ -205,25 +205,34 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-50/50 -m-4 p-4 sm:-m-8 sm:p-8 overflow-y-auto w-full min-w-0">
-      <div className="flex justify-end items-center mb-6 sm:mb-8">
+    <div className="space-y-5 sm:space-y-6 w-full min-w-0">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+            Analytics &amp; Financial Reports
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 font-medium">
+            Audit clinic revenue, treatment performance, payments, and expenses.
+          </p>
+        </div>
+
         {/* Global Date Filter */}
         {activeTab !== "patient_ledger" && (
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3 bg-white p-2 rounded-2xl shadow-xs border border-gray-100 w-full sm:w-auto">
-            <div className="flex items-center px-3 border-r border-gray-100 flex-1 sm:flex-initial">
+          <div className="flex flex-wrap items-center gap-2 bg-white p-2 rounded-2xl shadow-xs border border-gray-200/80 w-full sm:w-auto">
+            <div className="flex items-center px-2.5 sm:border-r border-gray-100 flex-1 sm:flex-initial">
               <CalendarIcon className="w-4 h-4 text-gray-400 mr-2 shrink-0" />
               <input
                 type="date"
-                className="outline-hidden text-sm text-gray-700 bg-transparent font-medium w-full sm:w-auto"
+                className="outline-hidden text-xs sm:text-sm text-gray-700 bg-transparent font-medium w-full sm:w-auto"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
               />
             </div>
-            <div className="flex items-center px-3 flex-1 sm:flex-initial">
-              <span className="text-gray-400 mr-2 text-sm font-medium">to</span>
+            <div className="flex items-center px-2.5 flex-1 sm:flex-initial">
+              <span className="text-gray-400 mr-2 text-xs sm:text-sm font-medium">to</span>
               <input
                 type="date"
-                className="outline-hidden text-sm text-gray-700 bg-transparent font-medium w-full sm:w-auto"
+                className="outline-hidden text-xs sm:text-sm text-gray-700 bg-transparent font-medium w-full sm:w-auto"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
               />
@@ -233,8 +242,8 @@ export default function ReportsPage() {
       </div>
 
       <div className="bg-white rounded-3xl shadow-xs border border-gray-100 overflow-hidden flex flex-col min-h-[500px] w-full min-w-0">
-        {/* Tabs */}
-        <div className="flex border-b border-gray-100 bg-gray-50/50 px-4 pt-4 overflow-x-auto whitespace-nowrap shrink-0">
+        {/* Tabs with smooth horizontal scroll */}
+        <div className="flex border-b border-gray-100 bg-gray-50/50 px-3 sm:px-4 pt-3 sm:pt-4 overflow-x-auto no-scrollbar whitespace-nowrap shrink-0 gap-1">
           <button
             className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${activeTab === 'sales_register'
               ? 'border-indigo-600 text-indigo-700 bg-white shadow-xs'

@@ -350,7 +350,7 @@ export default function ExpensesPage() {
   const topCategory = stats.categoryBreakdown?.[0];
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6 w-full min-w-0">
+    <div className="space-y-5 sm:space-y-6 max-w-7xl mx-auto w-full min-w-0">
       {/* Action Toolbar */}
       <div className="flex flex-wrap items-center justify-end gap-2.5">
         <Link
@@ -383,76 +383,76 @@ export default function ExpensesPage() {
       </div>
 
       {/* KPI Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* Total In Range */}
-        <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-xs flex items-center justify-between relative overflow-hidden">
-          <div className="space-y-1">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">
+        <div className="bg-white p-3.5 sm:p-5 rounded-3xl border border-gray-100 shadow-xs flex items-center justify-between relative overflow-hidden">
+          <div className="space-y-0.5 sm:space-y-1 min-w-0 pr-1">
+            <span className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider block truncate">
               Filtered Total Spent
             </span>
-            <div className="text-2xl font-black text-rose-600 tracking-tight">
+            <div className="text-base sm:text-2xl font-black text-rose-600 tracking-tight truncate">
               PKR {Number(stats.totalAmount || 0).toLocaleString("en-PK", { minimumFractionDigits: 0 })}
             </div>
-            <p className="text-[11px] text-gray-500 font-medium">
-              {stats.totalCount || 0} expense voucher{stats.totalCount === 1 ? "" : "s"} recorded
+            <p className="text-[10px] sm:text-[11px] text-gray-500 font-medium truncate">
+              {stats.totalCount || 0} voucher{stats.totalCount === 1 ? "" : "s"}
             </p>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
-            <TrendingDown className="w-6 h-6" />
+          <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+            <TrendingDown className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
         </div>
 
         {/* This Month */}
-        <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-xs flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">
+        <div className="bg-white p-3.5 sm:p-5 rounded-3xl border border-gray-100 shadow-xs flex items-center justify-between">
+          <div className="space-y-0.5 sm:space-y-1 min-w-0 pr-1">
+            <span className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider block truncate">
               Current Month Total
             </span>
-            <div className="text-2xl font-black text-gray-900 tracking-tight">
+            <div className="text-base sm:text-2xl font-black text-gray-900 tracking-tight truncate">
               PKR {Number(stats.thisMonthAmount || 0).toLocaleString("en-PK", { minimumFractionDigits: 0 })}
             </div>
-            <p className="text-[11px] text-gray-500 font-medium">
-              {dayjs().format("MMMM YYYY")} expenses
+            <p className="text-[10px] sm:text-[11px] text-gray-500 font-medium truncate">
+              {dayjs().format("MMM YYYY")}
             </p>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-            <Calendar className="w-6 h-6" />
+          <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+            <Calendar className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
         </div>
 
         {/* Today's Expenses */}
-        <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-xs flex items-center justify-between">
-          <div className="space-y-1">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">
+        <div className="bg-white p-3.5 sm:p-5 rounded-3xl border border-gray-100 shadow-xs flex items-center justify-between">
+          <div className="space-y-0.5 sm:space-y-1 min-w-0 pr-1">
+            <span className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider block truncate">
               Today's Expenses
             </span>
-            <div className="text-2xl font-black text-amber-600 tracking-tight">
+            <div className="text-base sm:text-2xl font-black text-amber-600 tracking-tight truncate">
               PKR {Number(stats.todayAmount || 0).toLocaleString("en-PK", { minimumFractionDigits: 0 })}
             </div>
-            <p className="text-[11px] text-gray-500 font-medium">
-              Petty cash & day expenditures
+            <p className="text-[10px] sm:text-[11px] text-gray-500 font-medium truncate">
+              Petty cash
             </p>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-            <Wallet className="w-6 h-6" />
+          <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+            <Wallet className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
         </div>
 
         {/* Top Spending Category */}
-        <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-xs flex items-center justify-between">
-          <div className="space-y-1 min-w-0 pr-2">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">
+        <div className="bg-white p-3.5 sm:p-5 rounded-3xl border border-gray-100 shadow-xs flex items-center justify-between">
+          <div className="space-y-0.5 sm:space-y-1 min-w-0 pr-1">
+            <span className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider block truncate">
               Top Category
             </span>
-            <div className="text-lg font-black text-gray-900 tracking-tight truncate">
+            <div className="text-sm sm:text-lg font-black text-gray-900 tracking-tight truncate">
               {topCategory?.name || "None"}
             </div>
-            <p className="text-[11px] text-gray-500 font-medium">
-              {topCategory ? `PKR ${topCategory.amount.toLocaleString()} (${topCategory.count} txns)` : "No expenses recorded"}
+            <p className="text-[10px] sm:text-[11px] text-gray-500 font-medium truncate">
+              {topCategory ? `PKR ${topCategory.amount.toLocaleString()}` : "No expenses"}
             </p>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
-            <Layers className="w-6 h-6" />
+          <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+            <Layers className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
         </div>
       </div>
@@ -623,19 +623,84 @@ export default function ExpensesPage() {
               )}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead className="bg-slate-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-                  <tr>
-                    <th className="p-4">Date & Time</th>
-                    <th className="p-4">Expense Description</th>
-                    <th className="p-4">Category</th>
-                    <th className="p-4">Paid To / Payee</th>
-                    <th className="p-4 text-center">Payment Method</th>
-                    <th className="p-4 text-right">Amount (PKR)</th>
-                    <th className="p-4 text-right">Actions</th>
-                  </tr>
-                </thead>
+            <>
+              {/* MOBILE EXPENSES VOUCHER CARDS (< md screens) */}
+              <div className="md:hidden divide-y divide-gray-100 p-3 space-y-3">
+                {expenses.map((exp) => (
+                  <div
+                    key={exp.id}
+                    className="bg-slate-50/70 p-3.5 rounded-2xl border border-slate-200/80 space-y-2.5"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="font-bold text-slate-900 text-sm">{exp.title}</div>
+                        <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                          <span>{dayjs(exp.date).format("DD-MMM-YYYY • hh:mm A")}</span>
+                          {exp.reference_no && (
+                            <span className="font-mono text-[10px] bg-slate-200/70 px-1.5 py-0.2 rounded font-semibold text-slate-700">
+                              Ref: {exp.reference_no}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="text-right shrink-0">
+                        <div className="font-black text-rose-600 text-base">
+                          PKR {Number(exp.amount).toLocaleString("en-PK", { minimumFractionDigits: 0 })}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1 text-xs">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-800 border border-indigo-100 px-2 py-0.5 rounded-md text-[11px] font-semibold">
+                          <Tag className="w-3 h-3 text-indigo-500" />
+                          {exp.category?.name || "General"}
+                        </span>
+                        <span className="bg-white text-slate-700 px-2 py-0.5 rounded-md text-[11px] font-semibold border border-slate-200">
+                          {exp.payment_method || "Cash"}
+                        </span>
+                      </div>
+
+                      {isAdminOrManager && (
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEditModal(exp)}
+                            className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg"
+                            title="Edit"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeletingExpenseId(exp.id)}
+                            className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* DESKTOP TABLE VIEW (>= md screens) */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead className="bg-slate-50 border-b border-gray-100 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                    <tr>
+                      <th className="p-4">Date & Time</th>
+                      <th className="p-4">Expense Description</th>
+                      <th className="p-4">Category</th>
+                      <th className="p-4">Paid To / Payee</th>
+                      <th className="p-4 text-center">Payment Method</th>
+                      <th className="p-4 text-right">Amount (PKR)</th>
+                      <th className="p-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
                 <tbody className="divide-y divide-gray-100 text-xs sm:text-sm">
                   {expenses.map((exp) => (
                     <tr key={exp.id} className="hover:bg-slate-50/70 transition-colors group">
@@ -728,6 +793,7 @@ export default function ExpensesPage() {
                 </tbody>
               </table>
             </div>
+          </>
           )}
         </div>
       ) : (

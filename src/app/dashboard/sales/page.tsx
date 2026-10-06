@@ -163,7 +163,89 @@ export default function SalesHistoryPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden w-full min-w-0">
+          {/* MOBILE SALES CARDS (< md screens) */}
+          <div className="md:hidden space-y-3">
+            {loading ? (
+              <div className="bg-white p-8 rounded-2xl border border-gray-200 text-center text-gray-500 text-sm">
+                Loading sales records...
+              </div>
+            ) : sales.length === 0 ? (
+              <div className="bg-white p-8 rounded-2xl border border-gray-200 text-center text-gray-500 text-sm">
+                No sales records found.
+              </div>
+            ) : (
+              sales.map((sale) => {
+                const balanceDue = Math.max(0, sale.grand_total - (sale.paid_amount || 0));
+                return (
+                  <div
+                    key={sale.id}
+                    onClick={() => setSelectedSale(sale)}
+                    className="bg-white p-4 rounded-2xl border border-gray-200/90 shadow-2xs space-y-3 active:scale-[0.99] transition-all cursor-pointer"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-0.5 rounded-lg">
+                          {sale.invoice_number}
+                        </span>
+                        <div className="font-bold text-slate-900 text-sm mt-1.5">{sale.customer?.name || "Walk-in Customer"}</div>
+                        {sale.customer?.phone && (
+                          <div className="text-xs text-slate-500 font-mono mt-0.5">{sale.customer.phone}</div>
+                        )}
+                      </div>
+
+                      <div className="text-right">
+                        <StatusBadge status={sale.payment_status} />
+                        <div className="text-[11px] text-slate-400 mt-1">
+                          {dayjs(sale.date).format("DD-MMM-YYYY")}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+                      <div>
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase">Grand Total</span>
+                        <span className="font-black text-slate-900 text-sm">
+                          PKR {sale.grand_total.toFixed(0)}
+                        </span>
+                      </div>
+
+                      <div className="text-right">
+                        <span className="text-slate-400 block text-[10px] font-bold uppercase">Paid / Due</span>
+                        <span className="font-bold text-emerald-700">PKR {(sale.paid_amount || 0).toFixed(0)}</span>
+                        {balanceDue > 0 && (
+                          <span className="text-rose-600 font-bold ml-1.5">(Due: {balanceDue.toFixed(0)})</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100" onClick={(e) => e.stopPropagation()}>
+                      {["Admin", "Manager"].includes(userRole) && (
+                        <button
+                          type="button"
+                          onClick={() => setEditingSale(sale)}
+                          className="px-3 py-1.5 rounded-xl border border-indigo-200 text-indigo-700 bg-indigo-50/70 text-xs font-bold flex items-center gap-1"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          <span>Edit</span>
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setSelectedSale(sale)}
+                        className="px-3 py-1.5 rounded-xl border border-slate-200 text-slate-700 bg-slate-50 text-xs font-semibold flex items-center gap-1"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Details</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* DESKTOP SALES TABLE (>= md screens) */}
+          <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden w-full min-w-0">
             <div className="overflow-x-auto w-full">
               <table className="w-full text-left border-collapse min-w-[760px]">
                 <thead className="bg-gray-50 border-b border-gray-200">

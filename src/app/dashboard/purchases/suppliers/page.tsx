@@ -72,12 +72,15 @@ export default function SuppliersPage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 w-full min-w-0">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-gray-900">Suppliers</h2>
+    <div className="space-y-5 sm:space-y-6 w-full min-w-0">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Suppliers</h2>
+          <p className="text-xs sm:text-sm text-gray-500 font-medium">Manage clinical and inventory suppliers</p>
+        </div>
         <button
           onClick={openAddModal}
-          className="flex items-center px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all text-sm font-semibold shadow-md shadow-indigo-600/20 active:scale-95"
+          className="w-full sm:w-auto flex items-center justify-center px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all text-xs sm:text-sm font-semibold shadow-md shadow-indigo-600/20 active:scale-95"
         >
           <Plus className="w-4 h-4 mr-2" />
           Add Supplier
@@ -88,7 +91,45 @@ export default function SuppliersPage() {
         <div className="flex justify-center p-8 text-gray-500 font-medium">Loading suppliers...</div>
       ) : (
         <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden w-full min-w-0 shadow-xs">
-          <div className="overflow-x-auto w-full">
+          {/* Mobile Cards (< md) */}
+          <div className="md:hidden divide-y divide-gray-100">
+            {suppliers.map((s) => (
+              <div key={s.id} className="p-3.5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="font-bold text-gray-900 text-sm">{s.name}</div>
+                  <div className="font-black text-indigo-700 text-xs">
+                    PKR {Number(s.balance || 0).toLocaleString()}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span>{s.contact_person ? `Contact: ${s.contact_person}` : "No contact person"}</span>
+                  <span>{s.phone || "No phone"}</span>
+                </div>
+                <div className="flex items-center justify-end gap-1.5 pt-1 border-t border-gray-50">
+                  <button
+                    onClick={() => openEditModal(s)}
+                    className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-gray-200"
+                    title="Edit"
+                  >
+                    <Edit className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => deleteSupplier(s.id)}
+                    className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-gray-200"
+                    title="Delete"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+            {suppliers.length === 0 && (
+              <div className="p-8 text-center text-gray-500 text-sm font-medium">No suppliers found.</div>
+            )}
+          </div>
+
+          {/* Desktop Table (>= md) */}
+          <div className="hidden md:block overflow-x-auto w-full">
             <table className="min-w-full divide-y divide-gray-100 min-w-[600px]">
               <thead className="bg-gray-50/80">
                 <tr>

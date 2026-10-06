@@ -204,15 +204,15 @@ export default function PurchasesPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 w-full min-w-0">
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-5 sm:space-y-6 w-full min-w-0">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Purchase Orders</h2>
-          <p className="text-gray-500 text-sm mt-1">Manage vendor purchases, inventory receipts, and supplier bills.</p>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Purchase Orders</h2>
+          <p className="text-xs sm:text-sm text-gray-500 font-medium">Manage vendor purchases, inventory receipts, and supplier bills.</p>
         </div>
         <button
           onClick={() => setIsCreating(true)}
-          className="flex items-center px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all text-sm font-semibold shadow-md shadow-indigo-600/20 active:scale-95"
+          className="w-full sm:w-auto flex items-center justify-center px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all text-xs sm:text-sm font-semibold shadow-md shadow-indigo-600/20 active:scale-95"
         >
           <Plus className="w-4 h-4 mr-2" />
           New Purchase
@@ -223,7 +223,39 @@ export default function PurchasesPage() {
         <div className="flex justify-center p-8 text-gray-500 font-medium">Loading purchases...</div>
       ) : (
         <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden w-full min-w-0 shadow-xs">
-          <div className="overflow-x-auto w-full">
+          {/* Mobile Cards (< md) */}
+          <div className="md:hidden divide-y divide-gray-100">
+            {purchases.map((p) => (
+              <div key={p.id} className="p-3.5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="bg-indigo-50 border border-indigo-100 text-indigo-700 px-2.5 py-0.5 rounded-lg text-xs font-mono font-bold">
+                    {p.invoice_number}
+                  </span>
+                  <span className={`px-2 py-0.5 inline-flex text-[10px] font-bold rounded-lg ${
+                    p.status === 'RECEIVED' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                  }`}>
+                    {p.status}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span className="font-semibold text-gray-900">{p.supplier?.name || "No Supplier"}</span>
+                  <span>{new Date(p.date).toLocaleDateString()}</span>
+                </div>
+                <div className="flex items-center justify-between pt-1 border-t border-gray-50 text-xs">
+                  <span className="text-gray-400">Total Order Amount:</span>
+                  <span className="font-black text-gray-900 text-sm">
+                    PKR {Number(p.grand_total || 0).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            ))}
+            {purchases.length === 0 && (
+              <div className="p-8 text-center text-gray-500 text-sm font-medium">No purchases found.</div>
+            )}
+          </div>
+
+          {/* Desktop Table (>= md) */}
+          <div className="hidden md:block overflow-x-auto w-full">
             <table className="min-w-full divide-y divide-gray-100 min-w-[600px]">
               <thead className="bg-gray-50/80">
                 <tr>

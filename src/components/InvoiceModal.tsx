@@ -418,8 +418,8 @@ export default function InvoiceModal({
                         <FileText className="w-3.5 h-3.5 text-gray-400" /> Individual Services & Products
                       </h4>
                     )}
-                    <div className="border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-xs">
-                      <table className="w-full text-left border-collapse">
+                    <div className="border border-gray-200 rounded-2xl overflow-x-auto w-full bg-white shadow-xs">
+                      <table className="w-full text-left border-collapse min-w-[460px]">
                         <thead className="bg-gray-50 border-b border-gray-200 text-gray-600 text-xs uppercase tracking-wider">
                           <tr>
                             <th className="p-3 font-semibold">Description</th>

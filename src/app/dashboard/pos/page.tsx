@@ -28,13 +28,18 @@ import {
   Banknote,
   Clock,
   Check,
-  Printer
+  Printer,
+  ArrowRight,
+  ChevronLeft,
 } from "lucide-react";
 import { printThermalReceipt, ThermalReceiptData } from "@/lib/thermalPrinter";
 
 function POSContent() {
   const searchParams = useSearchParams();
   const urlPatientId = searchParams.get("patientId");
+
+  // Mobile Screen Tab State (Services vs Payment)
+  const [mobilePosTab, setMobilePosTab] = useState<"services" | "payment">("services");
 
   // Data States
   const [patients, setPatients] = useState<any[]>([]);
@@ -755,11 +760,44 @@ function POSContent() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex flex-col lg:flex-row gap-6 w-full min-w-0 p-2 sm:p-0">
+    <div className="min-h-[calc(100vh-4rem)] flex flex-col lg:flex-row gap-5 lg:gap-6 w-full min-w-0 p-1 sm:p-0">
+      {/* MOBILE SCREEN SEGMENTED TOP CONTROLLER (< lg screens) */}
+      <div className="lg:hidden flex items-center bg-slate-200/80 p-1 rounded-2xl shrink-0 w-full mb-1">
+        <button
+          type="button"
+          onClick={() => setMobilePosTab("services")}
+          className={`flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-all ${
+            mobilePosTab === "services"
+              ? "bg-white text-indigo-600 shadow-sm"
+              : "text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          <Layers className="w-4 h-4" />
+          <span>1. Services &amp; Cart</span>
+          {cart.length > 0 && (
+            <span className="bg-indigo-600 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full ml-1">
+              {cart.length}
+            </span>
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobilePosTab("payment")}
+          className={`flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-all ${
+            mobilePosTab === "payment"
+              ? "bg-white text-indigo-600 shadow-sm"
+              : "text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          <CreditCard className="w-4 h-4" />
+          <span>2. Queue &amp; Pay</span>
+        </button>
+      </div>
+
       {/* LEFT PANEL */}
-      <div className="flex-1 flex flex-col gap-6 overflow-hidden w-full min-w-0">
+      <div className={`flex-1 flex-col gap-6 overflow-hidden w-full min-w-0 ${mobilePosTab === "services" ? "flex" : "hidden lg:flex"}`}>
         {/* PATIENT SELECTION CARD */}
-        <div className="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 shrink-0">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 shrink-0">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-gray-900 flex items-center">
               <User className="w-5 h-5 mr-2 text-indigo-600" /> Patient Selection
@@ -1357,10 +1395,22 @@ function POSContent() {
       </div>
     </div>
 
-      {/* RIGHT PANEL - CHECKOUT */ }
-  <div className="w-full lg:w-[380px] shrink-0 flex flex-col gap-6">
-    {/* TOKEN & INVOICE SUMMARY */}
-    <div className="bg-gradient-to-br from-indigo-950 via-indigo-900 to-slate-900 p-6 rounded-2xl shadow-xl text-white">
+      {/* RIGHT PANEL - CHECKOUT */}
+      <div className={`w-full lg:w-[380px] xl:w-[420px] shrink-0 flex-col gap-6 lg:sticky lg:top-4 self-start ${mobilePosTab === "payment" ? "flex" : "hidden lg:flex"}`}>
+        {/* Mobile Quick Return to Services Button */}
+        <div className="lg:hidden">
+          <button
+            type="button"
+            onClick={() => setMobilePosTab("services")}
+            className="w-full py-2.5 px-4 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 flex items-center justify-center gap-1.5 shadow-2xs active:scale-98"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            <span>Add More Services / Catalog</span>
+          </button>
+        </div>
+
+        {/* TOKEN & INVOICE SUMMARY */}
+        <div className="bg-gradient-to-br from-indigo-950 via-indigo-900 to-slate-900 p-6 rounded-2xl shadow-xl text-white">
       <div className="flex justify-between items-start mb-6">
         <div>
           <div className="text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-1">Queue Token</div>
@@ -1600,6 +1650,37 @@ function POSContent() {
       </button>
     </div>
   </div>
+
+  {/* MOBILE FLOATING ACTION BAR FOR EASY BILLING (< lg screens) */}
+  {mobilePosTab === "services" && cart.length > 0 && (
+    <div className="lg:hidden fixed bottom-16 left-3 right-3 z-30 animate-in slide-in-from-bottom-3 duration-200">
+      <button
+        type="button"
+        onClick={() => setMobilePosTab("payment")}
+        style={{
+          background: `linear-gradient(135deg, var(--color-primary, #4f46e5), var(--color-accent, #06b6d4))`,
+          boxShadow: "0 8px 24px rgba(79, 70, 229, 0.45)",
+        }}
+        className="w-full py-3.5 px-4 rounded-2xl text-white font-bold flex items-center justify-between active:scale-98 transition-all shadow-xl"
+      >
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center font-black text-xs">
+            {cart.length}
+          </div>
+          <div className="text-left">
+            <div className="text-[10px] font-semibold text-white/80 leading-none">Total Cart Value</div>
+            <div className="text-sm font-black">
+              PKR {(selectedFollowUpInvoice ? totalPayable : grandTotal).toFixed(2)}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-1 text-xs font-black uppercase tracking-wider bg-white/20 px-3 py-1.5 rounded-xl">
+          <span>Go to Checkout</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </div>
+      </button>
+    </div>
+  )}
 
   {/* ==================================================== */ }
   {/* QUICK ADD PATIENT MODAL (MRID auto-assigned, CNIC optional) */ }

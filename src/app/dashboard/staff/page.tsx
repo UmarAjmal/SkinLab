@@ -189,17 +189,95 @@ export default function StaffPage() {
   if (loading) return <div className="p-8 text-center text-gray-500">Loading...</div>;
 
   return (
-    <div className="max-w-6xl mx-auto w-full min-w-0 p-4 sm:p-0 space-y-6">
-      <div className="flex justify-end items-center">
+    <div className="max-w-6xl mx-auto w-full min-w-0 space-y-5 sm:space-y-6">
+      {/* Page Header & Action */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+            Staff &amp; Doctors Directory
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 font-medium">
+            Manage clinic doctors, treatment therapists, and department assignments.
+          </p>
+        </div>
+
         <button
           onClick={openNewModal}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold hover:bg-indigo-700 transition-all flex items-center shadow-xs active:scale-95"
+          className="w-full sm:w-auto bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold hover:bg-indigo-700 transition-all flex items-center justify-center shadow-md shadow-indigo-600/20 active:scale-95"
         >
           <Plus className="w-4 h-4 mr-1.5" /> Add Employee
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-xs border border-gray-200 overflow-hidden w-full min-w-0">
+      {/* MOBILE STAFF CARDS (< md screens) */}
+      <div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {employees.length === 0 ? (
+          <div className="col-span-full bg-white p-8 rounded-2xl border border-gray-200 text-center text-gray-500 space-y-2">
+            <Users className="w-10 h-10 text-gray-300 mx-auto" />
+            <p className="font-medium text-sm">No staff members found.</p>
+          </div>
+        ) : (
+          employees.map((emp) => {
+            const initial = emp.name ? emp.name.trim().charAt(0).toUpperCase() : "E";
+            return (
+              <div
+                key={emp.id}
+                className="bg-white p-4 rounded-2xl border border-gray-200/90 shadow-2xs space-y-3"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-700 text-white flex items-center justify-center font-bold text-sm uppercase shrink-0 shadow-xs">
+                      {initial}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-bold text-slate-900 text-sm truncate">{emp.name}</div>
+                      <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                        {emp.is_doctor ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">
+                            Doctor
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
+                            Staff
+                          </span>
+                        )}
+                        {emp.department?.name && (
+                          <span className="text-[11px] font-semibold text-slate-500 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-200/80">
+                            {emp.department.name}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => openEditModal(emp)}
+                    className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-1"
+                  >
+                    <Pencil className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Edit</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(emp.id)}
+                    className="px-3 py-1.5 rounded-xl border border-rose-200 text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-1"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete</span>
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* DESKTOP TABLE VIEW (>= md screens) */}
+      <div className="hidden md:block bg-white rounded-2xl shadow-xs border border-gray-200 overflow-hidden w-full min-w-0">
         <div className="overflow-x-auto w-full">
           <table className="min-w-full divide-y divide-gray-200 min-w-[600px]">
             <thead className="bg-slate-50/80">

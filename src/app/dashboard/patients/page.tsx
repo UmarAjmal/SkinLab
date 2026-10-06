@@ -212,133 +212,218 @@ export default function PatientsPage() {
   const totalWalletAmount = data.reduce((acc, p) => acc + (Number(p.advance_balance) || 0), 0);
 
   return (
-    <div className="flex flex-col h-full bg-slate-50/60">
-      {/* Main Container */}
-      <div className="p-4 sm:p-8 flex-1 overflow-auto w-full min-w-0 space-y-6">
-        {/* Quick Action Bar */}
+    <div className="space-y-5 sm:space-y-6 w-full min-w-0">
+      {/* Quick Action Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+            Patients Database
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 font-medium">
+            Manage patient records, clinical balances, and medical IDs.
+          </p>
+        </div>
+
         {userRole !== "Doctor" && (
-          <div className="flex justify-end items-center">
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="bg-indigo-600 text-white px-4 py-2.5 rounded-xl hover:bg-indigo-700 flex items-center text-sm font-semibold transition-all shadow-md shadow-indigo-600/20 active:scale-95"
-            >
-              <Plus className="w-4 h-4 mr-1.5" />
-              Register Patient
-            </button>
-          </div>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl flex items-center justify-center text-xs sm:text-sm font-bold transition-all shadow-md shadow-indigo-600/20 active:scale-95"
+          >
+            <Plus className="w-4 h-4 mr-1.5" />
+            <span>Register Patient</span>
+          </button>
         )}
-        {/* Metric Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Patients</p>
-              <h3 className="text-2xl font-bold text-gray-900 mt-1">{totalPatients}</h3>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center">
-              <UserCheck className="w-5 h-5" />
-            </div>
-          </div>
+      </div>
 
-          <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Patients With Dues</p>
-              <h3 className="text-2xl font-bold text-rose-600 mt-1">{totalDueCount}</h3>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center">
-              <AlertCircle className="w-5 h-5" />
-            </div>
+      {/* Metric Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-gray-200/90 shadow-xs flex items-center justify-between">
+          <div className="min-w-0 pr-1">
+            <p className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider truncate">Total Patients</p>
+            <h3 className="text-lg sm:text-2xl font-black text-gray-900 mt-1">{totalPatients}</h3>
           </div>
-
-          <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Outstanding Dues</p>
-              <h3 className="text-xl font-bold text-rose-700 mt-1">
-                PKR {totalDueAmount.toLocaleString("en-PK", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-              </h3>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center">
-              <AlertCircle className="w-5 h-5" />
-            </div>
-          </div>
-
-          <div className="bg-white p-4 rounded-2xl border border-gray-200 shadow-xs flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Advance Wallets</p>
-              <h3 className="text-xl font-bold text-emerald-700 mt-1">
-                PKR {totalWalletAmount.toLocaleString("en-PK", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-              </h3>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center">
-              <Wallet className="w-5 h-5" />
-            </div>
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+            <UserCheck className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
         </div>
 
-        {/* Search & Actions Bar */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="relative w-full sm:w-80">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <input
-              value={globalFilter ?? ""}
-              onChange={e => setGlobalFilter(e.target.value)}
-              placeholder="Search by name, phone, or MRID..."
-              className="pl-10 pr-4 py-2.5 w-full border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm transition-all shadow-xs bg-white text-slate-900 font-medium"
-            />
+        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-gray-200/90 shadow-xs flex items-center justify-between">
+          <div className="min-w-0 pr-1">
+            <p className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider truncate">Patients With Dues</p>
+            <h3 className="text-lg sm:text-2xl font-black text-rose-600 mt-1">{totalDueCount}</h3>
           </div>
-          <div className="text-xs text-gray-500 font-medium">
-            Showing <span className="font-semibold text-gray-900">{table.getRowModel().rows.length}</span> patient records
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+            <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
         </div>
 
-        {/* Patients Table */}
-        <div className="bg-white border border-gray-200 rounded-2xl shadow-xs w-full min-w-0 overflow-hidden">
-          <div className="overflow-x-auto w-full">
-            <table className="w-full text-left border-collapse min-w-[700px]">
-              <thead className="bg-slate-50/80 border-b border-gray-200 text-gray-600 text-xs uppercase tracking-wider">
-                {table.getHeaderGroups().map(headerGroup => (
-                  <tr key={headerGroup.id}>
-                    {headerGroup.headers.map(header => (
-                      <th
-                        key={header.id}
-                        className={`py-3.5 px-6 font-semibold ${header.id === "actions" ? "text-right" : ""
-                          }`}
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(header.column.columnDef.header, header.getContext())}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody className="text-sm text-gray-700 divide-y divide-gray-100">
-                {table.getRowModel().rows.map(row => (
-                  <tr
-                    key={row.id}
-                    onClick={() => router.push(`/dashboard/patients/${row.original.id}`)}
-                    className="hover:bg-indigo-50/40 transition-colors cursor-pointer group"
-                  >
-                    {row.getVisibleCells().map(cell => (
-                      <td key={cell.id} className="py-3.5 px-6">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-                {table.getRowModel().rows.length === 0 && (
-                  <tr>
-                    <td colSpan={columns.length} className="py-16 text-center text-gray-500">
-                      <div className="flex flex-col items-center justify-center space-y-2">
-                        <Users className="w-10 h-10 text-gray-300" />
-                        <p className="font-medium text-gray-600">No patients found.</p>
-                        <p className="text-xs text-gray-400">Try adjusting your search criteria or register a new patient.</p>
+        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-gray-200/90 shadow-xs flex items-center justify-between">
+          <div className="min-w-0 pr-1">
+            <p className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider truncate">Total Dues</p>
+            <h3 className="text-base sm:text-xl font-black text-rose-700 mt-1 truncate">
+              PKR {totalDueAmount.toLocaleString("en-PK", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+            </h3>
+          </div>
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+            <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+          </div>
+        </div>
+
+        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-gray-200/90 shadow-xs flex items-center justify-between">
+          <div className="min-w-0 pr-1">
+            <p className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider truncate">Advance Wallets</p>
+            <h3 className="text-base sm:text-xl font-black text-emerald-700 mt-1 truncate">
+              PKR {totalWalletAmount.toLocaleString("en-PK", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+            </h3>
+          </div>
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+            <Wallet className="w-4 h-4 sm:w-5 sm:h-5" />
+          </div>
+        </div>
+      </div>
+
+      {/* Search & Counter Bar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="relative w-full sm:w-80">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <input
+            value={globalFilter ?? ""}
+            onChange={e => setGlobalFilter(e.target.value)}
+            placeholder="Search name, phone, MRID..."
+            className="pl-10 pr-4 py-2.5 w-full border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm transition-all shadow-xs bg-white text-slate-900 font-medium"
+          >
+          </input>
+        </div>
+        <div className="text-xs text-gray-500 font-medium px-1">
+          Showing <span className="font-semibold text-gray-900">{table.getRowModel().rows.length}</span> patient records
+        </div>
+      </div>
+
+      {/* MOBILE CARDS VIEW (< md screens) */}
+      <div className="md:hidden space-y-3">
+        {table.getRowModel().rows.length === 0 ? (
+          <div className="bg-white p-8 rounded-2xl border border-gray-200 text-center text-gray-500 space-y-2">
+            <Users className="w-10 h-10 text-gray-300 mx-auto" />
+            <p className="font-medium text-sm">No patients found.</p>
+          </div>
+        ) : (
+          table.getRowModel().rows.map((row) => {
+            const p = row.original;
+            const initial = p.name ? p.name.trim().charAt(0).toUpperCase() : "P";
+            const dueVal = Number(p.current_balance) || 0;
+            const walletVal = Number(p.advance_balance) || 0;
+
+            return (
+              <div
+                key={p.id}
+                onClick={() => router.push(`/dashboard/patients/${p.id}`)}
+                className="bg-white p-4 rounded-2xl border border-gray-200/90 shadow-2xs hover:shadow-md transition-all active:scale-[0.99] cursor-pointer space-y-3"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-700 text-white flex items-center justify-center font-bold text-sm uppercase shrink-0 shadow-xs">
+                      {initial}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-bold text-slate-900 text-sm truncate">{p.name}</div>
+                      <div className="font-mono text-[11px] font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md inline-block mt-0.5 border border-indigo-100">
+                        {p.medical_id}
                       </div>
-                    </td>
-                  </tr>
+                    </div>
+                  </div>
+
+                  <ArrowRight className="w-4 h-4 text-slate-400 shrink-0 mt-2" />
+                </div>
+
+                {/* Phone & Contacts */}
+                {p.phone && (
+                  <div className="flex items-center gap-2 text-xs text-slate-600 font-mono">
+                    <Phone className="w-3.5 h-3.5 text-slate-400" />
+                    <a
+                      href={`tel:${p.phone}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="hover:text-indigo-600 hover:underline"
+                    >
+                      {p.phone}
+                    </a>
+                  </div>
                 )}
-              </tbody>
-            </table>
-          </div>
+
+                {/* Balance Badges */}
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+                  <div>
+                    {dueVal > 0 ? (
+                      <span className="font-bold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-md">
+                        Due: PKR {dueVal.toLocaleString("en-PK")}
+                      </span>
+                    ) : (
+                      <span className="text-slate-400 font-medium">No Dues</span>
+                    )}
+                  </div>
+                  <div>
+                    {walletVal > 0 ? (
+                      <span className="font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                        Wallet: PKR {walletVal.toLocaleString("en-PK")}
+                      </span>
+                    ) : (
+                      <span className="text-slate-400 font-medium">Wallet: 0</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* DESKTOP TABLE VIEW (>= md screens) */}
+      <div className="hidden md:block bg-white border border-gray-200 rounded-2xl shadow-xs w-full min-w-0 overflow-hidden">
+        <div className="overflow-x-auto w-full">
+          <table className="w-full text-left border-collapse min-w-[700px]">
+            <thead className="bg-slate-50/80 border-b border-gray-200 text-gray-600 text-xs uppercase tracking-wider">
+              {table.getHeaderGroups().map(headerGroup => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map(header => (
+                    <th
+                      key={header.id}
+                      className={`py-3.5 px-6 font-semibold ${header.id === "actions" ? "text-right" : ""
+                        }`}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(header.column.columnDef.header, header.getContext())}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody className="text-sm text-gray-700 divide-y divide-gray-100">
+              {table.getRowModel().rows.map(row => (
+                <tr
+                  key={row.id}
+                  onClick={() => router.push(`/dashboard/patients/${row.original.id}`)}
+                  className="hover:bg-indigo-50/40 transition-colors cursor-pointer group"
+                >
+                  {row.getVisibleCells().map(cell => (
+                    <td key={cell.id} className="py-3.5 px-6">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+              {table.getRowModel().rows.length === 0 && (
+                <tr>
+                  <td colSpan={columns.length} className="py-16 text-center text-gray-500">
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      <Users className="w-10 h-10 text-gray-300" />
+                      <p className="font-medium text-gray-600">No patients found.</p>
+                      <p className="text-xs text-gray-400">Try adjusting your search criteria or register a new patient.</p>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 

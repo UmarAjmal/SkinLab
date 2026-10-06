@@ -573,10 +573,10 @@ export default function SettingsPage() {
   const totalDelete = formPermissionsList.filter(p => p.delete).length;
 
   return (
-    <div className="flex flex-col h-full bg-gray-50/50 -m-4 p-4 sm:-m-8 sm:p-8 overflow-y-auto w-full min-w-0">
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col min-h-[550px] w-full min-w-0">
-        {/* Tabs Navigation Header */}
-        <div className="flex border-b border-gray-100 bg-gray-50/70 px-4 pt-4 overflow-x-auto whitespace-nowrap shrink-0 gap-2">
+    <div className="space-y-5 sm:space-y-6 w-full min-w-0">
+      <div className="bg-white rounded-3xl shadow-xs border border-gray-100 overflow-hidden flex flex-col min-h-[550px] w-full min-w-0">
+        {/* Tabs Navigation Header with smooth touch scroll */}
+        <div className="flex border-b border-gray-100 bg-gray-50/70 px-3 sm:px-4 pt-3 sm:pt-4 overflow-x-auto no-scrollbar whitespace-nowrap shrink-0 gap-1.5 sm:gap-2">
           <button
             style={activeTab === 'clinic' ? { borderColor: 'var(--color-primary)', color: 'var(--color-primary)' } : {}}
             className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-all cursor-pointer ${

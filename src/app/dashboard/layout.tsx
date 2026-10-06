@@ -2,6 +2,7 @@ import { getServerSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Sidebar from "@/components/layout/Sidebar";
 import TopHeader from "@/components/layout/TopHeader";
+import MobileBottomNav from "@/components/layout/MobileBottomNav";
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +26,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const permissions = (session?.user as any)?.permissions || [];
 
   return (
-    <div className="flex flex-col h-screen bg-slate-50 overflow-hidden">
+    <div className="flex flex-col h-[100dvh] bg-slate-50 overflow-hidden selection:bg-indigo-100">
       {/* Full-width TopHeader at the top of the entire page */}
       <TopHeader userEmail={email} userRole={role} />
 
@@ -33,12 +34,16 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <div className="flex flex-1 overflow-hidden relative">
         <Sidebar userEmail={email} userRole={role} userPermissions={permissions} />
 
-        <main className="flex-1 overflow-auto flex flex-col min-h-0 min-w-0 relative w-full transition-all duration-300 ease-in-out">
-          <div className="p-4 md:p-6 lg:p-8 flex-1 flex flex-col min-w-0 w-full">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col min-h-0 min-w-0 relative w-full transition-all duration-300 ease-in-out pb-20 md:pb-0">
+          <div className="p-3 sm:p-5 md:p-6 lg:p-8 flex-1 flex flex-col min-w-0 w-full max-w-[1920px] mx-auto">
             {children}
           </div>
         </main>
       </div>
+
+      {/* Mobile Native-Style Bottom Navigation Dock (Phones & Small Tablets) */}
+      <MobileBottomNav />
     </div>
   );
 }
+

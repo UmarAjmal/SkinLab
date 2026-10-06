@@ -146,79 +146,146 @@ export default function ServicesPage() {
   const filteredProducts = selectedCategory ? products.filter(p => p.category_id === selectedCategory) : products;
 
   return (
-    <div className="flex flex-col h-full bg-gray-50/50">
-      <div className="px-6 sm:px-8 pt-6">
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 pb-2">
-          <div className="flex space-x-2">
-            <button
-              type="button"
-              onClick={() => setActiveTab("services")}
-              className={`px-4 py-2.5 border-b-2 text-sm font-semibold flex items-center transition-all ${activeTab === "services"
-                  ? "border-indigo-600 text-indigo-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-            >
-              <LayoutList className="w-4 h-4 mr-2" /> Services & Procedures
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("deals")}
-              className={`px-4 py-2.5 border-b-2 text-sm font-semibold flex items-center transition-all ${activeTab === "deals"
-                  ? "border-indigo-600 text-indigo-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-            >
-              <Package className="w-4 h-4 mr-2" /> Packages & Multi-Sessions
-            </button>
-          </div>
+    <div className="space-y-5 sm:space-y-6 w-full min-w-0">
+      {/* Top Header & Tabs Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-200/80 pb-3">
+        <div className="flex space-x-1 sm:space-x-2 overflow-x-auto no-scrollbar">
+          <button
+            type="button"
+            onClick={() => setActiveTab("services")}
+            className={`px-3 sm:px-4 py-2 border-b-2 text-xs sm:text-sm font-bold flex items-center shrink-0 transition-all ${
+              activeTab === "services"
+                ? "border-indigo-600 text-indigo-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            }`}
+          >
+            <LayoutList className="w-4 h-4 mr-1.5" /> Services &amp; Procedures
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("deals")}
+            className={`px-3 sm:px-4 py-2 border-b-2 text-xs sm:text-sm font-bold flex items-center shrink-0 transition-all ${
+              activeTab === "deals"
+                ? "border-indigo-600 text-indigo-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            }`}
+          >
+            <Package className="w-4 h-4 mr-1.5" /> Packages &amp; Multi-Sessions
+          </button>
+        </div>
 
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-            <button
-              type="button"
-              onClick={() => setIsCategoryModalOpen(true)}
-              className="px-3.5 py-2 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 text-xs sm:text-sm font-semibold flex items-center shadow-xs transition-all active:scale-95"
-            >
-              <Tag className="w-4 h-4 mr-1.5 text-gray-500" /> Add Category
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setEditingProductId(null);
-                productForm.reset({
-                  name: "",
-                  category_id: "",
-                  sku: "",
-                  cost_price: 0,
-                  selling_price: 0,
-                  stock_quantity: 0,
-                  tax_class: "Standard"
-                });
-                setIsProductModalOpen(true);
-              }}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 text-xs sm:text-sm font-semibold flex items-center shadow-xs transition-all active:scale-95"
-            >
-              <Plus className="w-4 h-4 mr-1.5" /> Add Service
-            </button>
-          </div>
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap sm:flex-nowrap">
+          <button
+            type="button"
+            onClick={() => setIsCategoryModalOpen(true)}
+            className="flex-1 sm:flex-initial px-3.5 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 text-xs sm:text-sm font-semibold flex items-center justify-center shadow-xs transition-all active:scale-95"
+          >
+            <Tag className="w-4 h-4 mr-1.5 text-gray-500" /> Add Category
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setEditingProductId(null);
+              productForm.reset({
+                name: "",
+                category_id: "",
+                sku: "",
+                cost_price: 0,
+                selling_price: 0,
+                stock_quantity: 0,
+                tax_class: "Standard"
+              });
+              setIsProductModalOpen(true);
+            }}
+            className="flex-1 sm:flex-initial px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 text-xs sm:text-sm font-bold flex items-center justify-center shadow-md shadow-indigo-600/20 transition-all active:scale-95"
+          >
+            <Plus className="w-4 h-4 mr-1.5" /> Add Service
+          </button>
         </div>
       </div>
 
-      <div className="p-4 sm:p-8 flex-1 overflow-auto w-full min-w-0">
+      <div className="w-full min-w-0">
         {activeTab === "services" && (
           <div className="space-y-4">
-            <div className="flex items-center gap-3 mb-4">
-              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Category Filter:</label>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+              <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">Category Filter:</label>
               <select
                 value={selectedCategory}
                 onChange={e => setSelectedCategory(e.target.value)}
-                className="border border-gray-300 rounded-xl text-sm pl-3 pr-8 py-2 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white shadow-xs"
+                className="w-full sm:w-auto border border-gray-200 rounded-xl text-sm pl-3 pr-8 py-2 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white shadow-xs text-slate-800 font-medium"
               >
-                <option value="">All Categories</option>
+                <option value="">All Categories ({products.length})</option>
                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-2xl shadow-xs w-full min-w-0 overflow-hidden">
+            {/* MOBILE SERVICES CARDS (< md screens) */}
+            <div className="md:hidden grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {filteredProducts.length === 0 ? (
+                <div className="col-span-full bg-white p-8 rounded-2xl border border-gray-200 text-center text-gray-500 text-sm">
+                  No services found for the selected category.
+                </div>
+              ) : (
+                filteredProducts.map(p => (
+                  <div
+                    key={p.id}
+                    className="bg-white p-4 rounded-2xl border border-gray-200/90 shadow-2xs space-y-3"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="font-bold text-slate-900 text-sm truncate">{p.name}</div>
+                        <div className="text-[11px] font-mono text-slate-400 mt-0.5">SKU: {p.sku || "N/A"}</div>
+                      </div>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 shrink-0">
+                        {p.category?.name || "General"}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase text-slate-400 block">Price</span>
+                        <span className="font-black text-slate-900 text-sm">
+                          PKR {Number(p.selling_price || 0).toLocaleString("en-PK", { minimumFractionDigits: 0 })}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingProductId(p.id);
+                            productForm.reset({
+                              name: p.name,
+                              category_id: p.category_id || "",
+                              sku: p.sku || "",
+                              cost_price: p.cost_price || 0,
+                              selling_price: p.selling_price || 0,
+                              stock_quantity: p.stock_quantity || 0,
+                              tax_class: p.tax_class || "Standard"
+                            });
+                            setIsProductModalOpen(true);
+                          }}
+                          className="p-1.5 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg border border-slate-200"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteProduct(p.id)}
+                          className="p-1.5 text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg border border-slate-200"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* DESKTOP SERVICES TABLE (>= md screens) */}
+            <div className="hidden md:block bg-white border border-gray-200 rounded-2xl shadow-xs w-full min-w-0 overflow-hidden">
               <div className="overflow-x-auto w-full">
                 <table className="w-full text-left border-collapse min-w-[650px]">
                   <thead className="bg-slate-50/80 border-b border-gray-200 text-gray-600 text-xs uppercase tracking-wider">
@@ -482,19 +549,21 @@ export default function ServicesPage() {
                     </button>
                   </div>
 
-                  <div className="space-y-3 bg-slate-50/80 p-4 rounded-2xl border border-gray-200">
+                  <div className="space-y-3 bg-slate-50/80 p-3 sm:p-4 rounded-2xl border border-gray-200">
                     {dealItems.map((field, index) => (
-                      <div key={field.id} className="flex items-center space-x-3">
+                      <div key={field.id} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 p-2.5 bg-white sm:bg-transparent rounded-xl border sm:border-0 border-gray-200/80 shadow-2xs sm:shadow-none">
                         <div className="flex-1">
                           <select {...dealForm.register(`items.${index}.product_id`)} className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white shadow-xs">
                             <option value="">Select Service...</option>
                             {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                           </select>
                         </div>
-                        <div className="w-28">
-                          <input type="number" min="1" {...dealForm.register(`items.${index}.sessions`)} className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-xs" placeholder="Sessions" />
+                        <div className="flex items-center gap-2">
+                          <div className="w-full sm:w-28">
+                            <input type="number" min="1" {...dealForm.register(`items.${index}.sessions`)} className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 shadow-xs" placeholder="Sessions" />
+                          </div>
+                          <button type="button" onClick={() => removeDealItem(index)} className="text-rose-500 hover:text-rose-700 p-2 rounded-lg hover:bg-rose-50 transition-colors shrink-0" title="Remove"><Trash2 className="w-4 h-4" /></button>
                         </div>
-                        <button type="button" onClick={() => removeDealItem(index)} className="text-rose-500 hover:text-rose-700 p-1.5 rounded-lg hover:bg-rose-50 transition-colors"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     ))}
                     {dealForm.formState.errors.items && <p className="mt-1 text-xs text-red-500 font-medium">{dealForm.formState.errors.items.message as string}</p>}

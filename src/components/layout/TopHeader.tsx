@@ -85,27 +85,27 @@ export default function TopHeader({ userEmail, userRole }: TopHeaderProps) {
   return (
     <header
       style={{ backgroundColor: "var(--color-header-bg, #ffffff)" }}
-      className="w-full h-14 shrink-0 border-b border-slate-200/80 px-3 sm:px-6 flex items-center justify-between z-40 transition-colors duration-300 shadow-2xs"
+      className="w-full h-14 shrink-0 border-b border-slate-200/80 px-2.5 sm:px-6 flex items-center justify-between z-40 transition-colors duration-300 shadow-2xs select-none"
     >
       {/* ─── Left Section: Mobile Toggle + Bold Business Name + Page Title ─── */}
-      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+      <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
         {/* Mobile Sidebar Hamburger Toggle */}
         <button
           type="button"
           onClick={handleToggleMobileSidebar}
           aria-label="Toggle Navigation Menu"
-          className="p-1.5 rounded-xl md:hidden text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors focus:outline-none"
+          className="p-2 rounded-xl md:hidden text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors focus:outline-none shrink-0"
         >
           <Menu className="w-5 h-5" />
         </button>
 
         {/* Business Brand (Logo + Bold Name) */}
-        <div className="flex items-center gap-2.5 min-w-0">
+        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
           <div
             style={{
               background: `linear-gradient(135deg, var(--color-primary, #4f46e5), var(--color-accent, #06b6d4))`,
             }}
-            className="w-8 h-8 rounded-xl flex items-center justify-center shadow-xs overflow-hidden shrink-0"
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center shadow-xs overflow-hidden shrink-0"
           >
             {clinicLogo ? (
               <img
@@ -119,7 +119,7 @@ export default function TopHeader({ userEmail, userRole }: TopHeaderProps) {
           </div>
 
           <span
-            className="font-black text-slate-900 text-sm sm:text-base tracking-tight truncate max-w-[150px] sm:max-w-[260px]"
+            className="font-black text-slate-900 text-xs sm:text-base tracking-tight truncate max-w-[110px] min-[380px]:max-w-[150px] sm:max-w-[280px]"
             title={clinicName}
           >
             {clinicName}
@@ -128,10 +128,10 @@ export default function TopHeader({ userEmail, userRole }: TopHeaderProps) {
 
         {/* Divider & Dynamic Page Title */}
         <div className="hidden sm:flex items-center min-w-0">
-          <span className="text-slate-300 mx-2 text-sm font-semibold">/</span>
+          <span className="text-slate-300 mx-1.5 sm:mx-2 text-sm font-semibold">/</span>
           <span
             style={{ color: "var(--color-primary, #4f46e5)" }}
-            className="text-xs sm:text-sm font-bold truncate max-w-[280px]"
+            className="text-xs sm:text-sm font-bold truncate max-w-[200px] lg:max-w-[360px]"
           >
             {pageTitle}
           </span>
