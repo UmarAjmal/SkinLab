@@ -76,12 +76,6 @@ for /f "tokens=5" %%a in ('netstat -aon 2^>nul ^| findstr /r /c:":3000 .*LISTENI
     taskkill /F /PID %%a >nul 2>&1
 )
 
-echo Checking for processes on Port 10000...
-for /f "tokens=5" %%a in ('netstat -aon 2^>nul ^| findstr /r /c:":10000 .*LISTENING"') do (
-    echo Stopping PID %%a on Port 10000...
-    taskkill /F /PID %%a >nul 2>&1
-)
-
 echo Closing dedicated server windows...
 taskkill /F /FI "WINDOWTITLE eq Skin-Lab Dev Server*" >nul 2>&1
 taskkill /F /FI "WINDOWTITLE eq Skin-Lab Production Server*" >nul 2>&1

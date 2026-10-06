@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'Skin-Lab POS',
   webDir: 'public',
   server: {
-    url: 'https://skin-lab-seven.vercel.app',
+    url: 'https://skinlabb.vercel.app',
     cleartext: true
   }
 };
