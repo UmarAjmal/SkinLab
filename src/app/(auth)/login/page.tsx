@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { FlaskConical, Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, ShieldCheck } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 
 const loginSchema = z.object({
@@ -41,18 +41,6 @@ function LoginContent() {
   
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [clinicName, setClinicName] = useState("Skin-Lab");
-  const [clinicLogo, setClinicLogo] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch("/api/settings/public")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        if (d?.name) setClinicName(d.name);
-        if (d?.logo) setClinicLogo(d.logo);
-      })
-      .catch(() => {});
-  }, []);
 
   const {
     register,
@@ -122,36 +110,32 @@ function LoginContent() {
         {/* Card Container */}
         <div className="bg-white py-8 px-6 sm:px-8 shadow-xl rounded-3xl border border-slate-200/80">
           
-          {/* Logo & Wordmark */}
-          <div className="flex items-center justify-center space-x-2.5 mb-6">
-            <div 
-              style={{ 
-                background: `linear-gradient(135deg, var(--color-primary, #4f46e5), var(--color-accent, #06b6d4))` 
-              }}
-              className="w-10 h-10 rounded-xl text-white shadow-xs flex items-center justify-center shrink-0 overflow-hidden"
-            >
-              {clinicLogo ? (
-                <img
-                  src={clinicLogo}
-                  alt={clinicName}
-                  className="w-full h-full object-contain p-1 bg-white/10"
-                />
-              ) : (
-                <FlaskConical className="w-5 h-5 text-white" strokeWidth={2.5} />
-              )}
+          {/* Brand Logo & Wordmark */}
+          <div className="flex flex-col items-center justify-center mb-6 text-center">
+            <div className="w-16 h-16 rounded-full bg-white border border-slate-200/90 shadow-xs flex items-center justify-center p-2 mb-2.5 shrink-0 overflow-hidden ring-4 ring-indigo-50/70">
+              <img
+                src="/logo.png"
+                alt="Falcon Swift"
+                className="w-full h-full object-contain"
+              />
             </div>
-            <span className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-1.5">
-              {clinicName}
+            <div className="flex items-center justify-center gap-1.5">
+              <span className="text-xl font-black text-slate-900 tracking-tight">
+                Falcon Swift
+              </span>
               <span 
                 style={{ 
                   backgroundColor: "var(--color-primary, #4f46e5)",
                   color: "var(--color-primary-text, #ffffff)"
                 }}
-                className="text-[10px] uppercase px-2 py-0.5 rounded-md font-bold"
+                className="text-[9px] uppercase px-2 py-0.5 rounded-md font-extrabold tracking-wider"
               >
-                POS
+                PVT. LTD.
               </span>
-            </span>
+            </div>
+            <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
+              Clinic &amp; Healthcare POS
+            </p>
           </div>
 
           {/* Registered Success Notice */}
