@@ -265,8 +265,9 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="space-y-5 sm:space-y-6 w-full min-w-0">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div className="space-y-4 sm:space-y-6 w-full min-w-0">
+      {/* Top Header & Date Filter Bar */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
             Analytics &amp; Financial Reports
@@ -276,49 +277,50 @@ export default function ReportsPage() {
           </p>
         </div>
 
-        {/* Global Date Filter */}
+        {/* Global Date Filter & Presets */}
         {activeTab !== "patient_ledger" && (
-          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full lg:w-auto">
             {/* Quick Presets */}
-            <div className="flex items-center gap-1 bg-white p-1 rounded-2xl border border-gray-200/80 shadow-2xs text-xs font-semibold text-gray-600">
+            <div className="flex items-center justify-between sm:justify-start gap-1 bg-white p-1 rounded-2xl border border-gray-200/80 shadow-2xs text-xs font-semibold text-gray-600">
               <button
                 type="button"
                 onClick={() => setQuickDateRange("today")}
-                className="px-2.5 py-1.5 rounded-xl hover:bg-indigo-50 hover:text-indigo-700 transition-all cursor-pointer"
+                className="flex-1 sm:flex-initial px-2.5 py-1.5 rounded-xl hover:bg-indigo-50 hover:text-indigo-700 transition-all cursor-pointer text-center"
               >
                 Today
               </button>
               <button
                 type="button"
                 onClick={() => setQuickDateRange("this_week")}
-                className="px-2.5 py-1.5 rounded-xl hover:bg-indigo-50 hover:text-indigo-700 transition-all cursor-pointer"
+                className="flex-1 sm:flex-initial px-2.5 py-1.5 rounded-xl hover:bg-indigo-50 hover:text-indigo-700 transition-all cursor-pointer text-center"
               >
                 Week
               </button>
               <button
                 type="button"
                 onClick={() => setQuickDateRange("this_month")}
-                className="px-2.5 py-1.5 rounded-xl hover:bg-indigo-50 hover:text-indigo-700 transition-all cursor-pointer"
+                className="flex-1 sm:flex-initial px-2.5 py-1.5 rounded-xl hover:bg-indigo-50 hover:text-indigo-700 transition-all cursor-pointer text-center"
               >
                 Month
               </button>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 bg-white p-2 rounded-2xl shadow-xs border border-gray-200/80 w-full sm:w-auto">
-              <div className="flex items-center px-2.5 sm:border-r border-gray-100 flex-1 sm:flex-initial">
-                <CalendarIcon className="w-4 h-4 text-gray-400 mr-2 shrink-0" />
+            {/* Date Range Inputs */}
+            <div className="flex items-center justify-between gap-1 sm:gap-2 bg-white p-2 rounded-2xl shadow-xs border border-gray-200/80 w-full sm:w-auto">
+              <div className="flex items-center px-1.5 sm:px-2 flex-1 sm:flex-initial border-r border-gray-100">
+                <CalendarIcon className="w-3.5 h-3.5 text-gray-400 mr-1.5 shrink-0" />
                 <input
                   type="date"
-                  className="outline-hidden text-xs sm:text-sm text-gray-700 bg-transparent font-medium w-full sm:w-auto"
+                  className="outline-hidden text-xs sm:text-sm text-gray-700 bg-transparent font-medium w-full sm:w-auto min-w-0"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
                 />
               </div>
-              <div className="flex items-center px-2.5 flex-1 sm:flex-initial">
-                <span className="text-gray-400 mr-2 text-xs sm:text-sm font-medium">to</span>
+              <div className="flex items-center px-1.5 sm:px-2 flex-1 sm:flex-initial">
+                <span className="text-gray-400 mr-1.5 text-xs sm:text-sm font-medium">to</span>
                 <input
                   type="date"
-                  className="outline-hidden text-xs sm:text-sm text-gray-700 bg-transparent font-medium w-full sm:w-auto"
+                  className="outline-hidden text-xs sm:text-sm text-gray-700 bg-transparent font-medium w-full sm:w-auto min-w-0"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                 />
@@ -329,161 +331,177 @@ export default function ReportsPage() {
       </div>
 
       <div className="bg-white rounded-3xl shadow-xs border border-gray-100 overflow-hidden flex flex-col min-h-[500px] w-full min-w-0">
-        {/* Tabs with smooth horizontal scroll */}
-        <div className="flex border-b border-gray-100 bg-gray-50/50 px-3 sm:px-4 pt-3 sm:pt-4 overflow-x-auto no-scrollbar whitespace-nowrap shrink-0 gap-1 items-center">
-          <button
-            className={`px-4 sm:px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${activeTab === 'sales_register'
-              ? 'border-indigo-600 text-indigo-700 bg-white shadow-xs font-bold'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
-              }`}
-            onClick={() => setActiveTab('sales_register')}
-          >
-            <FileText className="w-4 h-4 mr-2" /> Sales Register
-          </button>
-          <button
-            className={`px-4 sm:px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${activeTab === 'audit_report'
-              ? 'border-indigo-600 text-indigo-700 bg-white shadow-xs font-bold'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
-              }`}
-            onClick={() => setActiveTab('audit_report')}
-          >
-            <ShieldCheck className="w-4 h-4 mr-2 text-indigo-600" /> Audit Report
-          </button>
-          <button
-            className={`px-4 sm:px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${activeTab === 'service_performance'
-              ? 'border-indigo-600 text-indigo-700 bg-white shadow-xs'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
-              }`}
-            onClick={() => setActiveTab('service_performance')}
-          >
-            <BarChart3 className="w-4 h-4 mr-2" /> Service Performance
-          </button>
-          <button
-            className={`px-4 sm:px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${activeTab === 'payment_breakdown'
-              ? 'border-indigo-600 text-indigo-700 bg-white shadow-xs'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
-              }`}
-            onClick={() => setActiveTab('payment_breakdown')}
-          >
-            <PieChart className="w-4 h-4 mr-2" /> Payment Breakdown
-          </button>
-          <button
-            className={`px-4 sm:px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${activeTab === 'expense_report'
-              ? 'border-rose-600 text-rose-700 bg-white shadow-xs font-bold'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
-              }`}
-            onClick={() => setActiveTab('expense_report')}
-          >
-            <Receipt className="w-4 h-4 mr-2 text-rose-600" /> Expense Report
-          </button>
-          <button
-            className={`px-4 sm:px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${activeTab === 'patient_ledger'
-              ? 'border-indigo-600 text-indigo-700 bg-white shadow-xs'
-              : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
-              }`}
-            onClick={() => setActiveTab('patient_ledger')}
-          >
-            <UserSquare className="w-4 h-4 mr-2" /> Patient Ledger
-          </button>
-
-          {/* Action Icons Toolbar (CSV, PDF, Print/Preview) */}
-          <div className="ml-auto pb-2 self-end flex items-center gap-1.5 sm:gap-2">
-            {/* Export CSV Icon */}
+        {/* Navigation Tabs Bar + Prominent Action Buttons (Non-scrollable Action Bar) */}
+        <div className="border-b border-gray-100 bg-gray-50/70 p-2 sm:px-4 sm:pt-3 flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+          {/* Scrollable Tabs */}
+          <div className="flex overflow-x-auto no-scrollbar whitespace-nowrap gap-1 items-center pb-1 md:pb-0 flex-1 min-w-0">
             <button
-              type="button"
-              onClick={handleExportCSV}
-              title="Export CSV spreadsheet"
-              className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 text-gray-700 hover:text-emerald-700 shadow-2xs transition-all active:scale-95 cursor-pointer"
+              className={`px-3.5 sm:px-4 py-2.5 font-semibold text-xs sm:text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${activeTab === 'sales_register'
+                ? 'border-indigo-600 text-indigo-700 bg-white shadow-xs font-bold'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
+                }`}
+              onClick={() => setActiveTab('sales_register')}
             >
-              <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+              <FileText className="w-4 h-4 mr-1.5 shrink-0" /> Sales Register
             </button>
-
-            {/* Export PDF Icon */}
             <button
-              type="button"
-              onClick={() => handleOpenPrintPreview(true)}
-              title="Export & Save PDF"
-              className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-200 hover:border-rose-300 hover:bg-rose-50 text-gray-700 hover:text-rose-700 shadow-2xs transition-all active:scale-95 cursor-pointer"
+              className={`px-3.5 sm:px-4 py-2.5 font-semibold text-xs sm:text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${activeTab === 'audit_report'
+                ? 'border-indigo-600 text-indigo-700 bg-white shadow-xs font-bold'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
+                }`}
+              onClick={() => setActiveTab('audit_report')}
             >
-              <FileText className="w-4 h-4 text-rose-600" />
+              <ShieldCheck className="w-4 h-4 mr-1.5 text-indigo-600 shrink-0" /> Audit Report
             </button>
-
-            {/* Print & A4 Preview in New Tab */}
             <button
-              type="button"
-              onClick={() => handleOpenPrintPreview(false)}
-              title="Print & A4 Report Preview (New Tab)"
-              className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 text-gray-700 hover:text-indigo-700 shadow-2xs transition-all active:scale-95 cursor-pointer"
+              className={`px-3.5 sm:px-4 py-2.5 font-semibold text-xs sm:text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${activeTab === 'service_performance'
+                ? 'border-indigo-600 text-indigo-700 bg-white shadow-xs'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
+                }`}
+              onClick={() => setActiveTab('service_performance')}
             >
-              <Printer className="w-4 h-4 text-indigo-600" />
+              <BarChart3 className="w-4 h-4 mr-1.5 shrink-0" /> Service Performance
             </button>
+            <button
+              className={`px-3.5 sm:px-4 py-2.5 font-semibold text-xs sm:text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${activeTab === 'payment_breakdown'
+                ? 'border-indigo-600 text-indigo-700 bg-white shadow-xs'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
+                }`}
+              onClick={() => setActiveTab('payment_breakdown')}
+            >
+              <PieChart className="w-4 h-4 mr-1.5 shrink-0" /> Payment Breakdown
+            </button>
+            <button
+              className={`px-3.5 sm:px-4 py-2.5 font-semibold text-xs sm:text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${activeTab === 'expense_report'
+                ? 'border-rose-600 text-rose-700 bg-white shadow-xs font-bold'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
+                }`}
+              onClick={() => setActiveTab('expense_report')}
+            >
+              <Receipt className="w-4 h-4 mr-1.5 text-rose-600 shrink-0" /> Expense Report
+            </button>
+            <button
+              className={`px-3.5 sm:px-4 py-2.5 font-semibold text-xs sm:text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${activeTab === 'patient_ledger'
+                ? 'border-indigo-600 text-indigo-700 bg-white shadow-xs'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
+                }`}
+              onClick={() => setActiveTab('patient_ledger')}
+            >
+              <UserSquare className="w-4 h-4 mr-1.5 shrink-0" /> Patient Ledger
+            </button>
+          </div>
+
+          {/* Dedicated Action Toolbar (CSV, PDF, Print/Preview) - ALWAYS VISIBLE, NEVER SCROLLED AWAY */}
+          <div className="flex items-center justify-between md:justify-end gap-2 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-gray-200/70">
+            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider md:hidden">
+              Export / Print:
+            </span>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              {/* Export CSV Button */}
+              <button
+                type="button"
+                onClick={handleExportCSV}
+                title="Export CSV spreadsheet"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50 text-emerald-800 shadow-2xs transition-all active:scale-95 cursor-pointer text-xs font-bold"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span>CSV</span>
+              </button>
+
+              {/* Export PDF Button */}
+              <button
+                type="button"
+                onClick={() => handleOpenPrintPreview(true)}
+                title="Export & Save PDF"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-rose-200 hover:border-rose-300 hover:bg-rose-50 text-rose-800 shadow-2xs transition-all active:scale-95 cursor-pointer text-xs font-bold"
+              >
+                <FileText className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                <span>PDF</span>
+              </button>
+
+              {/* Print & A4 Preview in New Tab */}
+              <button
+                type="button"
+                onClick={() => handleOpenPrintPreview(false)}
+                title="Print & A4 Report Preview (New Tab)"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-2xs transition-all active:scale-95 cursor-pointer text-xs font-bold"
+              >
+                <Printer className="w-3.5 h-3.5 text-white shrink-0" />
+                <span>Print / Preview</span>
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Content Area */}
-        <div className="p-4 sm:p-6 flex-1 overflow-auto">
+        <div className="p-3 sm:p-6 flex-1 overflow-auto">
           {isLoading ? (
             <div className="h-full min-h-[300px] flex items-center justify-center text-gray-400 font-medium">Loading report data...</div>
           ) : (
             <>
               {/* TAB 1: Sales Register */}
               {activeTab === 'sales_register' && (
-                <div className="overflow-x-auto w-full">
-                  <table className="w-full text-left border-collapse min-w-[600px]">
-                    <thead className="bg-gray-50/80 border-b border-gray-200 text-gray-600 text-xs uppercase tracking-wider">
-                      <tr>
-                        <th className="py-4 px-6 font-semibold">Date</th>
-                        <th className="py-4 px-6 font-semibold">Invoice #</th>
-                        <th className="py-4 px-6 font-semibold">Patient</th>
-                        <th className="py-4 px-6 font-semibold text-right">Gross</th>
-                        <th className="py-4 px-6 font-semibold text-right">Discount</th>
-                        <th className="py-4 px-6 font-semibold text-right">Net Total</th>
-                        <th className="py-4 px-6 font-semibold text-center">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="text-sm text-gray-700 divide-y divide-gray-100">
-                      {sales.length === 0 ? (
-                        <tr><td colSpan={7} className="py-10 text-center text-gray-400 font-medium">No sales found in this date range.</td></tr>
-                      ) : (
-                        sales.map(s => (
-                          <tr key={s.id} className="hover:bg-indigo-50/30 transition-colors">
-                            <td className="py-4 px-6 text-gray-500 whitespace-nowrap">{dayjs(s.date).format('MMM DD, YYYY')}</td>
-                            <td className="py-4 px-6 font-medium text-indigo-600">{s.invoice_number}</td>
-                            <td className="py-4 px-6 font-medium text-gray-900">{s.customer?.name}</td>
-                            <td className="py-4 px-6 text-right font-medium text-gray-700">PKR {s.subtotal.toFixed(2)}</td>
-                            <td className="py-4 px-6 text-right text-red-500 font-medium">- PKR {s.discount_amount.toFixed(2)}</td>
-                            <td className="py-4 px-6 text-right font-bold text-gray-900">PKR {s.grand_total.toFixed(2)}</td>
-                            <td className="py-4 px-6 text-center">
-                              {s.payment_status === "PAID" && <span className="bg-green-100 text-green-700 px-2.5 py-1 rounded-lg text-xs font-bold tracking-wide">PAID</span>}
-                              {s.payment_status === "PARTIAL" && <span className="bg-orange-100 text-orange-700 px-2.5 py-1 rounded-lg text-xs font-bold tracking-wide">PARTIAL</span>}
-                              {s.payment_status === "DUE" && <span className="bg-red-100 text-red-700 px-2.5 py-1 rounded-lg text-xs font-bold tracking-wide">DUE</span>}
+                <div className="w-full">
+                  <div className="sm:hidden text-[11px] text-gray-400 mb-2 flex items-center justify-end gap-1 font-medium">
+                    <span>👈 Swipe horizontally for full table 👉</span>
+                  </div>
+                  <div className="overflow-x-auto w-full -mx-1 sm:mx-0 scrollbar-thin">
+                    <table className="w-full text-left border-collapse min-w-[650px]">
+                      <thead className="bg-gray-50/80 border-b border-gray-200 text-gray-600 text-xs uppercase tracking-wider">
+                        <tr>
+                          <th className="py-3 px-4 sm:py-4 sm:px-6 font-semibold">Date</th>
+                          <th className="py-3 px-4 sm:py-4 sm:px-6 font-semibold">Invoice #</th>
+                          <th className="py-3 px-4 sm:py-4 sm:px-6 font-semibold">Patient</th>
+                          <th className="py-3 px-4 sm:py-4 sm:px-6 font-semibold text-right">Gross</th>
+                          <th className="py-3 px-4 sm:py-4 sm:px-6 font-semibold text-right">Discount</th>
+                          <th className="py-3 px-4 sm:py-4 sm:px-6 font-semibold text-right">Net Total</th>
+                          <th className="py-3 px-4 sm:py-4 sm:px-6 font-semibold text-center">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-sm text-gray-700 divide-y divide-gray-100">
+                        {sales.length === 0 ? (
+                          <tr><td colSpan={7} className="py-10 text-center text-gray-400 font-medium">No sales found in this date range.</td></tr>
+                        ) : (
+                          sales.map(s => (
+                            <tr key={s.id} className="hover:bg-indigo-50/30 transition-colors">
+                              <td className="py-3 px-4 sm:py-4 sm:px-6 text-gray-500 whitespace-nowrap text-xs sm:text-sm">{dayjs(s.date).format('MMM DD, YYYY')}</td>
+                              <td className="py-3 px-4 sm:py-4 sm:px-6 font-medium text-indigo-600 whitespace-nowrap text-xs sm:text-sm">{s.invoice_number}</td>
+                              <td className="py-3 px-4 sm:py-4 sm:px-6 font-medium text-gray-900 text-xs sm:text-sm">{s.customer?.name}</td>
+                              <td className="py-3 px-4 sm:py-4 sm:px-6 text-right font-medium text-gray-700 whitespace-nowrap text-xs sm:text-sm">PKR {s.subtotal.toFixed(2)}</td>
+                              <td className="py-3 px-4 sm:py-4 sm:px-6 text-right text-red-500 font-medium whitespace-nowrap text-xs sm:text-sm">- PKR {s.discount_amount.toFixed(2)}</td>
+                              <td className="py-3 px-4 sm:py-4 sm:px-6 text-right font-bold text-gray-900 whitespace-nowrap text-xs sm:text-sm">PKR {s.grand_total.toFixed(2)}</td>
+                              <td className="py-3 px-4 sm:py-4 sm:px-6 text-center whitespace-nowrap">
+                                {s.payment_status === "PAID" && <span className="bg-green-100 text-green-700 px-2.5 py-1 rounded-lg text-xs font-bold tracking-wide">PAID</span>}
+                                {s.payment_status === "PARTIAL" && <span className="bg-orange-100 text-orange-700 px-2.5 py-1 rounded-lg text-xs font-bold tracking-wide">PARTIAL</span>}
+                                {s.payment_status === "DUE" && <span className="bg-red-100 text-red-700 px-2.5 py-1 rounded-lg text-xs font-bold tracking-wide">DUE</span>}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                      {sales.length > 0 && (
+                        <tfoot className="bg-slate-50 border-t-2 border-slate-300 font-bold text-xs sm:text-sm text-gray-900">
+                          <tr>
+                            <td colSpan={3} className="py-3 px-4 sm:py-4 sm:px-6 uppercase tracking-wider text-gray-900 font-black">
+                              Total ({sales.length} Invoices)
+                            </td>
+                            <td className="py-3 px-4 sm:py-4 sm:px-6 text-right font-black text-gray-900 whitespace-nowrap">
+                              PKR {sales.reduce((sum, s) => sum + (s.subtotal || 0), 0).toFixed(2)}
+                            </td>
+                            <td className="py-3 px-4 sm:py-4 sm:px-6 text-right font-black text-rose-600 whitespace-nowrap">
+                              - PKR {sales.reduce((sum, s) => sum + (s.discount_amount || 0), 0).toFixed(2)}
+                            </td>
+                            <td className="py-3 px-4 sm:py-4 sm:px-6 text-right font-black text-indigo-700 whitespace-nowrap">
+                              PKR {sales.reduce((sum, s) => sum + (s.grand_total || 0), 0).toFixed(2)}
+                            </td>
+                            <td className="py-3 px-4 sm:py-4 sm:px-6 text-center text-xs text-gray-500 font-semibold whitespace-nowrap">
+                              {sales.filter((s) => s.payment_status === "PAID").length} Paid • {sales.filter((s) => s.payment_status === "DUE").length} Due
                             </td>
                           </tr>
-                        ))
+                        </tfoot>
                       )}
-                    </tbody>
-                    {sales.length > 0 && (
-                      <tfoot className="bg-slate-50 border-t-2 border-slate-300 font-bold text-xs sm:text-sm text-gray-900">
-                        <tr>
-                          <td colSpan={3} className="py-4 px-6 uppercase tracking-wider text-gray-900 font-black">
-                            Total ({sales.length} Invoices)
-                          </td>
-                          <td className="py-4 px-6 text-right font-black text-gray-900 whitespace-nowrap">
-                            PKR {sales.reduce((sum, s) => sum + (s.subtotal || 0), 0).toFixed(2)}
-                          </td>
-                          <td className="py-4 px-6 text-right font-black text-rose-600 whitespace-nowrap">
-                            - PKR {sales.reduce((sum, s) => sum + (s.discount_amount || 0), 0).toFixed(2)}
-                          </td>
-                          <td className="py-4 px-6 text-right font-black text-indigo-700 whitespace-nowrap">
-                            PKR {sales.reduce((sum, s) => sum + (s.grand_total || 0), 0).toFixed(2)}
-                          </td>
-                          <td className="py-4 px-6 text-center text-xs text-gray-500 font-semibold whitespace-nowrap">
-                            {sales.filter((s) => s.payment_status === "PAID").length} Paid • {sales.filter((s) => s.payment_status === "DUE").length} Due
-                          </td>
-                        </tr>
-                      </tfoot>
-                    )}
-                  </table>
+                    </table>
+                  </div>
                 </div>
               )}
 
@@ -648,20 +666,24 @@ export default function ReportsPage() {
                       </span>
                     </div>
 
+                    <div className="sm:hidden text-[11px] text-gray-400 mb-2 flex items-center justify-end gap-1 font-medium">
+                      <span>👈 Swipe horizontally for full ledger 👉</span>
+                    </div>
+
                     <div className="border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-2xs">
-                      <div className="overflow-x-auto w-full">
+                      <div className="overflow-x-auto w-full -mx-1 sm:mx-0 scrollbar-thin">
                         <table className="w-full text-left border-collapse min-w-[850px]">
                           <thead className="bg-slate-50 border-b border-gray-200 text-gray-600 text-xs uppercase tracking-wider">
                             <tr>
-                              <th className="p-4 font-semibold">Date &amp; Time</th>
-                              <th className="p-4 font-semibold text-center">Type</th>
-                              <th className="p-4 font-semibold">Voucher / Ref #</th>
-                              <th className="p-4 font-semibold">Party / Description</th>
-                              <th className="p-4 font-semibold">Payment Mode</th>
-                              <th className="p-4 font-semibold text-right">Cash In (+)</th>
-                              <th className="p-4 font-semibold text-right">Cash Out (-)</th>
-                              <th className="p-4 font-semibold text-right">Net Impact</th>
-                              <th className="p-4 font-semibold">Logged By</th>
+                              <th className="py-3 px-3 sm:p-4 font-semibold">Date &amp; Time</th>
+                              <th className="py-3 px-3 sm:p-4 font-semibold text-center">Type</th>
+                              <th className="py-3 px-3 sm:p-4 font-semibold">Voucher / Ref #</th>
+                              <th className="py-3 px-3 sm:p-4 font-semibold">Party / Description</th>
+                              <th className="py-3 px-3 sm:p-4 font-semibold">Payment Mode</th>
+                              <th className="py-3 px-3 sm:p-4 font-semibold text-right">Cash In (+)</th>
+                              <th className="py-3 px-3 sm:p-4 font-semibold text-right">Cash Out (-)</th>
+                              <th className="py-3 px-3 sm:p-4 font-semibold text-right">Net Impact</th>
+                              <th className="py-3 px-3 sm:p-4 font-semibold">Logged By</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-100 text-sm">
@@ -751,17 +773,21 @@ export default function ReportsPage() {
 
               {/* TAB 2: Service Performance */}
               {activeTab === 'service_performance' && (
-                <div className="overflow-x-auto w-full">
-                  <table className="w-full text-left border-collapse min-w-[600px]">
-                    <thead className="bg-gray-50/80 border-b border-gray-200 text-gray-600 text-xs uppercase tracking-wider">
-                      <tr>
-                        <th className="py-4 px-6 font-semibold">Service / Product Name</th>
-                        <th className="py-4 px-6 font-semibold">SKU</th>
-                        <th className="py-4 px-6 font-semibold text-right">Qty Sold</th>
-                        <th className="py-4 px-6 font-semibold text-right">Revenue Generated</th>
-                      </tr>
-                    </thead>
-                    <tbody className="text-sm text-gray-700 divide-y divide-gray-100">
+                <div className="w-full">
+                  <div className="sm:hidden text-[11px] text-gray-400 mb-2 flex items-center justify-end gap-1 font-medium">
+                    <span>👈 Swipe horizontally for full table 👉</span>
+                  </div>
+                  <div className="overflow-x-auto w-full -mx-1 sm:mx-0 scrollbar-thin">
+                    <table className="w-full text-left border-collapse min-w-[550px]">
+                      <thead className="bg-gray-50/80 border-b border-gray-200 text-gray-600 text-xs uppercase tracking-wider">
+                        <tr>
+                          <th className="py-3 px-4 sm:py-4 sm:px-6 font-semibold">Service / Product Name</th>
+                          <th className="py-3 px-4 sm:py-4 sm:px-6 font-semibold">SKU</th>
+                          <th className="py-3 px-4 sm:py-4 sm:px-6 font-semibold text-right">Qty Sold</th>
+                          <th className="py-3 px-4 sm:py-4 sm:px-6 font-semibold text-right">Revenue Generated</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-sm text-gray-700 divide-y divide-gray-100">
                       {servicePerformance.length === 0 ? (
                         <tr><td colSpan={4} className="py-10 text-center text-gray-400 font-medium">No performance data found in this date range.</td></tr>
                       ) : (
@@ -792,7 +818,8 @@ export default function ReportsPage() {
                     )}
                   </table>
                 </div>
-              )}
+              </div>
+            )}
 
               {/* TAB 3: Payment Breakdown */}
               {activeTab === 'payment_breakdown' && (
@@ -861,44 +888,47 @@ export default function ReportsPage() {
 
                   {selectedPatientData && (
                     <div className="max-w-4xl mx-auto">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                        <div className="bg-indigo-50 border border-indigo-100 p-5 rounded-2xl flex flex-col justify-center">
-                          <span className="text-indigo-600 text-xs font-semibold mb-1 uppercase tracking-wider">Total Spending</span>
-                          <span className="text-2xl sm:text-3xl font-black text-indigo-900">
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mb-6 sm:mb-8">
+                        <div className="bg-indigo-50 border border-indigo-100 p-3.5 sm:p-5 rounded-2xl flex flex-col justify-center">
+                          <span className="text-indigo-600 text-[10px] sm:text-xs font-semibold mb-1 uppercase tracking-wider">Total Spending</span>
+                          <span className="text-lg sm:text-2xl lg:text-3xl font-black text-indigo-900 break-words">
                             PKR {(selectedPatientData.sales || []).reduce((sum: number, s: any) => sum + s.grand_total, 0).toFixed(2)}
                           </span>
                         </div>
-                        <div className="bg-gray-50 border border-gray-100 p-5 rounded-2xl flex flex-col justify-center">
-                          <span className="text-gray-500 text-xs font-semibold mb-1 uppercase tracking-wider">Total Visits</span>
-                          <span className="text-2xl sm:text-3xl font-black text-gray-900">
+                        <div className="bg-gray-50 border border-gray-100 p-3.5 sm:p-5 rounded-2xl flex flex-col justify-center">
+                          <span className="text-gray-500 text-[10px] sm:text-xs font-semibold mb-1 uppercase tracking-wider">Total Visits</span>
+                          <span className="text-lg sm:text-2xl lg:text-3xl font-black text-gray-900 break-words">
                             {(selectedPatientData.sales || []).length}
                           </span>
                         </div>
-                        <div className="bg-red-50 border border-red-100 p-5 rounded-2xl flex flex-col justify-center">
-                          <span className="text-red-600 text-xs font-semibold mb-1 uppercase tracking-wider">Due Balance</span>
-                          <span className="text-2xl sm:text-3xl font-black text-red-900">
+                        <div className="bg-red-50 border border-red-100 p-3.5 sm:p-5 rounded-2xl flex flex-col justify-center">
+                          <span className="text-red-600 text-[10px] sm:text-xs font-semibold mb-1 uppercase tracking-wider">Due Balance</span>
+                          <span className="text-lg sm:text-2xl lg:text-3xl font-black text-red-900 break-words">
                             PKR {(selectedPatientData.current_balance || 0).toFixed(2)}
                           </span>
                         </div>
-                        <div className="bg-green-50 border border-green-100 p-5 rounded-2xl flex flex-col justify-center">
-                          <span className="text-green-600 text-xs font-semibold mb-1 uppercase tracking-wider">Advance Balance</span>
-                          <span className="text-2xl sm:text-3xl font-black text-green-900">
+                        <div className="bg-green-50 border border-green-100 p-3.5 sm:p-5 rounded-2xl flex flex-col justify-center">
+                          <span className="text-green-600 text-[10px] sm:text-xs font-semibold mb-1 uppercase tracking-wider">Advance Balance</span>
+                          <span className="text-lg sm:text-2xl lg:text-3xl font-black text-green-900 break-words">
                             PKR {(selectedPatientData.advance_balance || 0).toFixed(2)}
                           </span>
                         </div>
                       </div>
 
-                      <h3 className="font-bold text-gray-900 mb-4 text-lg">Invoice History</h3>
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-bold text-gray-900 text-base sm:text-lg">Invoice History</h3>
+                        <span className="sm:hidden text-[11px] text-gray-400 font-medium">👈 Swipe table 👉</span>
+                      </div>
                       <div className="border border-gray-200 rounded-2xl overflow-hidden bg-white w-full min-w-0 shadow-xs mb-8">
-                        <div className="overflow-x-auto w-full">
+                        <div className="overflow-x-auto w-full -mx-1 sm:mx-0 scrollbar-thin">
                           <table className="w-full text-left border-collapse min-w-[600px]">
                             <thead className="bg-gray-50 border-b border-gray-200 text-gray-600 text-xs uppercase tracking-wider">
                               <tr>
-                                <th className="p-4 font-semibold">Date</th>
-                                <th className="p-4 font-semibold">Invoice</th>
-                                <th className="p-4 font-semibold text-right">Net Total</th>
-                                <th className="p-4 font-semibold text-right">Paid To Date</th>
-                                <th className="p-4 font-semibold text-center">Status</th>
+                                <th className="p-3 sm:p-4 font-semibold">Date</th>
+                                <th className="p-3 sm:p-4 font-semibold">Invoice</th>
+                                <th className="p-3 sm:p-4 font-semibold text-right">Net Total</th>
+                                <th className="p-3 sm:p-4 font-semibold text-right">Paid To Date</th>
+                                <th className="p-3 sm:p-4 font-semibold text-center">Status</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100 text-sm">
@@ -907,11 +937,11 @@ export default function ReportsPage() {
                               ) : (
                                 selectedPatientData.sales.map((sale: any) => (
                                   <tr key={sale.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="p-4 text-gray-900">{dayjs(sale.date).format('MMM DD, YYYY')}</td>
-                                    <td className="p-4 font-medium text-indigo-600">{sale.invoice_number}</td>
-                                    <td className="p-4 text-right font-medium text-gray-900">PKR {sale.grand_total.toFixed(2)}</td>
-                                    <td className="p-4 text-right text-gray-600">PKR {sale.paid_amount.toFixed(2)}</td>
-                                    <td className="p-4 text-center">
+                                    <td className="p-3 sm:p-4 text-gray-900 whitespace-nowrap text-xs sm:text-sm">{dayjs(sale.date).format('MMM DD, YYYY')}</td>
+                                    <td className="p-3 sm:p-4 font-medium text-indigo-600 whitespace-nowrap text-xs sm:text-sm">{sale.invoice_number}</td>
+                                    <td className="p-3 sm:p-4 text-right font-medium text-gray-900 whitespace-nowrap text-xs sm:text-sm">PKR {sale.grand_total.toFixed(2)}</td>
+                                    <td className="p-3 sm:p-4 text-right text-gray-600 whitespace-nowrap text-xs sm:text-sm">PKR {sale.paid_amount.toFixed(2)}</td>
+                                    <td className="p-3 sm:p-4 text-center whitespace-nowrap">
                                       {sale.payment_status === "PAID" && <span className="bg-green-100 text-green-700 px-2.5 py-1 rounded-lg text-xs font-semibold">PAID</span>}
                                       {sale.payment_status === "PARTIAL" && <span className="bg-orange-100 text-orange-700 px-2.5 py-1 rounded-lg text-xs font-semibold">PARTIAL</span>}
                                       {sale.payment_status === "DUE" && <span className="bg-red-100 text-red-700 px-2.5 py-1 rounded-lg text-xs font-semibold">DUE</span>}
@@ -923,16 +953,16 @@ export default function ReportsPage() {
                             {selectedPatientData.sales && selectedPatientData.sales.length > 0 && (
                               <tfoot className="bg-slate-50 border-t-2 border-slate-300 font-bold text-xs sm:text-sm text-gray-900">
                                 <tr>
-                                  <td colSpan={2} className="p-4 uppercase tracking-wider text-gray-900 font-black">
+                                  <td colSpan={2} className="p-3 sm:p-4 uppercase tracking-wider text-gray-900 font-black">
                                     Total ({selectedPatientData.sales.length} Invoices)
                                   </td>
-                                  <td className="p-4 text-right font-black text-gray-900 whitespace-nowrap">
+                                  <td className="p-3 sm:p-4 text-right font-black text-gray-900 whitespace-nowrap">
                                     PKR {selectedPatientData.sales.reduce((sum: number, s: any) => sum + (s.grand_total || 0), 0).toFixed(2)}
                                   </td>
-                                  <td className="p-4 text-right font-black text-emerald-700 whitespace-nowrap">
+                                  <td className="p-3 sm:p-4 text-right font-black text-emerald-700 whitespace-nowrap">
                                     PKR {selectedPatientData.sales.reduce((sum: number, s: any) => sum + (s.paid_amount || 0), 0).toFixed(2)}
                                   </td>
-                                  <td className="p-4 text-center text-xs text-gray-500 font-semibold whitespace-nowrap">
+                                  <td className="p-3 sm:p-4 text-center text-xs text-gray-500 font-semibold whitespace-nowrap">
                                     Due: PKR {Math.max(0, selectedPatientData.sales.reduce((sum: number, s: any) => sum + ((s.grand_total || 0) - (s.paid_amount || 0)), 0)).toFixed(2)}
                                   </td>
                                 </tr>
@@ -943,9 +973,12 @@ export default function ReportsPage() {
                       </div>
 
                       {/* Payment History Table */}
-                      <h3 className="font-bold text-gray-900 mb-4 text-lg">Payments & Cash Receipts</h3>
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-bold text-gray-900 text-base sm:text-lg">Payments &amp; Cash Receipts</h3>
+                        <span className="sm:hidden text-[11px] text-gray-400 font-medium">👈 Swipe table 👉</span>
+                      </div>
                       <div className="border border-gray-200 rounded-2xl overflow-hidden bg-white w-full min-w-0 shadow-xs">
-                        <div className="overflow-x-auto w-full">
+                        <div className="overflow-x-auto w-full -mx-1 sm:mx-0 scrollbar-thin">
                           <table className="w-full text-left border-collapse min-w-[600px]">
                             <thead className="bg-gray-50 border-b border-gray-200 text-gray-600 text-xs uppercase tracking-wider">
                               <tr>
@@ -1149,18 +1182,21 @@ export default function ReportsPage() {
 
                   {/* Detailed Expenses Table */}
                   <div>
-                    <h4 className="font-bold text-gray-900 text-sm mb-3">Expense Vouchers Log</h4>
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-bold text-gray-900 text-sm">Expense Vouchers Log</h4>
+                      <span className="sm:hidden text-[11px] text-gray-400 font-medium">👈 Swipe table 👉</span>
+                    </div>
                     <div className="border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-2xs">
-                      <div className="overflow-x-auto w-full">
+                      <div className="overflow-x-auto w-full -mx-1 sm:mx-0 scrollbar-thin">
                         <table className="w-full text-left border-collapse min-w-[650px]">
                           <thead className="bg-slate-50 border-b border-gray-200 text-gray-600 text-xs uppercase tracking-wider">
                             <tr>
-                              <th className="p-4 font-semibold">Date</th>
-                              <th className="p-4 font-semibold">Description</th>
-                              <th className="p-4 font-semibold">Category</th>
-                              <th className="p-4 font-semibold">Payee</th>
-                              <th className="p-4 font-semibold">Method</th>
-                              <th className="p-4 font-semibold text-right">Amount</th>
+                              <th className="py-3 px-3 sm:p-4 font-semibold">Date</th>
+                              <th className="py-3 px-3 sm:p-4 font-semibold">Description</th>
+                              <th className="py-3 px-3 sm:p-4 font-semibold">Category</th>
+                              <th className="py-3 px-3 sm:p-4 font-semibold">Payee</th>
+                              <th className="py-3 px-3 sm:p-4 font-semibold">Method</th>
+                              <th className="py-3 px-3 sm:p-4 font-semibold text-right">Amount</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-100 text-sm">
