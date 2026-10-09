@@ -16,6 +16,12 @@ import {
   Layers,
   Tag,
   ArrowUpRight,
+  Printer,
+  FileSpreadsheet,
+  ShieldCheck,
+  Eye,
+  CheckCircle2,
+  Clock,
 } from "lucide-react";
 import dayjs from "dayjs";
 import { useSearchParams } from "next/navigation";
@@ -32,6 +38,7 @@ export default function ReportsPage() {
 
   // Data States
   const [sales, setSales] = useState<any[]>([]);
+  const [auditReport, setAuditReport] = useState<any>(null);
   const [servicePerformance, setServicePerformance] = useState<any[]>([]);
   const [paymentBreakdown, setPaymentBreakdown] = useState<any[]>([]);
   const [expenseReport, setExpenseReport] = useState<any>(null);
@@ -64,6 +71,10 @@ export default function ReportsPage() {
           const res = await fetch(`/api/sales${queryParams}`);
           const data = await res.json();
           setSales(Array.isArray(data) ? data : []);
+        } else if (activeTab === "audit_report") {
+          const res = await fetch(`/api/reports/audit${queryParams}`);
+          const data = await res.json();
+          setAuditReport(data);
         } else if (activeTab === "service_performance") {
           const res = await fetch(`/api/reports/service-performance${queryParams}`);
           const data = await res.json();
@@ -156,12 +167,12 @@ export default function ReportsPage() {
     document.body.removeChild(a);
   };
 
-  const handleExport = () => {
+  const handleExportCSV = () => {
     if (activeTab === "sales_register") {
       const exportData = sales.map((s) => ({
         Date: dayjs(s.date).format("YYYY-MM-DD"),
         Invoice: s.invoice_number,
-        Patient: s.customer?.name,
+        Patient: s.customer?.name || "Walk-In",
         GrossAmount: s.subtotal,
         Discount: s.discount_amount,
         NetTotal: s.grand_total,
@@ -169,6 +180,22 @@ export default function ReportsPage() {
         Status: s.payment_status,
       }));
       exportCSV(exportData, `Sales_Register_${startDate}_to_${endDate}`);
+    } else if (activeTab === "audit_report" && auditReport?.ledgerEntries) {
+      const exportData = auditReport.ledgerEntries.map((row: any) => ({
+        Date: dayjs(row.date).format("YYYY-MM-DD HH:mm"),
+        Type: row.type,
+        Ref: row.ref,
+        Party: row.party,
+        Method: row.method,
+        StatusOrCategory: row.categoryOrStatus,
+        CashIn: row.cashIn,
+        CashOut: row.cashOut,
+        NetImpact: row.net,
+        DueBalance: row.due,
+        LoggedBy: row.user,
+        Notes: row.notes || "",
+      }));
+      exportCSV(exportData, `Audit_Report_${startDate}_to_${endDate}`);
     } else if (activeTab === "service_performance") {
       const exportData = servicePerformance.map((s) => ({
         SKU: s.sku,
@@ -204,6 +231,39 @@ export default function ReportsPage() {
     }
   };
 
+  const handleOpenPrintPreview = (autoPrint = false) => {
+    const params = new URLSearchParams({
+      tab: activeTab,
+      startDate,
+      endDate,
+      categoryId: expenseCategoryFilter,
+      patientId: selectedPatientId,
+    });
+    if (autoPrint) {
+      params.set("autoprint", "true");
+    }
+    window.open(`/dashboard/reports/preview?${params.toString()}`, "_blank");
+  };
+
+  const setQuickDateRange = (preset: "today" | "yesterday" | "this_week" | "this_month" | "last_month") => {
+    if (preset === "today") {
+      setStartDate(dayjs().format("YYYY-MM-DD"));
+      setEndDate(dayjs().format("YYYY-MM-DD"));
+    } else if (preset === "yesterday") {
+      setStartDate(dayjs().subtract(1, "day").format("YYYY-MM-DD"));
+      setEndDate(dayjs().subtract(1, "day").format("YYYY-MM-DD"));
+    } else if (preset === "this_week") {
+      setStartDate(dayjs().startOf("week").format("YYYY-MM-DD"));
+      setEndDate(dayjs().endOf("week").format("YYYY-MM-DD"));
+    } else if (preset === "this_month") {
+      setStartDate(dayjs().startOf("month").format("YYYY-MM-DD"));
+      setEndDate(dayjs().endOf("month").format("YYYY-MM-DD"));
+    } else if (preset === "last_month") {
+      setStartDate(dayjs().subtract(1, "month").startOf("month").format("YYYY-MM-DD"));
+      setEndDate(dayjs().subtract(1, "month").endOf("month").format("YYYY-MM-DD"));
+    }
+  };
+
   return (
     <div className="space-y-5 sm:space-y-6 w-full min-w-0">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -218,24 +278,51 @@ export default function ReportsPage() {
 
         {/* Global Date Filter */}
         {activeTab !== "patient_ledger" && (
-          <div className="flex flex-wrap items-center gap-2 bg-white p-2 rounded-2xl shadow-xs border border-gray-200/80 w-full sm:w-auto">
-            <div className="flex items-center px-2.5 sm:border-r border-gray-100 flex-1 sm:flex-initial">
-              <CalendarIcon className="w-4 h-4 text-gray-400 mr-2 shrink-0" />
-              <input
-                type="date"
-                className="outline-hidden text-xs sm:text-sm text-gray-700 bg-transparent font-medium w-full sm:w-auto"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            {/* Quick Presets */}
+            <div className="flex items-center gap-1 bg-white p-1 rounded-2xl border border-gray-200/80 shadow-2xs text-xs font-semibold text-gray-600">
+              <button
+                type="button"
+                onClick={() => setQuickDateRange("today")}
+                className="px-2.5 py-1.5 rounded-xl hover:bg-indigo-50 hover:text-indigo-700 transition-all cursor-pointer"
+              >
+                Today
+              </button>
+              <button
+                type="button"
+                onClick={() => setQuickDateRange("this_week")}
+                className="px-2.5 py-1.5 rounded-xl hover:bg-indigo-50 hover:text-indigo-700 transition-all cursor-pointer"
+              >
+                Week
+              </button>
+              <button
+                type="button"
+                onClick={() => setQuickDateRange("this_month")}
+                className="px-2.5 py-1.5 rounded-xl hover:bg-indigo-50 hover:text-indigo-700 transition-all cursor-pointer"
+              >
+                Month
+              </button>
             </div>
-            <div className="flex items-center px-2.5 flex-1 sm:flex-initial">
-              <span className="text-gray-400 mr-2 text-xs sm:text-sm font-medium">to</span>
-              <input
-                type="date"
-                className="outline-hidden text-xs sm:text-sm text-gray-700 bg-transparent font-medium w-full sm:w-auto"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
+
+            <div className="flex flex-wrap items-center gap-2 bg-white p-2 rounded-2xl shadow-xs border border-gray-200/80 w-full sm:w-auto">
+              <div className="flex items-center px-2.5 sm:border-r border-gray-100 flex-1 sm:flex-initial">
+                <CalendarIcon className="w-4 h-4 text-gray-400 mr-2 shrink-0" />
+                <input
+                  type="date"
+                  className="outline-hidden text-xs sm:text-sm text-gray-700 bg-transparent font-medium w-full sm:w-auto"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+              <div className="flex items-center px-2.5 flex-1 sm:flex-initial">
+                <span className="text-gray-400 mr-2 text-xs sm:text-sm font-medium">to</span>
+                <input
+                  type="date"
+                  className="outline-hidden text-xs sm:text-sm text-gray-700 bg-transparent font-medium w-full sm:w-auto"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
             </div>
           </div>
         )}
@@ -243,10 +330,10 @@ export default function ReportsPage() {
 
       <div className="bg-white rounded-3xl shadow-xs border border-gray-100 overflow-hidden flex flex-col min-h-[500px] w-full min-w-0">
         {/* Tabs with smooth horizontal scroll */}
-        <div className="flex border-b border-gray-100 bg-gray-50/50 px-3 sm:px-4 pt-3 sm:pt-4 overflow-x-auto no-scrollbar whitespace-nowrap shrink-0 gap-1">
+        <div className="flex border-b border-gray-100 bg-gray-50/50 px-3 sm:px-4 pt-3 sm:pt-4 overflow-x-auto no-scrollbar whitespace-nowrap shrink-0 gap-1 items-center">
           <button
-            className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${activeTab === 'sales_register'
-              ? 'border-indigo-600 text-indigo-700 bg-white shadow-xs'
+            className={`px-4 sm:px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${activeTab === 'sales_register'
+              ? 'border-indigo-600 text-indigo-700 bg-white shadow-xs font-bold'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
               }`}
             onClick={() => setActiveTab('sales_register')}
@@ -254,7 +341,16 @@ export default function ReportsPage() {
             <FileText className="w-4 h-4 mr-2" /> Sales Register
           </button>
           <button
-            className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${activeTab === 'service_performance'
+            className={`px-4 sm:px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${activeTab === 'audit_report'
+              ? 'border-indigo-600 text-indigo-700 bg-white shadow-xs font-bold'
+              : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
+              }`}
+            onClick={() => setActiveTab('audit_report')}
+          >
+            <ShieldCheck className="w-4 h-4 mr-2 text-indigo-600" /> Audit Report
+          </button>
+          <button
+            className={`px-4 sm:px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${activeTab === 'service_performance'
               ? 'border-indigo-600 text-indigo-700 bg-white shadow-xs'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
               }`}
@@ -263,7 +359,7 @@ export default function ReportsPage() {
             <BarChart3 className="w-4 h-4 mr-2" /> Service Performance
           </button>
           <button
-            className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${activeTab === 'payment_breakdown'
+            className={`px-4 sm:px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${activeTab === 'payment_breakdown'
               ? 'border-indigo-600 text-indigo-700 bg-white shadow-xs'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
               }`}
@@ -272,7 +368,7 @@ export default function ReportsPage() {
             <PieChart className="w-4 h-4 mr-2" /> Payment Breakdown
           </button>
           <button
-            className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${activeTab === 'expense_report'
+            className={`px-4 sm:px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${activeTab === 'expense_report'
               ? 'border-rose-600 text-rose-700 bg-white shadow-xs font-bold'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
               }`}
@@ -281,7 +377,7 @@ export default function ReportsPage() {
             <Receipt className="w-4 h-4 mr-2 text-rose-600" /> Expense Report
           </button>
           <button
-            className={`px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${activeTab === 'patient_ledger'
+            className={`px-4 sm:px-5 py-3 font-semibold text-sm border-b-2 rounded-t-xl flex items-center transition-colors ${activeTab === 'patient_ledger'
               ? 'border-indigo-600 text-indigo-700 bg-white shadow-xs'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100/50'
               }`}
@@ -290,9 +386,36 @@ export default function ReportsPage() {
             <UserSquare className="w-4 h-4 mr-2" /> Patient Ledger
           </button>
 
-          <div className="ml-auto pb-2 self-end">
-            <button onClick={handleExport} className="flex items-center text-sm font-medium text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 px-4 py-2 rounded-xl shadow-xs transition-all">
-              <Download className="w-4 h-4 mr-2 text-indigo-600" /> Export CSV
+          {/* Action Icons Toolbar (CSV, PDF, Print/Preview) */}
+          <div className="ml-auto pb-2 self-end flex items-center gap-1.5 sm:gap-2">
+            {/* Export CSV Icon */}
+            <button
+              type="button"
+              onClick={handleExportCSV}
+              title="Export CSV spreadsheet"
+              className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 text-gray-700 hover:text-emerald-700 shadow-2xs transition-all active:scale-95 cursor-pointer"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+            </button>
+
+            {/* Export PDF Icon */}
+            <button
+              type="button"
+              onClick={() => handleOpenPrintPreview(true)}
+              title="Export & Save PDF"
+              className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-200 hover:border-rose-300 hover:bg-rose-50 text-gray-700 hover:text-rose-700 shadow-2xs transition-all active:scale-95 cursor-pointer"
+            >
+              <FileText className="w-4 h-4 text-rose-600" />
+            </button>
+
+            {/* Print & A4 Preview in New Tab */}
+            <button
+              type="button"
+              onClick={() => handleOpenPrintPreview(false)}
+              title="Print & A4 Report Preview (New Tab)"
+              className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 text-gray-700 hover:text-indigo-700 shadow-2xs transition-all active:scale-95 cursor-pointer"
+            >
+              <Printer className="w-4 h-4 text-indigo-600" />
             </button>
           </div>
         </div>
@@ -339,7 +462,290 @@ export default function ReportsPage() {
                         ))
                       )}
                     </tbody>
+                    {sales.length > 0 && (
+                      <tfoot className="bg-slate-50 border-t-2 border-slate-300 font-bold text-xs sm:text-sm text-gray-900">
+                        <tr>
+                          <td colSpan={3} className="py-4 px-6 uppercase tracking-wider text-gray-900 font-black">
+                            Total ({sales.length} Invoices)
+                          </td>
+                          <td className="py-4 px-6 text-right font-black text-gray-900 whitespace-nowrap">
+                            PKR {sales.reduce((sum, s) => sum + (s.subtotal || 0), 0).toFixed(2)}
+                          </td>
+                          <td className="py-4 px-6 text-right font-black text-rose-600 whitespace-nowrap">
+                            - PKR {sales.reduce((sum, s) => sum + (s.discount_amount || 0), 0).toFixed(2)}
+                          </td>
+                          <td className="py-4 px-6 text-right font-black text-indigo-700 whitespace-nowrap">
+                            PKR {sales.reduce((sum, s) => sum + (s.grand_total || 0), 0).toFixed(2)}
+                          </td>
+                          <td className="py-4 px-6 text-center text-xs text-gray-500 font-semibold whitespace-nowrap">
+                            {sales.filter((s) => s.payment_status === "PAID").length} Paid • {sales.filter((s) => s.payment_status === "DUE").length} Due
+                          </td>
+                        </tr>
+                      </tfoot>
+                    )}
                   </table>
+                </div>
+              )}
+
+              {/* TAB: Audit Report */}
+              {activeTab === 'audit_report' && (
+                <div className="space-y-6 w-full min-w-0">
+                  {/* Executive KPI Metric Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {/* Gross Invoiced Sales */}
+                    <div className="bg-gradient-to-br from-indigo-50/70 via-white to-white p-5 rounded-2xl border border-indigo-100 shadow-2xs">
+                      <span className="text-[11px] font-bold text-indigo-700 uppercase tracking-wider block mb-1">
+                        Gross Invoiced Sales
+                      </span>
+                      <div className="text-2xl font-black text-indigo-950">
+                        PKR {Number(auditReport?.summary?.grossSales || 0).toLocaleString("en-PK", { minimumFractionDigits: 2 })}
+                      </div>
+                      <p className="text-[11px] text-gray-500 mt-1">
+                        {auditReport?.summary?.totalInvoices || 0} Invoices • Net: PKR {Number(auditReport?.summary?.netInvoicedSales || 0).toLocaleString()}
+                      </p>
+                    </div>
+
+                    {/* Total Cash Inflow */}
+                    <div className="bg-gradient-to-br from-emerald-50/70 via-white to-white p-5 rounded-2xl border border-emerald-100 shadow-2xs">
+                      <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider block mb-1">
+                        Total Cash Inflow
+                      </span>
+                      <div className="text-2xl font-black text-emerald-700">
+                        PKR {Number(auditReport?.summary?.totalCashInflow || 0).toLocaleString("en-PK", { minimumFractionDigits: 2 })}
+                      </div>
+                      <p className="text-[11px] text-gray-500 mt-1">
+                        Sales Cash: PKR {Number(auditReport?.summary?.invoicedCashCollected || 0).toLocaleString()} + Adv: PKR {Number(auditReport?.summary?.totalAdvanceDeposits || 0).toLocaleString()}
+                      </p>
+                    </div>
+
+                    {/* Total Operating Expenses */}
+                    <div className="bg-gradient-to-br from-rose-50/70 via-white to-white p-5 rounded-2xl border border-rose-100 shadow-2xs">
+                      <span className="text-[11px] font-bold text-rose-700 uppercase tracking-wider block mb-1">
+                        Total Operating Expenses
+                      </span>
+                      <div className="text-2xl font-black text-rose-600">
+                        PKR {Number(auditReport?.summary?.totalExpenses || 0).toLocaleString("en-PK", { minimumFractionDigits: 2 })}
+                      </div>
+                      <p className="text-[11px] text-gray-500 mt-1">
+                        {auditReport?.summary?.totalExpenseTxns || 0} Expense Vouchers
+                      </p>
+                    </div>
+
+                    {/* Net Cash in Hand */}
+                    <div className="bg-gradient-to-br from-blue-50/70 via-white to-white p-5 rounded-2xl border border-blue-100 shadow-2xs">
+                      <span className="text-[11px] font-bold text-blue-700 uppercase tracking-wider block mb-1">
+                        Net Cash In Hand
+                      </span>
+                      <div className={`text-2xl font-black ${(auditReport?.summary?.netOperatingCash || 0) >= 0 ? "text-indigo-950" : "text-rose-600"}`}>
+                        PKR {Number(auditReport?.summary?.netOperatingCash || 0).toLocaleString("en-PK", { minimumFractionDigits: 2 })}
+                      </div>
+                      <p className="text-[11px] text-gray-500 mt-1">
+                        Total Inflow minus Expenses
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Secondary Metrics Strip */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="bg-white p-3.5 rounded-xl border border-gray-200/80 shadow-2xs">
+                      <span className="text-[10px] font-bold uppercase text-gray-400 block">Total Discounts</span>
+                      <span className="text-sm font-black text-rose-600">PKR {Number(auditReport?.summary?.totalDiscounts || 0).toLocaleString()}</span>
+                    </div>
+                    <div className="bg-white p-3.5 rounded-xl border border-gray-200/80 shadow-2xs">
+                      <span className="text-[10px] font-bold uppercase text-gray-400 block">Pending Invoiced Dues</span>
+                      <span className="text-sm font-black text-amber-600">PKR {Number(auditReport?.summary?.invoicedDueBalance || 0).toLocaleString()}</span>
+                    </div>
+                    <div className="bg-white p-3.5 rounded-xl border border-gray-200/80 shadow-2xs">
+                      <span className="text-[10px] font-bold uppercase text-gray-400 block">Advance Wallet Deposits</span>
+                      <span className="text-sm font-black text-indigo-600">PKR {Number(auditReport?.summary?.totalAdvanceDeposits || 0).toLocaleString()}</span>
+                    </div>
+                    <div className="bg-white p-3.5 rounded-xl border border-gray-200/80 shadow-2xs">
+                      <span className="text-[10px] font-bold uppercase text-gray-400 block">Avg Expense / Voucher</span>
+                      <span className="text-sm font-black text-gray-800">
+                        PKR {auditReport?.summary?.totalExpenseTxns ? Math.round(auditReport.summary.totalExpenses / auditReport.summary.totalExpenseTxns).toLocaleString() : 0}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Distribution Breakdowns (Payment Modes & Categories) */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Inflow by Payment Mode */}
+                    <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-2xs space-y-3">
+                      <h4 className="font-bold text-gray-900 text-sm flex items-center justify-between">
+                        <span className="flex items-center gap-1.5">
+                          <Wallet className="w-4 h-4 text-emerald-600" /> Inflow by Payment Method
+                        </span>
+                        <span className="text-xs text-gray-400 font-medium">
+                          {auditReport?.paymentMethodBreakdown?.length || 0} methods
+                        </span>
+                      </h4>
+                      {(!auditReport?.paymentMethodBreakdown || auditReport.paymentMethodBreakdown.length === 0) ? (
+                        <p className="text-xs text-gray-400 py-6 text-center">No payment transactions in this period.</p>
+                      ) : (
+                        <div className="space-y-3 max-h-[250px] overflow-y-auto pr-1">
+                          {auditReport.paymentMethodBreakdown.map((pm: any, idx: number) => {
+                            const totalAmount = auditReport.paymentMethodBreakdown.reduce((sum: number, x: any) => sum + x.amount, 0) || 1;
+                            const pct = Math.round((pm.amount / totalAmount) * 100);
+                            return (
+                              <div key={idx} className="space-y-1">
+                                <div className="flex justify-between text-xs font-semibold text-gray-700">
+                                  <span>{pm.method} ({pm.count} txns)</span>
+                                  <span>PKR {Number(pm.amount).toLocaleString()} ({pct}%)</span>
+                                </div>
+                                <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                                  <div className="bg-emerald-600 h-full rounded-full transition-all duration-300" style={{ width: `${pct}%` }} />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Outflow by Expense Category */}
+                    <div className="bg-white p-5 rounded-2xl border border-gray-200 shadow-2xs space-y-3">
+                      <h4 className="font-bold text-gray-900 text-sm flex items-center justify-between">
+                        <span className="flex items-center gap-1.5">
+                          <Layers className="w-4 h-4 text-rose-600" /> Outflow by Expense Category
+                        </span>
+                        <span className="text-xs text-gray-400 font-medium">
+                          {auditReport?.expenseCategoryBreakdown?.length || 0} categories
+                        </span>
+                      </h4>
+                      {(!auditReport?.expenseCategoryBreakdown || auditReport.expenseCategoryBreakdown.length === 0) ? (
+                        <p className="text-xs text-gray-400 py-6 text-center">No expenses recorded in this period.</p>
+                      ) : (
+                        <div className="space-y-3 max-h-[250px] overflow-y-auto pr-1">
+                          {auditReport.expenseCategoryBreakdown.map((cat: any, idx: number) => {
+                            const totalAmount = auditReport.expenseCategoryBreakdown.reduce((sum: number, x: any) => sum + x.amount, 0) || 1;
+                            const pct = Math.round((cat.amount / totalAmount) * 100);
+                            return (
+                              <div key={idx} className="space-y-1">
+                                <div className="flex justify-between text-xs font-semibold text-gray-700">
+                                  <span>{cat.name} ({cat.count} txns)</span>
+                                  <span>PKR {Number(cat.amount).toLocaleString()} ({pct}%)</span>
+                                </div>
+                                <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                                  <div className="bg-rose-500 h-full rounded-full transition-all duration-300" style={{ width: `${pct}%` }} />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Master Audit Ledger Table */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-bold text-gray-900 text-sm flex items-center gap-2">
+                        <ShieldCheck className="w-4 h-4 text-indigo-600" />
+                        Master Chronological Audit Ledger
+                      </h4>
+                      <span className="text-xs text-gray-500 font-medium">
+                        {auditReport?.ledgerEntries?.length || 0} verified transactions
+                      </span>
+                    </div>
+
+                    <div className="border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-2xs">
+                      <div className="overflow-x-auto w-full">
+                        <table className="w-full text-left border-collapse min-w-[850px]">
+                          <thead className="bg-slate-50 border-b border-gray-200 text-gray-600 text-xs uppercase tracking-wider">
+                            <tr>
+                              <th className="p-4 font-semibold">Date &amp; Time</th>
+                              <th className="p-4 font-semibold text-center">Type</th>
+                              <th className="p-4 font-semibold">Voucher / Ref #</th>
+                              <th className="p-4 font-semibold">Party / Description</th>
+                              <th className="p-4 font-semibold">Payment Mode</th>
+                              <th className="p-4 font-semibold text-right">Cash In (+)</th>
+                              <th className="p-4 font-semibold text-right">Cash Out (-)</th>
+                              <th className="p-4 font-semibold text-right">Net Impact</th>
+                              <th className="p-4 font-semibold">Logged By</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100 text-sm">
+                            {(!auditReport?.ledgerEntries || auditReport.ledgerEntries.length === 0) ? (
+                              <tr>
+                                <td colSpan={9} className="p-10 text-center text-gray-400 font-medium">
+                                  No transactions found for the selected audit period.
+                                </td>
+                              </tr>
+                            ) : (
+                              auditReport.ledgerEntries.map((row: any) => (
+                                <tr key={row.id} className="hover:bg-slate-50/70 transition-colors">
+                                  <td className="p-4 text-gray-900 whitespace-nowrap text-xs">
+                                    <div className="font-bold">{dayjs(row.date).format("MMM DD, YYYY")}</div>
+                                    <div className="text-[11px] text-gray-400">{dayjs(row.date).format("hh:mm A")}</div>
+                                  </td>
+                                  <td className="p-4 text-center whitespace-nowrap">
+                                    <span className={`px-2.5 py-1 rounded-lg text-xs font-bold tracking-wide ${
+                                      row.type === "SALE" ? "bg-emerald-100 text-emerald-800" :
+                                      row.type === "ADVANCE" ? "bg-indigo-100 text-indigo-800" :
+                                      "bg-rose-100 text-rose-800"
+                                    }`}>
+                                      {row.type}
+                                    </span>
+                                  </td>
+                                  <td className="p-4 font-mono text-xs font-semibold text-indigo-600 whitespace-nowrap">
+                                    {row.ref}
+                                  </td>
+                                  <td className="p-4 text-xs sm:text-sm">
+                                    <div className="font-bold text-gray-900">{row.party}</div>
+                                    {row.notes && (
+                                      <div className="text-[11px] text-gray-500 font-normal truncate max-w-xs">{row.notes}</div>
+                                    )}
+                                  </td>
+                                  <td className="p-4 whitespace-nowrap text-xs">
+                                    <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium">
+                                      {row.method}
+                                    </span>
+                                  </td>
+                                  <td className="p-4 text-right font-black text-emerald-700 whitespace-nowrap text-xs sm:text-sm">
+                                    {row.cashIn > 0 ? `PKR ${row.cashIn.toFixed(2)}` : "—"}
+                                  </td>
+                                  <td className="p-4 text-right font-black text-rose-600 whitespace-nowrap text-xs sm:text-sm">
+                                    {row.cashOut > 0 ? `PKR ${row.cashOut.toFixed(2)}` : "—"}
+                                  </td>
+                                  <td className={`p-4 text-right font-black whitespace-nowrap text-xs sm:text-sm ${
+                                    row.net >= 0 ? "text-gray-950" : "text-rose-600"
+                                  }`}>
+                                    PKR {row.net.toFixed(2)}
+                                  </td>
+                                  <td className="p-4 text-xs text-gray-500 whitespace-nowrap">
+                                    {row.user}
+                                  </td>
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                          {auditReport?.ledgerEntries?.length > 0 && (
+                            <tfoot className="bg-slate-100 border-t-2 border-slate-300 font-bold text-xs sm:text-sm text-gray-900">
+                              <tr>
+                                <td colSpan={5} className="p-4 uppercase tracking-wider text-gray-900 font-black">
+                                  Audit Grand Total ({auditReport.ledgerEntries.length} Transactions)
+                                </td>
+                                <td className="p-4 text-right font-black text-emerald-800 whitespace-nowrap">
+                                  PKR {Number(auditReport.summary.totalCashInflow || 0).toFixed(2)}
+                                </td>
+                                <td className="p-4 text-right font-black text-rose-700 whitespace-nowrap">
+                                  PKR {Number(auditReport.summary.totalExpenses || 0).toFixed(2)}
+                                </td>
+                                <td className={`p-4 text-right font-black whitespace-nowrap ${
+                                  Number(auditReport.summary.netOperatingCash || 0) >= 0 ? "text-indigo-950" : "text-rose-700"
+                                }`}>
+                                  PKR {Number(auditReport.summary.netOperatingCash || 0).toFixed(2)}
+                                </td>
+                                <td className="p-4 text-xs text-gray-500 font-semibold text-center">
+                                  Audited
+                                </td>
+                              </tr>
+                            </tfoot>
+                          )}
+                        </table>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -369,6 +775,21 @@ export default function ReportsPage() {
                         ))
                       )}
                     </tbody>
+                    {servicePerformance.length > 0 && (
+                      <tfoot className="bg-slate-50 border-t-2 border-slate-300 font-bold text-xs sm:text-sm text-gray-900">
+                        <tr>
+                          <td colSpan={2} className="py-4 px-6 uppercase tracking-wider text-gray-900 font-black">
+                            Total ({servicePerformance.length} Services / Items)
+                          </td>
+                          <td className="py-4 px-6 text-right font-black text-gray-900 whitespace-nowrap">
+                            {servicePerformance.reduce((sum, s) => sum + (s.quantity_sold || 0), 0)}
+                          </td>
+                          <td className="py-4 px-6 text-right font-black text-indigo-700 whitespace-nowrap">
+                            PKR {servicePerformance.reduce((sum, s) => sum + (s.revenue || 0), 0).toFixed(2)}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    )}
                   </table>
                 </div>
               )}
@@ -499,6 +920,24 @@ export default function ReportsPage() {
                                 ))
                               )}
                             </tbody>
+                            {selectedPatientData.sales && selectedPatientData.sales.length > 0 && (
+                              <tfoot className="bg-slate-50 border-t-2 border-slate-300 font-bold text-xs sm:text-sm text-gray-900">
+                                <tr>
+                                  <td colSpan={2} className="p-4 uppercase tracking-wider text-gray-900 font-black">
+                                    Total ({selectedPatientData.sales.length} Invoices)
+                                  </td>
+                                  <td className="p-4 text-right font-black text-gray-900 whitespace-nowrap">
+                                    PKR {selectedPatientData.sales.reduce((sum: number, s: any) => sum + (s.grand_total || 0), 0).toFixed(2)}
+                                  </td>
+                                  <td className="p-4 text-right font-black text-emerald-700 whitespace-nowrap">
+                                    PKR {selectedPatientData.sales.reduce((sum: number, s: any) => sum + (s.paid_amount || 0), 0).toFixed(2)}
+                                  </td>
+                                  <td className="p-4 text-center text-xs text-gray-500 font-semibold whitespace-nowrap">
+                                    Due: PKR {Math.max(0, selectedPatientData.sales.reduce((sum: number, s: any) => sum + ((s.grand_total || 0) - (s.paid_amount || 0)), 0)).toFixed(2)}
+                                  </td>
+                                </tr>
+                              </tfoot>
+                            )}
                           </table>
                         </div>
                       </div>
@@ -534,6 +973,18 @@ export default function ReportsPage() {
                                 ))
                               )}
                             </tbody>
+                            {selectedPatientData.payments && selectedPatientData.payments.length > 0 && (
+                              <tfoot className="bg-slate-50 border-t-2 border-slate-300 font-bold text-xs sm:text-sm text-gray-900">
+                                <tr>
+                                  <td colSpan={4} className="p-4 uppercase tracking-wider text-gray-900 font-black">
+                                    Total Receipts ({selectedPatientData.payments.length} Payments)
+                                  </td>
+                                  <td className="p-4 text-right font-black text-emerald-700 whitespace-nowrap">
+                                    PKR {selectedPatientData.payments.reduce((sum: number, p: any) => sum + (p.amount || 0), 0).toFixed(2)}
+                                  </td>
+                                </tr>
+                              </tfoot>
+                            )}
                           </table>
                         </div>
                       </div>
@@ -754,6 +1205,18 @@ export default function ReportsPage() {
                               ))
                             )}
                           </tbody>
+                          {expenseReport?.expenses && expenseReport.expenses.length > 0 && (
+                            <tfoot className="bg-slate-50 border-t-2 border-slate-300 font-bold text-xs sm:text-sm text-gray-900">
+                              <tr>
+                                <td colSpan={5} className="p-4 uppercase tracking-wider text-gray-900 font-black">
+                                  Total Expenses ({expenseReport.expenses.length} Vouchers)
+                                </td>
+                                <td className="p-4 text-right font-black text-rose-600 whitespace-nowrap">
+                                  PKR {expenseReport.expenses.reduce((sum: number, exp: any) => sum + (exp.amount || 0), 0).toFixed(2)}
+                                </td>
+                              </tr>
+                            </tfoot>
+                          )}
                         </table>
                       </div>
                     </div>
