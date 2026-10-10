@@ -59,12 +59,16 @@ export async function POST(request: Request) {
     const endOfDay = new Date();
     endOfDay.setHours(23, 59, 59, 999);
 
-    const [totalSales, customerVisits, salesToday, settings] = await Promise.all([
+    const [totalSales, customerVisits, salesToday, settingsRecord] = await Promise.all([
       prisma.sale.count(),
       prisma.sale.count({ where: { customer_id: customer.id } }),
       prisma.sale.count({ where: { date: { gte: startOfDay, lte: endOfDay } } }),
-      prisma.companySetting.findFirst(),
+      sessionCompanyId
+        ? prisma.companySetting.findUnique({ where: { id: sessionCompanyId } })
+        : prisma.companySetting.findFirst({ orderBy: { updated_at: "desc" } }),
     ]);
+
+    const settings = settingsRecord || (await prisma.companySetting.findFirst({ orderBy: { updated_at: "desc" } }));
 
     const token = `P-${(salesToday + 1).toString().padStart(2, "0")}`;
     const visitCount = customerVisits + 1;
@@ -483,6 +487,7 @@ export async function GET(request: Request) {
             product: true,
           },
         },
+        company: true,
       },
     });
 

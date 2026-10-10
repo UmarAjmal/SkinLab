@@ -239,7 +239,11 @@ export default function SettingsPage() {
         body: JSON.stringify(clinicSettings)
       });
       if (res.ok) {
+        const savedData = await res.json();
         setClinicSaved(true);
+        try {
+          sessionStorage.setItem("pos_cache_settings", JSON.stringify(savedData));
+        } catch (_) {}
         setTimeout(() => setClinicSaved(false), 3000);
       }
     } catch (e) {

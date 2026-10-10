@@ -202,14 +202,15 @@ export default function PatientDetailPage() {
   const handlePrintReceipt = (sale: any) => {
     const remainingDue = Math.max(0, sale.grand_total - (sale.paid_amount || 0));
 
+    const activeClinic = sale.company || clinicSettings;
     const receiptData: ThermalReceiptData = {
       clinic: {
-        name: clinicSettings?.name || "BEYOND BEAUTY CLINIC",
-        phone: clinicSettings?.phone || "+92 326-3392082",
-        address: clinicSettings?.address || "Clinic Address",
-        logo: clinicSettings?.logo || "",
-        footer_note: clinicSettings?.footer_note || "Divine Glow You Need",
-        tax_number: clinicSettings?.tax_number || "",
+        name: activeClinic?.name || "Skin-Lab Clinic",
+        phone: activeClinic?.phone || "",
+        address: activeClinic?.address || "",
+        logo: activeClinic?.logo || "",
+        footer_note: activeClinic?.footer_note || "Thank you for choosing our clinic!",
+        tax_number: activeClinic?.tax_number || "",
       },
       invoiceNumber: sale.invoice_number,
       date: sale.date,

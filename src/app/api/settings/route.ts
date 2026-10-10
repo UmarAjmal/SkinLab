@@ -29,7 +29,9 @@ export async function GET() {
         });
       }
     } else {
-      settings = await prisma.companySetting.findFirst();
+      settings = await prisma.companySetting.findFirst({
+        orderBy: { updated_at: "desc" }
+      });
       if (!settings) {
         settings = await prisma.companySetting.create({
           data: {
@@ -62,8 +64,10 @@ export async function PUT(request: Request) {
     let targetSettingId = userCompanyId;
 
     if (!targetSettingId) {
-      const first = await prisma.companySetting.findFirst();
-      targetSettingId = first?.id;
+      const latest = await prisma.companySetting.findFirst({
+        orderBy: { updated_at: "desc" }
+      });
+      targetSettingId = latest?.id;
     }
     
     const updateData: any = {};

@@ -74,15 +74,24 @@ export default function SalesHistoryPage() {
   };
 
   useEffect(() => {
+    try {
+      const cached = sessionStorage.getItem("pos_cache_settings");
+      if (cached) setClinicSettings(JSON.parse(cached));
+    } catch (_) {}
+
     fetch("/api/settings")
       .then((r) => r.json())
       .then((data) => {
-        if (data && !data.error) setClinicSettings(data);
+        if (data && !data.error) {
+          setClinicSettings(data);
+          try { sessionStorage.setItem("pos_cache_settings", JSON.stringify(data)); } catch (_) {}
+        }
       })
       .catch(() => {});
   }, []);
 
   const handlePrintThermalReceipt = (sale: any) => {
+    const activeClinic = sale.company || clinicSettings;
     printThermalReceipt({
       invoiceNumber: sale.invoice_number,
       date: sale.date,
@@ -97,12 +106,12 @@ export default function SalesHistoryPage() {
       },
       doctor: sale.doctor ? { name: sale.doctor.name } : null,
       clinic: {
-        name: clinicSettings?.name || "Skin-Lab Clinic",
-        phone: clinicSettings?.phone || "",
-        logo: clinicSettings?.logo || "",
-        address: clinicSettings?.address || "",
-        tax_number: clinicSettings?.tax_number || "",
-        footer_note: clinicSettings?.footer_note || "Thank you for choosing Skin-Lab!",
+        name: activeClinic?.name || "Skin-Lab Clinic",
+        phone: activeClinic?.phone || "",
+        logo: activeClinic?.logo || "",
+        address: activeClinic?.address || "",
+        tax_number: activeClinic?.tax_number || "",
+        footer_note: activeClinic?.footer_note || "Thank you for choosing our clinic!",
       },
       items: (sale.items || []).map((it: any) => ({
         name: it.product?.name || "Service",

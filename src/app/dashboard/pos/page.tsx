@@ -610,9 +610,21 @@ function POSContent() {
 
         const isFollowUp = Boolean(data.is_followup || selectedFollowUpInvoice);
         const receiptSale = data.sale || selectedFollowUpInvoice;
+        const activeClinic = data.settings || clinicSettings;
+        if (data.settings) {
+          setClinicSettings(data.settings);
+          try { sessionStorage.setItem("pos_cache_settings", JSON.stringify(data.settings)); } catch (_) { }
+        }
 
         const receiptData: ThermalReceiptData = {
-          clinic: data.settings || clinicSettings,
+          clinic: {
+            name: activeClinic?.name || "Skin-Lab Clinic",
+            phone: activeClinic?.phone || "",
+            logo: activeClinic?.logo || "",
+            address: activeClinic?.address || "",
+            tax_number: activeClinic?.tax_number || "",
+            footer_note: activeClinic?.footer_note || "Thank you for choosing our clinic!",
+          },
           invoiceNumber: receiptSale?.invoice_number || nextInvoice,
           date: receiptSale?.date || new Date(),
           customer: {

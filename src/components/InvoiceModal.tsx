@@ -61,10 +61,18 @@ export default function InvoiceModal({
 
   // Fetch clinic settings for logo and brand info
   useEffect(() => {
+    try {
+      const cached = sessionStorage.getItem("pos_cache_settings");
+      if (cached) setClinicSettings(JSON.parse(cached));
+    } catch (_) {}
+
     fetch("/api/settings")
       .then((r) => r.json())
       .then((data) => {
-        if (data && !data.error) setClinicSettings(data);
+        if (data && !data.error) {
+          setClinicSettings(data);
+          try { sessionStorage.setItem("pos_cache_settings", JSON.stringify(data)); } catch (_) {}
+        }
       })
       .catch(() => { });
   }, []);
@@ -170,12 +178,12 @@ export default function InvoiceModal({
         },
         doctor: selectedSale.doctor ? { name: selectedSale.doctor.name } : null,
         clinic: {
-          name: clinicSettings?.name || "Skin-Lab Clinic",
-          phone: clinicSettings?.phone || "",
-          logo: clinicSettings?.logo || "",
-          address: clinicSettings?.address || "",
-          tax_number: clinicSettings?.tax_number || "",
-          footer_note: clinicSettings?.footer_note || "Thank you for choosing Skin-Lab!",
+          name: (selectedSale?.company || clinicSettings)?.name || "Skin-Lab Clinic",
+          phone: (selectedSale?.company || clinicSettings)?.phone || "",
+          logo: (selectedSale?.company || clinicSettings)?.logo || "",
+          address: (selectedSale?.company || clinicSettings)?.address || "",
+          tax_number: (selectedSale?.company || clinicSettings)?.tax_number || "",
+          footer_note: (selectedSale?.company || clinicSettings)?.footer_note || "Thank you for choosing our clinic!",
         },
         items: (selectedSale.items || []).map((it: any) => ({
           name: it.product?.name || "Service",
