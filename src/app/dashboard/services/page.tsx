@@ -5,6 +5,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Plus, X, Edit2, Trash2, Tag, LayoutList, Package } from "lucide-react";
+import { toast } from "@/lib/toast";
 
 // Schemas
 const categorySchema = z.object({
@@ -87,15 +88,16 @@ export default function ServicesPage() {
       const res = await fetch("/api/categories", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(values) });
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        alert(errorData.error || "Failed to create category");
+        toast.error(errorData.error || "Failed to create category");
         return;
       }
+      toast.dbSave(`Category "${values.name}"`);
       setIsCategoryModalOpen(false);
       categoryForm.reset();
       fetchData();
     } catch (err) {
       console.error(err);
-      alert("Error saving category");
+      toast.error("Error saving category to database");
     }
   };
 
@@ -106,8 +108,13 @@ export default function ServicesPage() {
       const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(values) });
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        alert(errorData.error || "Failed to save service");
+        toast.error(errorData.error || "Failed to save service");
         return;
+      }
+      if (editingProductId) {
+        toast.dbUpdate(`Service "${values.name}"`);
+      } else {
+        toast.dbSave(`Service "${values.name}"`);
       }
       setIsProductModalOpen(false);
       setEditingProductId(null);
@@ -115,31 +122,66 @@ export default function ServicesPage() {
       fetchData();
     } catch (err) {
       console.error(err);
-      alert("Error saving service");
+      toast.error("Error saving service to database");
     }
   };
 
   const onDealSubmit = async (values: any) => {
-    const url = editingDealId ? `/api/deals/${editingDealId}` : "/api/deals";
-    const method = editingDealId ? "PUT" : "POST";
-    await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(values) });
-    setIsDealModalOpen(false);
-    setEditingDealId(null);
-    dealForm.reset({ items: [{ product_id: "", sessions: 1 }] });
-    fetchData();
+    try {
+      const url = editingDealId ? `/api/deals/${editingDealId}` : "/api/deals";
+      const method = editingDealId ? "PUT" : "POST";
+      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(values) });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        toast.error(errorData.error || "Failed to save package");
+        return;
+      }
+      if (editingDealId) {
+        toast.dbUpdate(`Package "${values.name}"`);
+      } else {
+        toast.dbSave(`Package "${values.name}"`);
+      }
+      setIsDealModalOpen(false);
+      setEditingDealId(null);
+      dealForm.reset({ items: [{ product_id: "", sessions: 1 }] });
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      toast.error("Error saving package to database");
+    }
   };
 
   const deleteProduct = async (id: string) => {
     if (confirm("Are you sure you want to delete this service?")) {
-      await fetch(`/api/products/${id}`, { method: "DELETE" });
-      fetchData();
+      try {
+        const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          toast.error(errData.error || "Failed to delete service");
+          return;
+        }
+        toast.dbDelete("Service");
+        fetchData();
+      } catch (err) {
+        toast.error("Error deleting service");
+      }
     }
   };
 
   const deleteDeal = async (id: string) => {
     if (confirm("Are you sure you want to delete this package?")) {
-      await fetch(`/api/deals/${id}`, { method: "DELETE" });
-      fetchData();
+      try {
+        const res = await fetch(`/api/deals/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          toast.error(errData.error || "Failed to delete package");
+          return;
+        }
+        toast.dbDelete("Package");
+        fetchData();
+      } catch (err) {
+        toast.error("Error deleting package");
+      }
     }
   };
 

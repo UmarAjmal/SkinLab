@@ -33,6 +33,7 @@ import * as z from "zod";
 import dayjs from "dayjs";
 import { useSession } from "next-auth/react";
 import InvoiceModal, { StatusBadge } from "@/components/InvoiceModal";
+import { toast } from "@/lib/toast";
 import { printThermalReceipt, ThermalReceiptData } from "@/lib/thermalPrinter";
 
 const patientSchema = z.object({
@@ -157,11 +158,13 @@ export default function PatientDetailPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to process payment");
 
+      toast.success(`Payment of PKR ${parseFloat(paymentAmount).toLocaleString()} collected successfully!`, "Payment Collected");
       setIsPaymentModalOpen(false);
       setSelectedSale(null);
       fetchPatient();
     } catch (e: any) {
       setPaymentError(e.message);
+      toast.error(e.message || "Failed to process payment");
     } finally {
       setPaymentProcessing(false);
     }
@@ -172,6 +175,7 @@ export default function PatientDetailPage() {
     const amountNum = parseFloat(walletAmount);
     if (isNaN(amountNum) || amountNum <= 0) {
       setWalletError("Please enter a valid deposit amount.");
+      toast.warning("Please enter a valid deposit amount.");
       return;
     }
 
@@ -188,11 +192,13 @@ export default function PatientDetailPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to add advance balance");
 
+      toast.success(`Advance deposit of PKR ${amountNum.toLocaleString()} added to wallet!`, "Wallet Deposited");
       setIsWalletModalOpen(false);
       setWalletAmount("");
       fetchPatient();
     } catch (e: any) {
       setWalletError(e.message);
+      toast.error(e.message || "Failed to deposit advance balance");
     } finally {
       setWalletProcessing(false);
     }

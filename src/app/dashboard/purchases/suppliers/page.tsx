@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { toast } from "@/lib/toast";
 
 export default function SuppliersPage() {
   const [suppliers, setSuppliers] = useState<any[]>([]);
@@ -40,12 +41,21 @@ export default function SuppliersPage() {
       });
 
       if (res.ok) {
+        if (selectedSupplier) {
+          toast.dbUpdate("Supplier updated successfully", "Supplier Updated");
+        } else {
+          toast.dbSave("New supplier added successfully", "Supplier Created");
+        }
         setIsModalOpen(false);
         reset();
         fetchSuppliers();
+      } else {
+        const err = await res.json();
+        toast.dbError(err.error || "Failed to save supplier", "Supplier Error");
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      toast.dbError(e?.message || "An unexpected error occurred", "Error");
     }
   };
 
@@ -64,10 +74,17 @@ export default function SuppliersPage() {
   const deleteSupplier = async (id: string) => {
     if (!confirm("Are you sure you want to delete this supplier?")) return;
     try {
-      await fetch(`/api/suppliers/${id}`, { method: "DELETE" });
-      fetchSuppliers();
-    } catch (e) {
+      const res = await fetch(`/api/suppliers/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        toast.dbDelete("Supplier deleted successfully", "Supplier Removed");
+        fetchSuppliers();
+      } else {
+        const err = await res.json();
+        toast.dbError(err.error || "Failed to delete supplier", "Delete Error");
+      }
+    } catch (e: any) {
       console.error(e);
+      toast.dbError(e?.message || "An unexpected error occurred", "Error");
     }
   };
 

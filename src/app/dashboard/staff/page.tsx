@@ -13,6 +13,7 @@ import {
   SortingState,
 } from "@tanstack/react-table";
 import { Pencil, Trash2, Plus, X, Users } from "lucide-react";
+import { toast } from "@/lib/toast";
 
 // Schemas
 const employeeSchema = z.object({
@@ -80,12 +81,17 @@ export default function StaffPage() {
       });
       if (res.ok) {
         const dept = await res.json();
+        toast.dbSave(`Department "${dept.name}"`);
         setDepartments([...departments, dept]);
         employeeForm.setValue("department_id", dept.id);
         setNewDepartmentName("");
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.error || "Failed to create department");
       }
     } catch (e) {
       console.error(e);
+      toast.error("Network error creating department");
     }
     setIsCreatingDepartment(false);
   };
@@ -102,13 +108,22 @@ export default function StaffPage() {
       });
 
       if (res.ok) {
+        if (editingEmployee) {
+          toast.dbUpdate(`Staff member "${data.name}"`);
+        } else {
+          toast.dbSave(`Staff member "${data.name}"`);
+        }
         setIsEmployeeModalOpen(false);
         setEditingEmployee(null);
         employeeForm.reset();
         fetchData();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.error || "Failed to save staff member");
       }
     } catch (e) {
       console.error(e);
+      toast.error("Network error saving staff member");
     }
   };
 
@@ -116,9 +131,16 @@ export default function StaffPage() {
     if (!confirm("Are you sure you want to delete this employee?")) return;
     try {
       const res = await fetch(`/api/employees/${id}`, { method: "DELETE" });
-      if (res.ok) fetchData();
+      if (res.ok) {
+        toast.dbDelete("Staff member");
+        fetchData();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.error || "Failed to delete staff member");
+      }
     } catch (e) {
       console.error(e);
+      toast.error("Network error deleting staff member");
     }
   };
 

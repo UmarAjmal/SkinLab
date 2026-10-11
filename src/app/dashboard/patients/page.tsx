@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "@/lib/toast";
 import { useSession } from "next-auth/react";
 
 const patientSchema = z.object({
@@ -195,13 +196,18 @@ export default function PatientsPage() {
         body: JSON.stringify(values),
       });
       if (res.ok) {
+        toast.dbSave(`Patient "${values.name}"`);
         setIsModalOpen(false);
         reset();
         fetchPatients();
         router.refresh();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        toast.error(errData.error || "Failed to register patient");
       }
     } catch (e) {
       console.error("Failed to add patient", e);
+      toast.error("Network error while registering patient");
     }
   };
 

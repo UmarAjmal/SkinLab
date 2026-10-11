@@ -29,6 +29,7 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { toast } from "@/lib/toast";
 
 dayjs.extend(relativeTime);
 
@@ -230,10 +231,17 @@ export default function ExpensesPage() {
         throw new Error(data.error || "Failed to save expense");
       }
 
+      if (editingExpense) {
+        toast.dbUpdate(`Expense "${formTitle.trim()}"`);
+      } else {
+        toast.dbSave(`Expense "${formTitle.trim()}"`);
+      }
+
       setIsExpenseModalOpen(false);
       fetchExpenses();
     } catch (err: any) {
       setFormError(err.message || "Failed to save expense");
+      toast.error(err.message || "Failed to save expense");
     } finally {
       setFormSubmitting(false);
     }
@@ -250,10 +258,11 @@ export default function ExpensesPage() {
         const data = await res.json();
         throw new Error(data.error || "Failed to delete expense");
       }
+      toast.dbDelete("Expense");
       setDeletingExpenseId(null);
       fetchExpenses();
     } catch (e: any) {
-      alert(e.message || "Failed to delete expense");
+      toast.error(e.message || "Failed to delete expense");
     }
   };
 
@@ -279,12 +288,14 @@ export default function ExpensesPage() {
         throw new Error(data.error || "Failed to create category");
       }
 
+      toast.dbSave(`Expense Category "${newCatName.trim()}"`);
       setNewCatName("");
       setNewCatDesc("");
       fetchCategories();
       fetchExpenses();
     } catch (err: any) {
       setCatError(err.message || "Failed to create category");
+      toast.error(err.message || "Failed to create category");
     } finally {
       setCatSubmitting(false);
     }
@@ -301,10 +312,11 @@ export default function ExpensesPage() {
         const data = await res.json();
         throw new Error(data.error || "Failed to delete category");
       }
+      toast.dbDelete("Expense Category");
       fetchCategories();
       fetchExpenses();
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message || "Failed to delete category");
     }
   };
 

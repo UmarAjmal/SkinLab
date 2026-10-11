@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Edit3, X, Save, AlertCircle, Calendar, User, Stethoscope, FileText, CheckCircle2 } from "lucide-react";
 import dayjs from "dayjs";
+import { toast } from "@/lib/toast";
 
 export default function EditInvoiceModal({
   sale,
@@ -98,10 +99,12 @@ export default function EditInvoiceModal({
         throw new Error(data.error || "Failed to update invoice");
       }
 
+      toast.dbUpdate(`Invoice #${sale.invoice_number}`);
       onSaveComplete();
       onClose();
     } catch (err: any) {
       setErrorMessage(err.message || "Failed to save invoice changes.");
+      toast.error(err.message || "Failed to save invoice changes.");
     } finally {
       setIsSaving(false);
     }

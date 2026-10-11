@@ -33,6 +33,7 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import { printThermalReceipt, ThermalReceiptData } from "@/lib/thermalPrinter";
+import { toast } from "@/lib/toast";
 
 function POSContent() {
   const searchParams = useSearchParams();
@@ -388,6 +389,7 @@ function POSContent() {
 
       if (res.ok) {
         const createdPatient = await res.json();
+        toast.dbSave(`Patient "${createdPatient.name}"`);
         setPatients((prev) => [createdPatient, ...prev]);
         setSelectedPatientId(createdPatient.id);
         setIsPatientModalOpen(false);
@@ -396,10 +398,12 @@ function POSContent() {
       } else {
         const err = await res.json();
         setPatientError(err.error || "Failed to create patient");
+        toast.error(err.error || "Failed to create patient");
       }
     } catch (e: any) {
       console.error(e);
       setPatientError(e.message || "Failed to create patient");
+      toast.error(e.message || "Failed to create patient");
     } finally {
       setPatientSaving(false);
     }
@@ -439,6 +443,7 @@ function POSContent() {
 
       if (res.ok) {
         const createdDeal = await res.json();
+        toast.dbSave(`Package "${createdDeal.name}"`);
         // Update deals state
         setDeals((prev) => [createdDeal, ...prev]);
         // Automatically add to POS cart
@@ -449,10 +454,12 @@ function POSContent() {
       } else {
         const err = await res.json();
         setPackageError(err.error || "Failed to create custom package");
+        toast.error(err.error || "Failed to create custom package");
       }
     } catch (e: any) {
       console.error(e);
       setPackageError(e.message || "Failed to create custom package");
+      toast.error(e.message || "Failed to create custom package");
     } finally {
       setPackageSaving(false);
     }
@@ -521,8 +528,14 @@ function POSContent() {
   };
 
   const completeSale = async () => {
-    if (!selectedPatientId) return alert("Please select a patient.");
-    if (cart.length === 0) return alert("Cart is empty.");
+    if (!selectedPatientId) {
+      toast.warning("Please select a patient before completing sale.");
+      return;
+    }
+    if (cart.length === 0) {
+      toast.warning("Cart is empty. Please add at least one service.");
+      return;
+    }
 
     setIsCheckingOut(true);
     try {
@@ -663,16 +676,17 @@ function POSContent() {
         setLastReceiptData(receiptData);
         setSuccessData({ ...data, invoice: receiptData.invoiceNumber, token: receiptData.tokenNumber });
         setIsSuccess(true);
+        toast.success(`Invoice #${receiptData.invoiceNumber} generated & Sale completed!`, "Sale Completed");
 
         // Open and print 80mm thermal invoice directly in a new tab/popup
         printThermalReceipt(receiptData);
       } else {
-        const err = await res.json();
-        alert(`Error: ${err.details || err.error || "Failed to complete sale"}`);
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.details || err.error || "Failed to complete sale");
       }
     } catch (e: any) {
       console.error(e);
-      alert("An error occurred during checkout.");
+      toast.error("An error occurred during checkout.");
     } finally {
       setIsCheckingOut(false);
     }

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Plus, Search, Trash2, ArrowLeft } from "lucide-react";
 import { useForm, useFieldArray } from "react-hook-form";
+import { toast } from "@/lib/toast";
 
 export default function PurchasesPage() {
   const [purchases, setPurchases] = useState<any[]>([]);
@@ -84,15 +85,17 @@ export default function PurchasesPage() {
         body: JSON.stringify(formattedData)
       });
       if (res.ok) {
+        toast.dbSave("Purchase order created successfully", "Purchase Saved");
         setIsCreating(false);
         reset();
         fetchData();
       } else {
         const err = await res.json();
-        alert(err.error || "Failed to create purchase");
+        toast.dbError(err.error || "Failed to create purchase", "Purchase Failed");
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      toast.dbError(e?.message || "An unexpected error occurred", "Error");
     }
   };
 

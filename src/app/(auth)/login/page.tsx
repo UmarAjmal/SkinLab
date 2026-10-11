@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, ShieldCheck } from "lucide-react";
 import Link from "next/link";
+import { toast } from "@/lib/toast";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email"),
@@ -72,6 +73,7 @@ function LoginContent() {
       });
 
       if (res?.ok && !res?.error) {
+        toast.success("Login successful! Redirecting...", "Welcome");
         // Fetch session to check if first login
         try {
           const sessRes = await fetch("/api/auth/session");
@@ -85,11 +87,15 @@ function LoginContent() {
         }
         window.location.href = res?.url || callbackUrl;
       } else {
-        setError(res?.error === "CredentialsSignin" ? "Invalid email or password" : (res?.error || "Invalid email or password"));
+        const errorMsg = res?.error === "CredentialsSignin" ? "Invalid email or password" : (res?.error || "Invalid email or password");
+        setError(errorMsg);
+        toast.error(errorMsg, "Login Failed");
       }
     } catch (err: any) {
       console.error("Login submission error:", err);
-      setError(err?.message || "An unexpected error occurred");
+      const errorMsg = err?.message || "An unexpected error occurred";
+      setError(errorMsg);
+      toast.error(errorMsg, "Login Error");
     }
   };
 

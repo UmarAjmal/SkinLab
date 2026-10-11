@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import PublicNavbar from "@/components/PublicNavbar";
 import PublicFooter from "@/components/PublicFooter";
+import { toast } from "@/lib/toast";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -54,7 +55,7 @@ export default function SignUpPage() {
   const handleLogoUpload = (file: File) => {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      alert("Please upload a valid image file (PNG, JPG, SVG, WebP)");
+      toast.warning("Please upload a valid image file (PNG, JPG, SVG, WebP)", "Invalid File");
       return;
     }
     const reader = new FileReader();
@@ -139,10 +140,14 @@ export default function SignUpPage() {
         throw new Error(data.error || "Failed to create account");
       }
 
+      toast.dbSave("Clinic account created successfully! Please log in.", "Account Registered");
+
       // Success -> Redirect to login with created banner & auto-fill
       router.push(`/login?registered=true&new_user=true&email=${encodeURIComponent(email)}`);
     } catch (err: any) {
-      setError(err.message || "Something went wrong. Please try again.");
+      const msg = err.message || "Something went wrong. Please try again.";
+      setError(msg);
+      toast.dbError(msg, "Registration Failed");
     } finally {
       setLoading(false);
     }

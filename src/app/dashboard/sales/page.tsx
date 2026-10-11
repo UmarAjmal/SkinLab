@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import InvoiceModal, { StatusBadge } from "@/components/InvoiceModal";
 import EditInvoiceModal from "@/components/EditInvoiceModal";
 import { printThermalReceipt } from "@/lib/thermalPrinter";
+import { toast } from "@/lib/toast";
 
 export default function SalesHistoryPage() {
   const { data: session } = useSession();
@@ -168,11 +169,13 @@ export default function SalesHistoryPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to process payment");
 
+      toast.success(`Payment of PKR ${parseFloat(paymentAmount).toLocaleString()} recorded successfully!`, "Payment Processed");
       setIsPaymentModalOpen(false);
       setSelectedSale(null);
       fetchSales();
     } catch (e: any) {
       setPaymentError(e.message);
+      toast.error(e.message || "Failed to process payment");
     } finally {
       setPaymentProcessing(false);
     }

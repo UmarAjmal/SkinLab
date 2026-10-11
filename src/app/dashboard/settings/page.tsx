@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { SYSTEM_MODULES } from "@/lib/permissions";
 import { useTheme } from "@/context/ThemeContext";
+import { toast } from "@/lib/toast";
 
 interface RolePermissionState {
   module: string;
@@ -107,7 +108,7 @@ export default function SettingsPage() {
   const handleLogoFileUpload = (file: File) => {
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      alert("Please upload a valid image file (PNG, JPG, JPEG, SVG, WebP)");
+      toast.warning("Please upload a valid image file (PNG, JPG, JPEG, SVG, WebP)", "Invalid File");
       return;
     }
     const reader = new FileReader();
@@ -241,13 +242,18 @@ export default function SettingsPage() {
       if (res.ok) {
         const savedData = await res.json();
         setClinicSaved(true);
+        toast.dbSave("Clinic Profile & Settings");
         try {
           sessionStorage.setItem("pos_cache_settings", JSON.stringify(savedData));
         } catch (_) {}
         setTimeout(() => setClinicSaved(false), 3000);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.error || "Failed to save clinic settings");
       }
     } catch (e) {
       console.error(e);
+      toast.error("Network error while saving settings");
     } finally {
       setClinicSaving(false);
     }
@@ -258,6 +264,7 @@ export default function SettingsPage() {
     setAddUserError("");
     if (!newUser.email || !newUser.password || !newUser.role_id) {
       setAddUserError("Email, password, and role are required.");
+      toast.warning("Email, password, and role are required.");
       return;
     }
 
@@ -271,14 +278,17 @@ export default function SettingsPage() {
       const data = await res.json();
       if (!res.ok) {
         setAddUserError(data.error || "Failed to create user");
+        toast.error(data.error || "Failed to create user");
         return;
       }
+      toast.dbSave(`User "${data.email}"`);
       setUsers([...users, data]);
       setIsAddUserOpen(false);
       setNewUser({ email: "", password: "", role_id: "", employee_id: "" });
       fetchUsersAndRoles();
     } catch (e) {
       setAddUserError("Network error occurred");
+      toast.error("Network error creating user");
     } finally {
       setAddUserSaving(false);
     }
@@ -323,14 +333,17 @@ export default function SettingsPage() {
       const updated = await res.json();
       if (!res.ok) {
         setEditUserError(updated.error || "Failed to update user");
+        toast.error(updated.error || "Failed to update user");
         return;
       }
 
+      toast.dbUpdate(`User "${updated.email}"`);
       setUsers(users.map(u => u.id === editingUser.id ? updated : u));
       setEditingUser(null);
       fetchUsersAndRoles();
     } catch (e) {
       setEditUserError("Network error occurred");
+      toast.error("Network error occurred while updating user");
     } finally {
       setEditUserSaving(false);
     }
@@ -347,9 +360,13 @@ export default function SettingsPage() {
       if (res.ok) {
         const updated = await res.json();
         setUsers(users.map(u => u.id === userId ? updated : u));
+        toast.info(`User status ${!currentActive ? "Activated" : "Deactivated"}`, "Status Changed");
+      } else {
+        toast.error("Failed to change user status");
       }
     } catch (e) {
       console.error(e);
+      toast.error("Network error updating user status");
     }
   };
 
@@ -365,13 +382,16 @@ export default function SettingsPage() {
       const data = await res.json();
       if (!res.ok) {
         setDeleteUserModal(prev => ({ ...prev, isDeleting: false, error: data.error || "Failed to delete user" }));
+        toast.error(data.error || "Failed to delete user");
         return;
       }
+      toast.dbDelete(`User "${deleteUserModal.user.email}"`);
       setUsers(users.filter(u => u.id !== deleteUserModal.user?.id));
       setDeleteUserModal({ isOpen: false, user: null, isDeleting: false, error: "" });
       fetchUsersAndRoles();
     } catch (e) {
       setDeleteUserModal(prev => ({ ...prev, isDeleting: false, error: "Network error occurred" }));
+      toast.error("Network error occurred while deleting user");
     }
   };
 
@@ -525,13 +545,21 @@ export default function SettingsPage() {
       const data = await res.json();
       if (!res.ok) {
         setRoleFormError(data.error || "Failed to save role");
+        toast.error(data.error || "Failed to save role");
         return;
+      }
+
+      if (roleModalMode === "create") {
+        toast.dbSave(`Role "${roleForm.name.trim()}"`);
+      } else {
+        toast.dbUpdate(`Role "${roleForm.name.trim()}"`);
       }
 
       setIsRoleModalOpen(false);
       fetchUsersAndRoles();
     } catch (e) {
       setRoleFormError("Network error occurred");
+      toast.error("Network error occurred while saving role");
     } finally {
       setRoleFormSaving(false);
     }
@@ -548,13 +576,16 @@ export default function SettingsPage() {
       const data = await res.json();
       if (!res.ok) {
         setDeleteRoleModal(prev => ({ ...prev, isDeleting: false, error: data.error || "Failed to delete role" }));
+        toast.error(data.error || "Failed to delete role");
         return;
       }
 
+      toast.dbDelete(`Role "${deleteRoleModal.role.name}"`);
       setDeleteRoleModal({ isOpen: false, role: null, isDeleting: false, error: "" });
       fetchUsersAndRoles();
     } catch (e) {
       setDeleteRoleModal(prev => ({ ...prev, isDeleting: false, error: "Network error occurred" }));
+      toast.error("Network error occurred while deleting role");
     }
   };
 

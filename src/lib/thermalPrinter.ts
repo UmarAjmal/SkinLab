@@ -1,4 +1,5 @@
 import dayjs from "dayjs";
+import { toast } from "@/lib/toast";
 
 export interface ThermalReceiptItem {
   name?: string;
@@ -481,7 +482,7 @@ export function printThermalReceipt(data: ThermalReceiptData) {
     "width=420,height=750,menubar=no,toolbar=no,location=no,status=no"
   );
   if (!printWindow) {
-    alert("Popup blocked! Please allow popups for this site to print thermal receipts.");
+    toast.warning("Popup blocked! Please allow popups for this site to print thermal receipts.", "Popup Blocked");
     return;
   }
   printWindow.document.open();

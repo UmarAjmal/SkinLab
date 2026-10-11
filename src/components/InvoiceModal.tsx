@@ -17,6 +17,7 @@ import {
   Building2,
 } from "lucide-react";
 import { printThermalReceipt } from "@/lib/thermalPrinter";
+import { toast } from "@/lib/toast";
 
 export const StatusBadge = ({ status }: { status: string }) => {
   if (status === "PAID")
@@ -130,7 +131,7 @@ export default function InvoiceModal({
         }));
 
       if (itemsToReturn.length === 0) {
-        alert("Please select at least one item to return.");
+        toast.warning("Please select at least one item to return.", "Refund");
         setRefundProcessing(false);
         return;
       }
@@ -145,18 +146,18 @@ export default function InvoiceModal({
       });
 
       if (res.ok) {
-        alert("Refund processed successfully! Amount credited to patient advance wallet.");
+        toast.dbSave("Refund processed! Amount credited to patient advance wallet.", "Refund Completed");
         setIsRefundMode(false);
         setRefundQuantities({});
         if (onRefundComplete) onRefundComplete();
         onClose();
       } else {
         const data = await res.json();
-        alert(data.error || "Failed to process refund");
+        toast.dbError(data.error || "Failed to process refund", "Refund Failed");
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      alert("Error processing refund");
+      toast.dbError("Error processing refund", "Refund Error");
     } finally {
       setRefundProcessing(false);
     }
