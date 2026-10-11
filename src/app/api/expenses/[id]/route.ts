@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth";
+import { hasModulePermission } from "@/lib/permissions";
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession();
@@ -34,8 +35,8 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   const session = await getServerSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const role = (session.user as any)?.role;
-  if (!["Admin", "Manager"].includes(role)) {
+  const canWrite = await hasModulePermission(session, "expenses", "write", ["Admin", "Manager", "Cashier"]);
+  if (!canWrite) {
     return NextResponse.json({ error: "Forbidden: insufficient permissions to edit expenses" }, { status: 403 });
   }
 
@@ -99,8 +100,8 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
   const session = await getServerSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const role = (session.user as any)?.role;
-  if (!["Admin", "Manager"].includes(role)) {
+  const canDelete = await hasModulePermission(session, "expenses", "delete", ["Admin", "Manager"]);
+  if (!canDelete) {
     return NextResponse.json({ error: "Forbidden: insufficient permissions to delete expenses" }, { status: 403 });
   }
 

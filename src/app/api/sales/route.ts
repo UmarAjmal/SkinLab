@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth";
 import { createNotification } from "@/lib/notifications";
-
+import { hasModulePermission } from "@/lib/permissions";
 
 export async function POST(request: Request) {
   const session = await getServerSession();
@@ -10,8 +10,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const role = (session.user as any)?.role;
-  if (!["Admin", "Manager", "Cashier", "Doctor"].includes(role)) {
+  const canWrite =
+    (await hasModulePermission(session, "pos", "write", ["Admin", "Manager", "Cashier", "Doctor"])) ||
+    (await hasModulePermission(session, "sales", "write", ["Admin", "Manager", "Cashier", "Doctor"]));
+
+  if (!canWrite) {
     return NextResponse.json({ error: "Forbidden: insufficient permissions to create sales." }, { status: 403 });
   }
 

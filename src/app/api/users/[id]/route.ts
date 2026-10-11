@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth";
+import { hasModulePermission, isAdminUser } from "@/lib/permissions";
 import bcrypt from "bcryptjs";
 
 export async function PATCH(request: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if ((session.user as any).role !== "Admin") {
+  const canWrite = (await hasModulePermission(session, "users", "write", ["Admin"])) || isAdminUser(session);
+  if (!canWrite) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -61,7 +63,8 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
   const session = await getServerSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if ((session.user as any).role !== "Admin") {
+  const canDelete = (await hasModulePermission(session, "users", "delete", ["Admin"])) || isAdminUser(session);
+  if (!canDelete) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

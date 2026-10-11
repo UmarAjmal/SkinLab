@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth";
-import { SYSTEM_MODULES } from "@/lib/permissions";
+import { SYSTEM_MODULES, isAdminUser } from "@/lib/permissions";
 
 export async function GET() {
   const session = await getServerSession();
@@ -32,8 +32,7 @@ export async function POST(request: Request) {
   const session = await getServerSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const userRole = (session.user as any)?.role;
-  if (userRole !== "Admin") {
+  if (!isAdminUser(session)) {
     return NextResponse.json({ error: "Only administrators can create roles" }, { status: 403 });
   }
 

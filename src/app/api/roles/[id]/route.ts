@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth";
-import { SYSTEM_MODULES } from "@/lib/permissions";
+import { SYSTEM_MODULES, isAdminUser } from "@/lib/permissions";
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession();
@@ -33,8 +33,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   const session = await getServerSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const userRole = (session.user as any)?.role;
-  if (userRole !== "Admin") {
+  if (!isAdminUser(session)) {
     return NextResponse.json({ error: "Only administrators can update roles" }, { status: 403 });
   }
 
@@ -142,8 +141,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
   const session = await getServerSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const userRole = (session.user as any)?.role;
-  if (userRole !== "Admin") {
+  if (!isAdminUser(session)) {
     return NextResponse.json({ error: "Only administrators can delete roles" }, { status: 403 });
   }
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth";
 import { createNotification } from "@/lib/notifications";
+import { hasModulePermission } from "@/lib/permissions";
 
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
@@ -41,8 +42,8 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   const session = await getServerSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const role = (session.user as any)?.role;
-  if (!["Admin", "Manager"].includes(role)) {
+  const canWrite = await hasModulePermission(session, "sales", "write", ["Admin", "Manager"]);
+  if (!canWrite) {
     return NextResponse.json({ error: "Forbidden: insufficient permissions to edit sales." }, { status: 403 });
   }
 

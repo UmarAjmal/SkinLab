@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth";
+import { hasModulePermission } from "@/lib/permissions";
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession();
@@ -29,6 +30,11 @@ export async function GET(request: Request, { params }: { params: { id: string }
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const canWrite = await hasModulePermission(session, "services", "write", ["Admin", "Manager", "Cashier", "Doctor"]);
+  if (!canWrite) {
+    return NextResponse.json({ error: "Forbidden: You do not have permission to edit packages" }, { status: 403 });
+  }
 
   try {
     const companyId = (session.user as any)?.company_id;
@@ -77,6 +83,11 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const canDelete = await hasModulePermission(session, "services", "delete", ["Admin", "Manager"]);
+  if (!canDelete) {
+    return NextResponse.json({ error: "Forbidden: You do not have permission to delete packages" }, { status: 403 });
+  }
 
   try {
     const companyId = (session.user as any)?.company_id;

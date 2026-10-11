@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth";
 import { createNotification } from "@/lib/notifications";
+import { hasModulePermission } from "@/lib/permissions";
 import dayjs from "dayjs";
 
 
@@ -151,8 +152,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const role = (session.user as any)?.role;
-  if (!["Admin", "Manager", "Cashier"].includes(role)) {
+  const canWrite = await hasModulePermission(session, "expenses", "write", ["Admin", "Manager", "Cashier"]);
+  if (!canWrite) {
     return NextResponse.json({ error: "Forbidden: insufficient permissions" }, { status: 403 });
   }
 

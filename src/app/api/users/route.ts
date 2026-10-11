@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth";
+import { hasModulePermission, isAdminUser } from "@/lib/permissions";
 import bcrypt from "bcryptjs";
 
 export async function GET() {
   const session = await getServerSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Only Admin can list users
-  if ((session.user as any).role !== "Admin") {
+  const canRead = (await hasModulePermission(session, "users", "read", ["Admin"])) || isAdminUser(session);
+  if (!canRead) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -41,7 +42,8 @@ export async function POST(request: Request) {
   const session = await getServerSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if ((session.user as any).role !== "Admin") {
+  const canWrite = (await hasModulePermission(session, "users", "write", ["Admin"])) || isAdminUser(session);
+  if (!canWrite) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

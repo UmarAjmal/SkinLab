@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "@/lib/auth";
+import { hasModulePermission } from "@/lib/permissions";
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const role = (session.user as any)?.role;
-  if (!["Admin", "Manager", "Cashier"].includes(role)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const canWrite = await hasModulePermission(session, "patients", "write", ["Admin", "Manager", "Cashier", "Doctor"]);
+  if (!canWrite) {
+    return NextResponse.json({ error: "Forbidden: You do not have permission to manage patient wallet" }, { status: 403 });
   }
 
   try {

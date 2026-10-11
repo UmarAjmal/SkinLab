@@ -87,6 +87,20 @@ export interface RolePermissionData {
 }
 
 /**
+ * Helper to check if a user is an administrator or owner.
+ */
+export function isAdminUser(session: any): boolean {
+  if (!session || !session.user) return false;
+  const roleName = String((session.user as any).role || "").trim().toLowerCase();
+  return (
+    roleName === "admin" ||
+    roleName === "superadmin" ||
+    roleName.includes("admin") ||
+    roleName === "owner"
+  );
+}
+
+/**
  * Check if a role permission set allows a given action on a module.
  * Admin role always gets full access.
  */
@@ -96,15 +110,74 @@ export function checkPermission(
   moduleId: string,
   action: PermissionAction
 ): boolean {
-  if (roleName === "Admin") return true;
+  const normRole = (roleName || "").trim().toLowerCase();
+  if (normRole === "admin" || normRole === "superadmin" || normRole.includes("admin") || normRole === "owner") {
+    return true;
+  }
   if (!permissions || permissions.length === 0) return false;
 
   const modulePerm = permissions.find((p) => p.module === moduleId);
   if (!modulePerm) return false;
 
-  if (action === "read") return modulePerm.can_read;
-  if (action === "write") return modulePerm.can_write;
-  if (action === "delete") return modulePerm.can_delete;
+  if (action === "read") return Boolean(modulePerm.can_read);
+  if (action === "write") return Boolean(modulePerm.can_write);
+  if (action === "delete") return Boolean(modulePerm.can_delete);
+  return false;
+}
+
+/**
+ * Robust helper to verify if the session user has permission for a module action.
+ * Supports SuperAdmin/Admin, fallback system roles, session JWT permissions, and DB fallback.
+ */
+export async function hasModulePermission(
+  session: any,
+  moduleId: string,
+  action: PermissionAction = "write",
+  fallbackRoles: string[] = ["Admin", "Manager", "Cashier", "Doctor"]
+): Promise<boolean> {
+  if (!session || !session.user) return false;
+
+  const roleName = String((session.user as any).role || "").trim();
+  const lowerRole = roleName.toLowerCase();
+
+  // SuperAdmin, Admin, Owner always get unrestricted full access
+  if (lowerRole === "admin" || lowerRole === "superadmin" || lowerRole.includes("admin") || lowerRole === "owner") {
+    return true;
+  }
+
+  // Check permissions array on session
+  const sessionPerms = (session.user as any).permissions as RolePermissionData[] | undefined;
+  if (checkPermission(roleName, sessionPerms, moduleId, action)) {
+    return true;
+  }
+
+  // Fallback to database check in case JWT token permissions array was not refreshed
+  const userId = (session.user as any).id;
+  if (userId) {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          role: {
+            include: {
+              permissions: true,
+            },
+          },
+        },
+      });
+      if (user?.role?.permissions) {
+        if (checkPermission(user.role.name, user.role.permissions, moduleId, action)) {
+          return true;
+        }
+      }
+    } catch (_) {}
+  }
+
+  // Check fallback system roles if specified (safety net for default built-in roles)
+  if (fallbackRoles && fallbackRoles.some((r) => r.toLowerCase() === lowerRole)) {
+    return true;
+  }
+
   return false;
 }
 
@@ -119,7 +192,8 @@ export async function requireModulePermission(moduleId: string, action: Permissi
   }
 
   const roleName = (session.user as any).role || "";
-  if (roleName === "Admin") {
+  const normRole = roleName.trim().toLowerCase();
+  if (normRole === "admin" || normRole === "superadmin" || normRole.includes("admin") || normRole === "owner") {
     return session;
   }
 
