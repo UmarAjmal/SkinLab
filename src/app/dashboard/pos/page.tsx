@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, Suspense } from "react";
+import { useState, useEffect, useMemo, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Search,
@@ -69,6 +69,8 @@ function POSContent() {
   const [discountAmount, setDiscountAmount] = useState<number>(0);
   const [paidAmount, setPaidAmount] = useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState<string>("Cash");
+  const isCheckingOutRef = useRef<boolean>(false);
+  const prevTargetRef = useRef<number>(0);
 
   // Token & Success State
   const [nextToken, setNextToken] = useState("");
@@ -334,16 +336,12 @@ function POSContent() {
     const targetAmount = selectedFollowUpInvoice ? totalPayable : grandTotal;
     if (method === "Credit") {
       setPaidAmount(0);
-    } else if (method === "Card") {
+    } else {
       setPaidAmount(targetAmount);
-    } else if (method === "Cash") {
-      if (paidAmount === 0 && targetAmount > 0) {
-        setPaidAmount(targetAmount);
-      }
     }
   };
 
-  // Auto-sync paid amount when grand total changes
+  // Auto-sync paid amount when grand total / discount / cart changes
   useEffect(() => {
     const targetAmount = selectedFollowUpInvoice ? totalPayable : grandTotal;
     if (paymentMethod === "Credit") {
@@ -351,11 +349,17 @@ function POSContent() {
     } else if (paymentMethod === "Card") {
       setPaidAmount(targetAmount);
     } else if (paymentMethod === "Cash") {
-      if (paidAmount === 0 && targetAmount > 0 && cart.length > 0) {
+      // Auto-sync if paidAmount is 0, or exceeds new target, or previously matched the total
+      if (
+        paidAmount === 0 ||
+        paidAmount > targetAmount ||
+        Math.abs(paidAmount - prevTargetRef.current) < 0.05
+      ) {
         setPaidAmount(targetAmount);
       }
     }
-  }, [grandTotal, totalPayable, paymentMethod, cart.length, selectedFollowUpInvoice]);
+    prevTargetRef.current = targetAmount;
+  }, [grandTotal, totalPayable, paymentMethod, selectedFollowUpInvoice]);
 
   // Handlers
   const handleAddPatient = async (e: React.FormEvent) => {
@@ -528,6 +532,8 @@ function POSContent() {
   };
 
   const completeSale = async () => {
+    if (isCheckingOutRef.current || isCheckingOut) return;
+
     if (!selectedPatientId) {
       toast.warning("Please select a patient before completing sale.");
       return;
@@ -537,6 +543,22 @@ function POSContent() {
       return;
     }
 
+    // Safety: Prevent non-followup services with 0 price from corrupting invoice math
+    const zeroPriceItem = cart.find(
+      (it) => !it.is_follow_up_session && (Number(it.unit_price) <= 0 && Number(it.package_price || 0) <= 0)
+    );
+    if (zeroPriceItem) {
+      toast.warning(`Service "${zeroPriceItem.name}" has PKR 0 price. Please enter a valid price before checkout.`);
+      return;
+    }
+
+    // Safety: Discount cannot exceed subtotal
+    if (discountAmount > subtotal && subtotal > 0) {
+      toast.warning(`Discount amount (PKR ${discountAmount.toLocaleString()}) cannot exceed Subtotal (PKR ${subtotal.toLocaleString()}).`);
+      return;
+    }
+
+    isCheckingOutRef.current = true;
     setIsCheckingOut(true);
     try {
       const finalPaidAmount = paymentMethod === "Credit" ? 0 : paidAmount;
@@ -689,10 +711,15 @@ function POSContent() {
       toast.error("An error occurred during checkout.");
     } finally {
       setIsCheckingOut(false);
+      setTimeout(() => {
+        isCheckingOutRef.current = false;
+      }, 1000);
     }
   };
 
   const resetPOS = async () => {
+    isCheckingOutRef.current = false;
+    prevTargetRef.current = 0;
     setCart([]);
     setSelectedPatientId("");
     setSelectedDoctorId("");
@@ -1478,9 +1505,21 @@ function POSContent() {
           <input
             type="number"
             min="0"
+            max={subtotal}
             className="w-24 bg-indigo-950/80 border border-indigo-700/80 rounded-xl text-right px-2.5 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-400 text-white font-bold"
-            value={discountAmount}
-            onChange={(e) => setDiscountAmount(parseFloat(e.target.value) || 0)}
+            value={discountAmount === 0 ? "" : discountAmount}
+            placeholder="0"
+            onChange={(e) => {
+              const val = Math.max(0, parseFloat(e.target.value) || 0);
+              if (val > subtotal && subtotal > 0) {
+                toast.warning(`Discount cannot exceed Subtotal (PKR ${subtotal.toLocaleString()})`);
+                setDiscountAmount(subtotal);
+              } else if (subtotal === 0) {
+                setDiscountAmount(0);
+              } else {
+                setDiscountAmount(val);
+              }
+            }}
           />
         </div>
 

@@ -296,16 +296,56 @@ export async function POST(request: Request) {
 
     const calculatedSubtotal = sanitizedItems.reduce((acc, it) => acc + it.total_price, 0);
     const subtotal = Number(data.subtotal) !== undefined && !isNaN(Number(data.subtotal)) ? Number(data.subtotal) : calculatedSubtotal;
-    const discountAmount = Number(data.discount_amount) || 0;
-    const grandTotal = Math.max(0, Number(data.grand_total) || (subtotal - discountAmount));
+    const discountAmount = Math.max(0, Number(data.discount_amount) || 0);
+
+    // Validation: Discount cannot exceed subtotal
+    if (discountAmount > subtotal) {
+      return NextResponse.json(
+        { error: `Discount amount (PKR ${discountAmount.toLocaleString()}) cannot exceed Subtotal (PKR ${subtotal.toLocaleString()}).` },
+        { status: 400 }
+      );
+    }
+
+    // Validation: Subtotal cannot be 0 if payment is being collected on a non-followup sale
+    if (subtotal <= 0 && paidAmount > 0) {
+      return NextResponse.json(
+        { error: "Cannot process payment on an invoice with PKR 0 subtotal. Please ensure services have valid prices." },
+        { status: 400 }
+      );
+    }
+
+    const grandTotal = Math.max(0, subtotal - discountAmount);
+    // Sale paid_amount cannot exceed grandTotal on the invoice itself
+    const salePaidAmount = Math.min(grandTotal, paidAmount);
 
     let paymentStatus = "DUE";
-    if (paidAmount >= grandTotal - 0.01 && grandTotal > 0) {
+    if (salePaidAmount >= grandTotal - 0.01 && grandTotal > 0) {
       paymentStatus = "PAID";
-    } else if (paidAmount > 0) {
+    } else if (salePaidAmount > 0) {
       paymentStatus = "PARTIAL";
     } else if (grandTotal === 0) {
       paymentStatus = "PAID";
+    }
+
+    // Duplicate sale guard: Prevent rapid duplicate clicks (within last 15 seconds) for same customer with identical amounts
+    const duplicateSale = await prisma.sale.findFirst({
+      where: {
+        customer_id: customer.id,
+        ...(sessionCompanyId ? { company_id: sessionCompanyId } : {}),
+        grand_total: grandTotal,
+        date: {
+          gte: new Date(Date.now() - 15000), // created within last 15 seconds
+        },
+      },
+    });
+
+    if (duplicateSale) {
+      return NextResponse.json(
+        {
+          error: `Duplicate checkout prevented! Invoice #${duplicateSale.invoice_number} was just generated moments ago. Please check Sales list.`,
+        },
+        { status: 409 }
+      );
     }
 
     let count = totalSales + 1;
@@ -332,7 +372,7 @@ export async function POST(request: Request) {
         subtotal: subtotal,
         discount_amount: discountAmount,
         grand_total: grandTotal,
-        paid_amount: paidAmount,
+        paid_amount: salePaidAmount,
         payment_status: paymentStatus,
         payment_method: data.payment_method || "Cash",
         session_remarks: data.session_remarks || null,
@@ -353,13 +393,13 @@ export async function POST(request: Request) {
       },
     });
 
-    // If payment was made on this new sale, record in Payment table
-    if (paidAmount > 0) {
+    // If payment was made on this new sale, record in Payment table (exact sale paid amount)
+    if (salePaidAmount > 0) {
       await prisma.payment.create({
         data: {
           sale_id: sale.id,
           customer_id: customer.id,
-          amount: paidAmount,
+          amount: salePaidAmount,
           payment_method: data.payment_method || "Cash",
           payment_date: sale.date,
           received_by: sessionUserEmail,
@@ -373,7 +413,7 @@ export async function POST(request: Request) {
     let newCurrentBalance = customer.current_balance;
     let newAdvanceBalance = customer.advance_balance;
 
-    const balanceDelta = grandTotal - paidAmount;
+    const balanceDelta = grandTotal - salePaidAmount;
     if (balanceDelta > 0) {
       if (newAdvanceBalance >= balanceDelta) {
         newAdvanceBalance -= balanceDelta;
@@ -382,8 +422,9 @@ export async function POST(request: Request) {
         newAdvanceBalance = 0;
         newCurrentBalance += remainingOwed;
       }
-    } else if (balanceDelta < 0) {
-      const overpaidAmount = Math.abs(balanceDelta);
+    } else if (paidAmount > grandTotal && grandTotal > 0) {
+      // ONLY if grandTotal > 0 and the patient explicitly paid extra cash, record legitimate overpayment
+      const overpaidAmount = paidAmount - grandTotal;
       if (newCurrentBalance >= overpaidAmount) {
         newCurrentBalance -= overpaidAmount;
       } else {
@@ -391,6 +432,19 @@ export async function POST(request: Request) {
         newCurrentBalance = 0;
         newAdvanceBalance += remainingAdvance;
       }
+
+      await prisma.payment.create({
+        data: {
+          sale_id: sale.id,
+          customer_id: customer.id,
+          amount: overpaidAmount,
+          payment_method: data.payment_method || "Cash",
+          payment_date: sale.date,
+          received_by: sessionUserEmail,
+          notes: `Excess payment of PKR ${overpaidAmount.toFixed(2)} from Invoice ${sale.invoice_number} credited to Advance Wallet`,
+          company_id: sessionCompanyId,
+        },
+      });
     }
 
     const updatedCustomer = await prisma.customer.update({
